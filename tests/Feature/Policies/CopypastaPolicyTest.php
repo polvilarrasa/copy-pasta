@@ -67,3 +67,20 @@ test('solo el staff lista copy-pastas en el panel de administración', function 
     expect(Gate::forUser($user)->allows('viewAny', Copypasta::class))->toBeFalse();
     expect(Gate::forUser($moderator)->allows('viewAny', Copypasta::class))->toBeTrue();
 });
+
+test('votar y guardar: miembros verificados sí, el autor no, y no sobre ocultos', function (): void {
+    $member = User::factory()->create();
+    $unverified = User::factory()->unverified()->create();
+    $author = User::factory()->create();
+    $published = Copypasta::factory()->create(['user_id' => $author->id]);
+    $hidden = Copypasta::factory()->hidden()->create();
+    $unpublished = Copypasta::factory()->unpublished()->create();
+
+    expect(Gate::forUser($member)->allows('vote', $published))->toBeTrue()
+        ->and(Gate::forUser($member)->allows('favorite', $published))->toBeTrue()
+        ->and(Gate::forUser($unverified)->allows('vote', $published))->toBeTrue()
+        ->and(Gate::forUser($author)->allows('vote', $published))->toBeFalse()
+        ->and(Gate::forUser($author)->allows('favorite', $published))->toBeFalse()
+        ->and(Gate::forUser($member)->allows('vote', $hidden))->toBeFalse()
+        ->and(Gate::forUser($member)->allows('favorite', $unpublished))->toBeFalse();
+});

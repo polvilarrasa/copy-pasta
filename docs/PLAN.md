@@ -353,12 +353,25 @@ Aceptación: un usuario no puede ver ni editar copy-pastas ajenos en `/app`; tes
 
 ### Fase 6 — Votos y favoritos
 
-- [ ] Action `CastVote` transaccional con `lockForUpdate` sobre el copy-pasta; alternar, cambiar y retirar voto.
-- [ ] Action `ToggleFavorite` sobre la carpeta por defecto; actualiza `favorites_count`.
-- [ ] Botones en tarjeta y detalle con actualización optimista; modal de login para anónimos.
-- [ ] Rate limit: 60 votos por minuto por usuario.
+- [x] Action `CastVote` transaccional con `lockForUpdate` sobre el copy-pasta; alternar, cambiar y retirar voto.
+- [x] Action `ToggleFavorite` sobre la carpeta por defecto; actualiza `favorites_count`.
+- [x] Botones en tarjeta y detalle con actualización optimista; modal de login para anónimos.
+- [x] Rate limit: 60 votos por minuto por usuario.
 
 Aceptación: tests de contadores tras secuencias de votos (+1, +1 de nuevo, -1), concurrencia básica, no votar lo propio, anónimo recibe redirección a login.
+
+**Desviaciones de la Fase 6:**
+
+- **Botones con JSON y Alpine, no Livewire por tarjeta.** Misma razón que en la Fase 4: un componente por tarjeta rehidrataría modelos en cada petición. Votar y guardar llaman a `POST /c/{copypasta}/voto` y `POST /c/{copypasta}/favorito`, que devuelven el estado real.
+- **Estado del visitante en una sola consulta.** `Copypasta::scopeWithViewerState()` añade `my_vote` e `is_favorite` como subconsultas, así que el feed y el detalle no hacen consultas por tarjeta. Es una lectura de la fila del visitante, no un agregado de votos, así que respeta la regla de contadores denormalizados.
+- **El cliente envía el voto que pulsa y el servidor decide.** Repetir el mismo voto lo retira y el contrario lo cambia en `CastVote`. El cliente se actualiza antes y revierte si la petición falla.
+- **Anónimos.** El cliente muestra el modal "Inicia sesión para votar" sin enviar nada, y el servidor redirige a login si llega una petición sin sesión.
+- **Concurrencia.** `CastVote` y `ToggleFavorite` bloquean la fila del copy-pasta con `lockForUpdate` y actualizan los contadores con deltas. El test de concurrencia comprueba que la consulta usa `FOR UPDATE` y que los contadores coinciden con el recuento real tras varios votantes. No hay pruebas con procesos paralelos.
+- **Límites.** Votar, 60 por minuto por usuario (limitador `votes`). Favoritos, 120 por minuto (`throttle:120,1`); el plan no lo fijaba y lo pongo igual que la copia.
+- **Permisos.** `CopypastaPolicy::vote` y `favorite` exigen copy-pasta publicado, no oculto y ajeno. Los miembros sin email verificado pueden votar y guardar, como dice la sección de Roles.
+- **Carpeta por defecto.** Se añade `Folder::DEFAULT_NAME` y el listener lo usa, para que el nombre "Favoritos" esté en un solo sitio. `ToggleFavorite` crea la carpeta si el usuario no la tiene.
+- **Detalle.** `CopypastaController` vuelve a leer el copy-pasta con el estado del visitante antes de renderizar.
+
 
 ### Fase 7 — Carpetas
 

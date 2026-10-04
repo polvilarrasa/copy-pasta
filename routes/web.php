@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Public\CopypastaController;
 use App\Http\Controllers\Public\CopypastaCopyController;
+use App\Http\Controllers\Public\CopypastaFavoriteController;
+use App\Http\Controllers\Public\CopypastaVoteController;
 use App\Http\Controllers\Public\FeedController;
 use App\Http\Controllers\Public\NsfwConfirmationController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +19,13 @@ Route::get('/c/{copypasta}/{slug?}', [CopypastaController::class, 'show'])->name
 Route::post('/c/{copypasta}/copia', CopypastaCopyController::class)
     ->middleware('throttle:120,1')
     ->name('copypastas.copy');
+
+Route::post('/c/{copypasta}/voto', CopypastaVoteController::class)
+    ->middleware(['auth', 'throttle:votes'])
+    ->name('copypastas.vote');
+Route::post('/c/{copypasta}/favorito', CopypastaFavoriteController::class)
+    ->middleware(['auth', 'throttle:120,1'])
+    ->name('copypastas.favorite');
 
 Route::post('/nsfw/confirmar', NsfwConfirmationController::class)->name('nsfw.confirm');
 

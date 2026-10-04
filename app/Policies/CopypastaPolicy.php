@@ -52,4 +52,24 @@ class CopypastaPolicy
     {
         return $user->isStaff();
     }
+
+    public function vote(User $user, Copypasta $copypasta): bool
+    {
+        return $this->canEngage($user, $copypasta);
+    }
+
+    public function favorite(User $user, Copypasta $copypasta): bool
+    {
+        return $this->canEngage($user, $copypasta);
+    }
+
+    /**
+     * Votes and favorites need a visible copy-pasta that is not the user's own. Unverified members may engage.
+     */
+    private function canEngage(User $user, Copypasta $copypasta): bool
+    {
+        return $copypasta->published_at !== null
+            && ! $copypasta->isHidden()
+            && $user->getKey() !== $copypasta->user_id;
+    }
 }

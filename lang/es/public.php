@@ -53,6 +53,25 @@ return [
     'copy' => [
         'copied' => 'Copiado al portapapeles',
         'link_copied' => 'Enlace copiado',
+        'action_failed' => 'No se pudo completar la acción. Inténtalo de nuevo.',
+    ],
+
+    'vote' => [
+        'up' => 'Votar a favor',
+        'down' => 'Votar en contra',
+    ],
+
+    'favorite' => [
+        'add' => 'Guardar en favoritos',
+        'remove' => 'Quitar de favoritos',
+    ],
+
+    'login_modal' => [
+        'title' => 'Inicia sesión',
+        'vote' => 'Inicia sesión para votar.',
+        'favorite' => 'Inicia sesión para guardar copy-pastas en favoritos.',
+        'confirm' => 'Entrar',
+        'cancel' => 'Cancelar',
     ],
 
     'show' => [

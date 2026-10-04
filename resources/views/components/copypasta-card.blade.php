@@ -2,8 +2,7 @@
 
 @php
     $detailUrl = route('copypastas.show', [$copypasta, $copypasta->slug]);
-    $preview = $copypasta->body;
-    $previewLines = explode("\n", $preview);
+    $previewLines = explode("\n", $copypasta->body);
     $isTruncated = count($previewLines) > 6;
     $preview = implode("\n", array_slice($previewLines, 0, 6));
 @endphp
@@ -12,10 +11,20 @@
     x-data="copypastaActions({
         body: @js($copypasta->body),
         copyUrl: @js(route('copypastas.copy', $copypasta)),
+        voteUrl: @js(route('copypastas.vote', $copypasta)),
+        favoriteUrl: @js(route('copypastas.favorite', $copypasta)),
         shareUrl: @js($detailUrl),
         shareTitle: @js($copypasta->title),
+        authenticated: @js(auth()->check()),
+        score: @js($copypasta->score),
+        myVote: @js($copypasta->my_vote),
+        isFavorite: @js((bool) $copypasta->is_favorite),
+        favoritesCount: @js($copypasta->favorites_count),
         copiedMessage: @js(__('public.copy.copied')),
         linkCopiedMessage: @js(__('public.copy.link_copied')),
+        loginRequiredVoteMessage: @js(__('public.login_modal.vote')),
+        loginRequiredFavoriteMessage: @js(__('public.login_modal.favorite')),
+        actionFailedMessage: @js(__('public.copy.action_failed')),
     })"
     class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200"
     {{ $attributes }}
@@ -50,21 +59,10 @@
             @endforeach
             <span>{{ __('public.card.by', ['username' => $copypasta->user->username]) }}</span>
             <span>· {{ $copypasta->published_at->diffForHumans() }}</span>
-            <span>· {{ __('public.card.score', ['score' => $copypasta->score]) }}</span>
         </div>
 
-        <div class="flex items-center gap-2">
-            <button
-                type="button"
-                x-on:click="copy()"
-                @if ($copypasta->is_nsfw) :disabled="! revealed" @endif
-                class="rounded-md px-2 py-1 font-medium text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50 disabled:opacity-40"
-            >{{ __('public.card.copy') }}</button>
-            <button
-                type="button"
-                x-on:click="share()"
-                class="rounded-md px-2 py-1 font-medium text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
-            >{{ __('public.card.share') }}</button>
+        <div class="flex flex-wrap items-center gap-2">
+            @include('components.copypasta-actions', ['requiresReveal' => $copypasta->is_nsfw])
         </div>
     </footer>
 </article>

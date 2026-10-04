@@ -103,7 +103,15 @@ class Feed extends Component
             ->search($this->search)
             ->nsfw($this->includesNsfw())
             ->builder()
+            ->withViewerState($this->viewer())
             ->with(['user:id,username', 'tags:id,name,slug,color']);
+    }
+
+    private function viewer(): ?User
+    {
+        $user = auth()->user();
+
+        return $user instanceof User ? $user : null;
     }
 
     private function activeSort(): FeedSort

@@ -73,6 +73,31 @@
         <div class="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg" x-text="message"></div>
     </div>
 
+    <div
+        x-data="{ open: false, message: '' }"
+        x-on:login-required.window="message = $event.detail; open = true"
+        x-show="open"
+        x-cloak
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="login-modal-title"
+        class="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/50 px-4"
+        x-on:keydown.escape.window="open = false"
+    >
+        <div class="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" x-on:click.outside="open = false">
+            <h2 id="login-modal-title" class="text-lg font-semibold">{{ __('public.login_modal.title') }}</h2>
+            <p class="mt-2 text-sm text-zinc-600" x-text="message"></p>
+            <div class="mt-5 flex justify-end gap-2">
+                <button type="button" x-on:click="open = false" class="rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
+                    {{ __('public.login_modal.cancel') }}
+                </button>
+                <a href="{{ route('login') }}" class="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700">
+                    {{ __('public.login_modal.confirm') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
     @livewireScripts
 </body>
 </html>

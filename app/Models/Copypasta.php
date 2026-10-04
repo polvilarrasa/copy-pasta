@@ -56,6 +56,8 @@ class Copypasta extends Model
     {
         return [
             'is_nsfw' => 'boolean',
+            'my_vote' => 'integer',
+            'is_favorite' => 'boolean',
             'upvotes_count' => 'integer',
             'downvotes_count' => 'integer',
             'score' => 'integer',
@@ -158,6 +160,34 @@ class Copypasta extends Model
     public function scopeVisible(Builder $query): void
     {
         $query->whereNotNull('published_at')->whereNull('hidden_at');
+    }
+
+    /**
+     * Adds the viewer's own vote and favorite flag as columns, so cards need no extra queries.
+     *
+     * @param  Builder<Copypasta>  $query
+     */
+    public function scopeWithViewerState(Builder $query, ?User $viewer): void
+    {
+        $query->addSelect('copypastas.*');
+
+        if ($viewer === null) {
+            $query->selectRaw('NULL AS my_vote, 0 AS is_favorite');
+
+            return;
+        }
+
+        $query->addSelect([
+            'my_vote' => Vote::query()
+                ->select('value')
+                ->whereColumn('votes.copypasta_id', 'copypastas.id')
+                ->where('votes.user_id', $viewer->getKey())
+                ->limit(1),
+        ])->selectRaw(
+            '(EXISTS (SELECT 1 FROM copypasta_folder AS cf INNER JOIN folders AS f ON f.id = cf.folder_id'
+            .' WHERE cf.copypasta_id = copypastas.id AND f.user_id = ? AND f.is_default = TRUE))::int AS is_favorite',
+            [$viewer->getKey()],
+        );
     }
 
     /**

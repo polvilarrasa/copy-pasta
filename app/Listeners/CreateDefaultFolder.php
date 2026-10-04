@@ -13,7 +13,7 @@ class CreateDefaultFolder
     {
         Folder::query()->firstOrCreate(
             ['user_id' => $event->user->getAuthIdentifier(), 'is_default' => true],
-            ['name' => 'Favoritos', 'position' => 0],
+            ['name' => Folder::DEFAULT_NAME, 'position' => 0],
         );
     }
 }

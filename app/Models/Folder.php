@@ -21,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 #[Fillable(['user_id', 'name', 'is_default', 'position'])]
 class Folder extends Model
 {
+    public const DEFAULT_NAME = 'Favoritos';
+
     /** @use HasFactory<FolderFactory> */
     use HasFactory;
 
