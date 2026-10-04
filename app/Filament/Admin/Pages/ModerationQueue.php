@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Pages;
 
 use App\Actions\DismissCopypastaReports;
-use App\Actions\HideCopypasta;
-use App\Actions\MarkCopypastaNsfw;
-use App\Actions\RestoreCopypasta;
+use App\Filament\Admin\Resources\Copypastas\Tables\CopypastaModerationActions;
 use App\Models\Copypasta;
 use App\Models\Report;
 use App\Models\User;
@@ -15,14 +13,12 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Textarea;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -109,40 +105,9 @@ class ModerationQueue extends Page implements HasTable
                     ->dateTime(),
             ])
             ->recordActions([
-                Action::make('hide')
-                    ->label(__('admin.actions.hide'))
-                    ->icon(Heroicon::OutlinedEyeSlash)
-                    ->color('danger')
-                    ->modalHeading(__('admin.actions.hide_heading'))
-                    ->modalSubmitActionLabel(__('admin.actions.hide_submit'))
-                    ->authorize('hide')
-                    ->visible(fn (Copypasta $copypasta): bool => ! $copypasta->isHidden())
-                    ->schema([
-                        Textarea::make('reason')
-                            ->label(__('admin.fields.reason'))
-                            ->required()
-                            ->maxLength(500),
-                    ])
-                    ->action(fn (array $data, Copypasta $copypasta) => app(HideCopypasta::class)
-                        ->handle($this->actor(), $copypasta, (string) $data['reason'])),
-                Action::make('restore')
-                    ->label(__('admin.actions.restore'))
-                    ->icon(Heroicon::OutlinedEye)
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->modalHeading(__('admin.actions.restore_heading'))
-                    ->authorize('restore')
-                    ->visible(fn (Copypasta $copypasta): bool => $copypasta->isHidden())
-                    ->action(fn (Copypasta $copypasta) => app(RestoreCopypasta::class)
-                        ->handle($this->actor(), $copypasta)),
-                Action::make('toggleNsfw')
-                    ->label(fn (Copypasta $copypasta): string => $copypasta->is_nsfw
-                        ? __('admin.actions.unmark_nsfw')
-                        : __('admin.actions.mark_nsfw'))
-                    ->icon(Heroicon::OutlinedNoSymbol)
-                    ->authorize('markNsfw')
-                    ->action(fn (Copypasta $copypasta) => app(MarkCopypastaNsfw::class)
-                        ->handle($this->actor(), $copypasta, ! $copypasta->is_nsfw)),
+                CopypastaModerationActions::hide(),
+                CopypastaModerationActions::restore(),
+                CopypastaModerationActions::toggleNsfw(),
                 Action::make('dismiss')
                     ->label(__('moderation.queue.dismiss'))
                     ->icon(Heroicon::OutlinedCheck)
@@ -151,7 +116,7 @@ class ModerationQueue extends Page implements HasTable
                     ->modalDescription(__('moderation.queue.dismiss_confirm'))
                     ->authorize('dismissReports')
                     ->action(fn (Copypasta $copypasta) => app(DismissCopypastaReports::class)
-                        ->handle($this->actor(), $copypasta)),
+                        ->handle(CopypastaModerationActions::actor(), $copypasta)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -163,7 +128,7 @@ class ModerationQueue extends Page implements HasTable
                         ->action(function (Collection $copypastas): void {
                             foreach ($copypastas as $copypasta) {
                                 if ($copypasta instanceof Copypasta) {
-                                    app(DismissCopypastaReports::class)->handle($this->actor(), $copypasta);
+                                    app(DismissCopypastaReports::class)->handle(CopypastaModerationActions::actor(), $copypasta);
                                 }
                             }
                         }),
@@ -174,14 +139,5 @@ class ModerationQueue extends Page implements HasTable
     private function asDate(mixed $value): ?Carbon
     {
         return $value === null ? null : Carbon::parse($value);
-    }
-
-    private function actor(): User
-    {
-        $user = auth()->user();
-
-        throw_unless($user instanceof User, AuthenticationException::class);
-
-        return $user;
     }
 }

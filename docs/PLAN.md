@@ -421,7 +421,7 @@ Aceptación: tests del umbral de auto-ocultación, de la resolución en bloque d
 - **Relación `pendingReports`.** `Copypasta::pendingReports()` filtra por estado pendiente; la cola la usa con `whereHas`, `with` y `withCount`/`withMin`/`withMax` sin closures, lo que permite a PHPStan tipar la consulta.
 - **Recarga del autor.** `ConcealCopypasta` usa `load('user')`, no `loadMissing`: la cola carga el autor con `user:id,username` y el correo se quedaba sin dirección. Lo detectó el test de ocultación desde la cola.
 - **Badge en la cola.** El número de pendientes va en la navegación de la página `ModerationQueue`, no en `ReportResource`, que es histórico de solo lectura.
-- **Acciones duplicadas.** Ocultar, restaurar y NSFW en la cola repiten las de `CopypastasTable`. Extraerlas a una clase compartida queda como limpieza posterior.
+- **Acciones duplicadas.** Ocultar, restaurar y NSFW en la cola repetían las de `CopypastasTable`. Resuelto después de la Fase 11: `CopypastaModerationActions` (junto a `CopypastasTable`) define las tres y `actor()`; la cola añade solo "descartar", que no está en la tabla.
 - **Pendiente de comprobar en navegador.** El modal de reporte y el botón de la tarjeta están cubiertos por los tests de backend y el build de assets, pero no los he probado clicando en el navegador.
 
 ### Fase 9 — Gestión de usuarios
