@@ -26,7 +26,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'username' => fake()->unique()->userName(),
+            'username' => Str::of(fake()->unique()->userName())->replace('.', '_')->limit(30, '')->value(),
             'email' => fake()->unique()->safeEmail(),
             'role' => Role::User,
             'show_nsfw' => false,

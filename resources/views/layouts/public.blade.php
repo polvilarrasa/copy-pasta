@@ -1,4 +1,12 @@
 <!DOCTYPE html>
+@php
+    $currentUser = auth()->user();
+    $publishUrl = match (true) {
+        $currentUser === null => route('login'),
+        $currentUser->hasVerifiedEmail() => url('/app/copypastas/create'),
+        default => route('verification.notice'),
+    };
+@endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     @include('partials.head', ['title' => $title ?? null])
@@ -23,7 +31,7 @@
             </form>
 
             <nav class="flex items-center gap-2 text-sm">
-                <a href="{{ auth()->check() ? route('dashboard') : route('login') }}"
+                <a href="{{ $publishUrl }}"
                    class="rounded-lg bg-zinc-900 px-3 py-2 font-medium text-white hover:bg-zinc-700">
                     {{ __('public.layout.publish') }}
                 </a>
@@ -32,7 +40,7 @@
                     @can('access-admin')
                         <a href="{{ url('/admin') }}" class="px-2 py-2 text-zinc-600 hover:text-zinc-900">{{ __('public.layout.admin') }}</a>
                     @endcan
-                    <a href="{{ route('dashboard') }}" class="px-2 py-2 text-zinc-600 hover:text-zinc-900">{{ __('public.layout.dashboard') }}</a>
+                    <a href="{{ url('/app') }}" class="px-2 py-2 text-zinc-600 hover:text-zinc-900">{{ __('public.layout.dashboard') }}</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="px-2 py-2 text-zinc-600 hover:text-zinc-900">{{ __('public.layout.logout') }}</button>

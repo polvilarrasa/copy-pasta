@@ -27,8 +27,10 @@ test('un moderador baneado no accede al panel aunque tenga sesión', function ()
     expect($moderator->canAccessPanel(Panel::make()->id('admin')))->toBeFalse();
 });
 
-test('ningún usuario accede a un panel distinto de admin', function (): void {
+test('el panel de usuario se abre a miembros verificados, también a staff, pero no sin verificar', function (): void {
     $admin = User::factory()->admin()->create();
+    $unverified = User::factory()->unverified()->create();
 
-    expect($admin->canAccessPanel(Panel::make()->id('app')))->toBeFalse();
+    expect($admin->canAccessPanel(Panel::make()->id('app')))->toBeTrue()
+        ->and($unverified->canAccessPanel(Panel::make()->id('app')))->toBeFalse();
 });

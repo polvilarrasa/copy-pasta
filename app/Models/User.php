@@ -104,10 +104,18 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     }
 
     /**
-     * Staff who are not banned can sign in to the admin panel.
+     * Staff can use the admin panel and verified members can use the user panel; banned users use neither.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $panel->getId() === 'admin' && $this->isStaff() && ! $this->isBanned();
+        if ($this->isBanned()) {
+            return false;
+        }
+
+        return match ($panel->getId()) {
+            'admin' => $this->isStaff(),
+            'app' => $this->hasVerifiedEmail(),
+            default => false,
+        };
     }
 }

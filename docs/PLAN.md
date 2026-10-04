@@ -328,13 +328,28 @@ Aceptación: tests de feed para anónimos (sin NSFW por defecto, con NSFW tras c
 
 ### Fase 5 — Panel `/app`: publicar y ajustes
 
-- [ ] Panel Filament `app` para usuarios autenticados y verificados.
-- [ ] MyCopypastaResource limitado a los del usuario: formulario con título, cuerpo, etiquetas (máximo 5, solo activas) y NSFW; aviso de duplicado por `body_hash`.
-- [ ] Estado oculto visible con motivo; el formulario de edición mantiene la ocultación.
-- [ ] Página de ajustes: username, preferencia NSFW, email y contraseña.
-- [ ] Botón "Publicar" de la web pública enlazado al formulario.
+- [x] Panel Filament `app` para usuarios autenticados y verificados.
+- [x] MyCopypastaResource limitado a los del usuario: formulario con título, cuerpo, etiquetas (máximo 5, solo activas) y NSFW; aviso de duplicado por `body_hash`.
+- [x] Estado oculto visible con motivo; el formulario de edición mantiene la ocultación.
+- [x] Página de ajustes: username, preferencia NSFW, email y contraseña.
+- [x] Botón "Publicar" de la web pública enlazado al formulario.
 
 Aceptación: un usuario no puede ver ni editar copy-pastas ajenos en `/app`; tests de validación y de aviso de duplicado; el feed respeta `show_nsfw`.
+
+**Desviaciones de la Fase 5:**
+
+- **Regla del panel de admin modificada (Fase 3).** `User::canAccessPanel()` ahora abre `/app` a cualquier miembro verificado y no baneado, también a staff. El test `ningún usuario accede a un panel distinto de admin` codificaba la regla antigua; se ha sustituido por `el panel de usuario se abre a miembros verificados…`, que comprueba la nueva regla. Se ha modificado en vez de eliminarlo.
+- **Baneo en los paneles.** `EnsureUserIsNotBanned` estaba solo en el grupo `web`, y los paneles de Filament no lo usan: un baneado recibía 403 en lugar de cerrar sesión. Se añade a `AdminPanelProvider` y `AppPanelProvider`, justo después de `StartSession`, porque el `Authenticate` de Filament comprueba `canAccessPanel` antes que cualquier middleware posterior.
+- **Acceso al recurso sin tocar la Policy.** `CopypastaPolicy::viewAny` sigue reservado al staff (lo fija un test de la Fase 2). `MyCopypastaResource::canViewAny()` comprueba verificado y no baneado, y `getEloquentQuery()` limita a los del autor.
+- **Slug del recurso.** Filament deriva `my-copypastas` del nombre plural; se fija `copypastas` para que las rutas sean `/app/copypastas`.
+- **Ajustes con la página de perfil de Filament.** `app/Filament/App/Pages/Auth/EditProfile.php` extiende la base de Filament con username, preferencia NSFW, email y contraseña. Las páginas `/settings` del starter (perfil, seguridad, 2FA, passkeys) siguen existiendo, así que email y contraseña aparecen en dos sitios.
+- **Email nuevo, verificación nueva.** Cambiar el email borra `email_verified_at`, envía la verificación y redirige a `verification.notice`. Sin esto, un email no verificado podría publicar.
+- **Duplicados tras publicar.** Un copy-pasta con cuerpo repetido se publica igual y se muestra una notificación con enlace al existente. `FindDuplicateCopypasta` ignora los ocultos.
+- **Etiquetas.** El formulario solo ofrece etiquetas activas y una regla `exists` con `is_active` rechaza las demás. `UpdateCopypasta` conserva las etiquetas que se desactivaron después de publicar, para no perderlas al guardar.
+- **Reglas de username.** `ProfileValidationRules` pasa la columna a `Rule::unique` (sin ella Laravel generaba `data.username` dentro de Filament) y corrige el tipo de retorno de `Rule::unique`, que es `Stringable`.
+- **Factory de usuarios.** Los usernames generados contenían puntos, que la regla de la Fase 1 no admite; se sustituyen por guiones bajos.
+- **Escritorio de `/app` vacío.** El dashboard de Filament es un placeholder hasta que existan widgets de resumen.
+
 
 ### Fase 6 — Votos y favoritos
 
