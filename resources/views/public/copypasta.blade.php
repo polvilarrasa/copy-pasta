@@ -78,7 +78,7 @@
                     @foreach ($copypasta->tags as $tag)
                         <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-700">{{ $tag->name }}</span>
                     @endforeach
-                    <span>{{ __('public.card.by', ['username' => $copypasta->user->username]) }}</span>
+                    <span>{{ __('public.card.by', ['username' => $copypasta->user->displayName()]) }}</span>
                     <span>· {{ $copypasta->published_at?->diffForHumans() }}</span>
                 </div>
 

@@ -172,6 +172,7 @@ return [
         'user_created' => 'Usuario creado',
         'user_deleted' => 'Usuario borrado',
         'user_restored' => 'Usuario restaurado',
+        'user_anonymized' => 'Cuenta anonimizada',
         'email_verified' => 'Email verificado a mano',
         'email_unverified' => 'Verificación quitada',
         'verification_resent' => 'Verificación reenviada',

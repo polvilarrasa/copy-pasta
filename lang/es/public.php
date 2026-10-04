@@ -63,6 +63,7 @@ return [
         'nsfw_badge' => '+18',
         'reveal' => 'Mostrar contenido',
         'by' => 'por :username',
+        'deleted_user' => 'usuario eliminado',
         'score' => ':score puntos',
         'copy' => 'Copiar',
         'share' => 'Compartir',

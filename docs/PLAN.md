@@ -522,13 +522,21 @@ Cubre los críticos y altos de la [auditoría del MVP](AUDITORIA.md), que tiene 
 
 #### 12.1 — Proceso y datos
 
-- [ ] Subir el repo a un remoto privado y dejar CI en verde (C1).
-- [ ] Action `DeleteOwnAccount`: retira votos y favoritos con deltas, anonimiza el usuario y mantiene sus copy-pastas visibles como "usuario eliminado" (C2).
-- [ ] FK de `copypastas.user_id`, `votes.user_id` y `reports.reporter_id` a `restrictOnDelete` (C2).
-- [ ] Comando `app:recalculate-counters` que recalcula todos los contadores desde las tablas reales; ejecutarlo una vez (C2).
-- [ ] Anonimización programada de usuarios con borrado lógico de más de 30 días (M9).
+- [x] Subir el repo a un remoto privado y dejar CI en verde (C1).
+- [x] Action `DeleteOwnAccount`: retira votos y favoritos con deltas, anonimiza el usuario y mantiene sus copy-pastas visibles como "usuario eliminado" (C2).
+- [x] FK de `copypastas.user_id`, `votes.user_id` y `reports.reporter_id` a `restrictOnDelete` (C2).
+- [ ] Comando `app:recalculate-counters` que recalcula todos los contadores desde las tablas reales; ejecutarlo una vez en cada entorno con datos (C2). El comando y sus tests están hechos; falta la ejecución en staging y producción.
+- [x] Anonimización programada de usuarios con borrado lógico de más de 30 días (M9).
 
 Aceptación: tras borrar una cuenta con votos, favoritos, copy-pastas y reportes, los contadores de los copy-pastas afectados coinciden con un recuento real y los copy-pastas de otros siguen en sus carpetas.
+
+**Desviaciones de la Fase 12.1:**
+
+- **Email y contraseña sustituidos, no anulados.** `users.email` y `users.password` son `NOT NULL`, y Fortify compara hashes. La cuenta anonimizada recibe `eliminado-{id}@anonimo.invalid` y una contraseña aleatoria de 64 caracteres sin migración de columnas.
+- **Cuenta anonimizada con `deleted_at` y `anonymized_at`.** No puede iniciar sesión, y su username y email quedan libres. Un admin no puede restaurarla (`UserPolicy::restore`).
+- **"usuario eliminado" en la ficha y en el feed.** `User::displayName()` lo resuelve. Las consultas públicas cargan `anonymized_at`. El panel admin muestra el username anonimizado (`eliminado-{id}`) a propósito, para identificar la cuenta.
+- **Traza en el log.** `ModerationActionType::UserAnonymized`. El autoborrado queda con el propio miembro como actor; la purga automática, sin actor.
+- **Borrado propio por policy.** `UserPolicy::deleteOwnAccount`; la acción la autoriza igual que el resto.
 
 #### 12.2a — Impersonación y staff
 

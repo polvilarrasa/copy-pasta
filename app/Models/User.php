@@ -74,6 +74,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'show_nsfw' => 'boolean',
             'email_verified_at' => 'datetime',
             'banned_at' => 'datetime',
+            'anonymized_at' => 'datetime',
             'must_change_password' => 'boolean',
             'password' => 'hashed',
         ];
@@ -90,6 +91,19 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     public function canBeImpersonated(): bool
     {
         return ! $this->isStaff() && ! $this->isBanned();
+    }
+
+    public function isAnonymized(): bool
+    {
+        return $this->anonymized_at !== null;
+    }
+
+    /**
+     * The name shown next to a copy-pasta. An anonymized account shows a neutral label instead of its old username.
+     */
+    public function displayName(): string
+    {
+        return $this->isAnonymized() ? __('public.card.deleted_user') : $this->username;
     }
 
     /**

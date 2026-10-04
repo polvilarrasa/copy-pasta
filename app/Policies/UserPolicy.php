@@ -66,9 +66,20 @@ class UserPolicy
         return $this->ban($user, $target);
     }
 
+    /**
+     * An anonymized account lost its identity and cannot be brought back.
+     */
     public function restore(User $user, User $target): bool
     {
-        return $this->ban($user, $target);
+        return $this->ban($user, $target) && ! $target->isAnonymized();
+    }
+
+    /**
+     * Members delete only their own account, and only while it is still active.
+     */
+    public function deleteOwnAccount(User $user, User $target): bool
+    {
+        return $user->is($target) && ! $target->isAnonymized();
     }
 
     public function verifyEmail(User $user, User $target): bool

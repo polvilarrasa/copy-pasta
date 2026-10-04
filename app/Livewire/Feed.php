@@ -105,7 +105,7 @@ class Feed extends Component
             ->nsfw($this->includesNsfw())
             ->builder()
             ->withViewerState($this->viewer())
-            ->with(['user:id,username', 'tags:id,name,slug,color']);
+            ->with(['user:id,username,anonymized_at', 'tags:id,name,slug,color']);
     }
 
     private function viewer(): ?User

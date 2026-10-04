@@ -11,3 +11,6 @@ Artisan::command('inspire', function () {
 // Queue housekeeping: finished batches and failed jobs older than a week are pruned every night.
 Schedule::command('queue:prune-batches --hours=48 --unfinished=72 --cancelled=72')->daily()->onOneServer();
 Schedule::command('queue:prune-failed --hours=168')->daily()->onOneServer();
+
+// Accounts an admin deleted are anonymized once the 30-day retention window closes.
+Schedule::command('users:anonymize-expired')->daily()->onOneServer();

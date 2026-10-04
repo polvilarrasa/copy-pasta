@@ -22,6 +22,7 @@ enum ModerationActionType: string
     case UserCreated = 'user_created';
     case UserDeleted = 'user_deleted';
     case UserRestored = 'user_restored';
+    case UserAnonymized = 'user_anonymized';
     case EmailVerified = 'email_verified';
     case EmailUnverified = 'email_unverified';
     case VerificationResent = 'verification_resent';

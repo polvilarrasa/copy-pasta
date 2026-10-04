@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\DeleteOwnAccount;
 use App\Concerns\PasswordValidationRules;
 use App\Livewire\Actions\Logout;
 use Illuminate\Support\Facades\Auth;
@@ -13,13 +14,15 @@ new class extends Component {
     /**
      * Delete the currently authenticated user.
      */
-    public function deleteUser(Logout $logout): void
+    public function deleteUser(DeleteOwnAccount $deleteOwnAccount, Logout $logout): void
     {
         $this->validate([
             'password' => $this->currentPasswordRules(),
         ]);
 
-        tap(Auth::user(), $logout(...))->forceDelete();
+        $deleteOwnAccount->handle(Auth::user());
+
+        $logout();
 
         $this->redirect('/', navigate: true);
     }

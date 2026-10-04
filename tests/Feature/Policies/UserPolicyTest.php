@@ -100,3 +100,19 @@ test('un usuario borrado no se edita hasta que se restaura', function (): void {
 
     expect(Gate::forUser($admin)->allows('update', $member))->toBeFalse();
 });
+
+test('solo el propio miembro puede borrar su cuenta, y un admin no borra la de otro', function (): void {
+    $member = User::factory()->create();
+    $admin = User::factory()->admin()->create();
+
+    expect(Gate::forUser($member)->allows('deleteOwnAccount', $member))->toBeTrue();
+    expect(Gate::forUser($admin)->allows('deleteOwnAccount', $member))->toBeFalse();
+});
+
+test('una cuenta anonimizada no se puede restaurar aunque la borrara un admin', function (): void {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->create();
+    $member->forceFill(['deleted_at' => now(), 'anonymized_at' => now()])->save();
+
+    expect(Gate::forUser($admin)->allows('restore', $member))->toBeFalse();
+});
