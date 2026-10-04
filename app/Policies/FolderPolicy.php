@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\User;
 
@@ -11,7 +12,7 @@ class FolderPolicy
 {
     public function view(User $user, Folder $folder): bool
     {
-        return $user->is($folder->user);
+        return $user->getKey() === $folder->user_id;
     }
 
     public function create(User $user): bool
@@ -21,11 +22,26 @@ class FolderPolicy
 
     public function update(User $user, Folder $folder): bool
     {
-        return $user->is($folder->user) && ! $folder->is_default;
+        return $user->getKey() === $folder->user_id && ! $folder->is_default;
     }
 
     public function delete(User $user, Folder $folder): bool
     {
-        return $user->is($folder->user) && ! $folder->is_default;
+        return $user->getKey() === $folder->user_id && ! $folder->is_default;
+    }
+
+    /**
+     * Only the owner adds to their folders, and only copy-pastas the public could see can be added.
+     */
+    public function addCopypasta(User $user, Folder $folder, Copypasta $copypasta): bool
+    {
+        return $user->getKey() === $folder->user_id
+            && $copypasta->published_at !== null
+            && ! $copypasta->isHidden();
+    }
+
+    public function removeCopypasta(User $user, Folder $folder): bool
+    {
+        return $user->getKey() === $folder->user_id;
     }
 }

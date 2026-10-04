@@ -7,6 +7,8 @@ return [
     'models' => [
         'copypasta' => 'Copy-pasta',
         'my_copypastas' => 'Mis copy-pastas',
+        'folder' => 'Carpeta',
+        'folders' => 'Carpetas',
     ],
 
     'fields' => [
@@ -20,6 +22,7 @@ return [
         'score' => 'Score',
         'published_at' => 'Publicado',
         'hidden_notice' => 'Moderación',
+        'folder_name' => 'Nombre',
     ],
 
     'status' => [
@@ -40,6 +43,29 @@ return [
         'title' => 'Ya existe un copy-pasta igual',
         'body' => 'Tu copy-pasta se ha publicado, pero el cuerpo coincide con uno existente.',
         'view' => 'Ver el existente',
+    ],
+
+    'folders' => [
+        'contents' => 'Copy-pastas de la carpeta',
+        'empty' => 'Esta carpeta está vacía.',
+        'create' => 'Nueva carpeta',
+        'rename' => 'Renombrar',
+        'delete' => 'Borrar carpeta',
+        'delete_confirm' => 'Se borrará la carpeta, no los copy-pastas que contiene.',
+        'remove' => 'Quitar de la carpeta',
+        'remove_confirm' => 'El copy-pasta se quitará de esta carpeta. No se borra.',
+        'removed_content' => 'Contenido retirado',
+        'default_badge' => 'Predeterminada',
+        'count' => 'Copy-pastas',
+        'status' => [
+            'visible' => 'Visible',
+            'hidden' => 'Oculto',
+            'deleted' => 'Borrado',
+        ],
+        'errors' => [
+            'limit' => 'Puedes tener hasta :max carpetas.',
+            'name_taken' => 'Ya tienes una carpeta con ese nombre.',
+        ],
     ],
 
     'profile' => [

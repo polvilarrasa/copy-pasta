@@ -33,6 +33,12 @@
 
 <button
     type="button"
+    x-on:click="authenticated ? $dispatch('folders-open', { copypasta: '{{ $copypasta->getKey() }}' }) : requireLogin(loginRequiredFolderMessage)"
+    class="rounded-md px-2 py-1 font-medium text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
+>{{ __('public.folders.button') }}</button>
+
+<button
+    type="button"
     x-on:click="copy()"
     @if (! empty($requiresReveal)) :disabled="! revealed" @endif
     class="rounded-md px-2 py-1 font-medium text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50 disabled:opacity-40"
@@ -43,3 +49,5 @@
     x-on:click="share()"
     class="rounded-md px-2 py-1 font-medium text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
 >{{ __('public.card.share') }}</button>
+
+@include('components.copypasta-folder-selector')

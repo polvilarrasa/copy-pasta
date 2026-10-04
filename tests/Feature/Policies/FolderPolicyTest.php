@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
@@ -46,4 +47,29 @@ test('cualquier usuario autenticado puede crear carpetas', function (): void {
     $user = User::factory()->create();
 
     expect(Gate::forUser($user)->allows('create', Folder::class))->toBeTrue();
+});
+
+test('el dueño añade a su carpeta un copy-pasta publicado y visible', function (): void {
+    $user = User::factory()->create();
+    $folder = Folder::factory()->for($user, 'user')->create();
+
+    expect(Gate::forUser($user)->allows('addCopypasta', [$folder, Copypasta::factory()->create()]))->toBeTrue();
+});
+
+test('no se añade a la carpeta de otro ni un copy-pasta sin publicar u oculto', function (): void {
+    $owner = User::factory()->create();
+    $folder = Folder::factory()->for($owner, 'user')->create();
+    $visible = Copypasta::factory()->create();
+
+    expect(Gate::forUser(User::factory()->create())->allows('addCopypasta', [$folder, $visible]))->toBeFalse()
+        ->and(Gate::forUser($owner)->allows('addCopypasta', [$folder, Copypasta::factory()->unpublished()->create()]))->toBeFalse()
+        ->and(Gate::forUser($owner)->allows('addCopypasta', [$folder, Copypasta::factory()->hidden()->create()]))->toBeFalse();
+});
+
+test('solo el dueño quita copy-pastas de su carpeta', function (): void {
+    $owner = User::factory()->create();
+    $folder = Folder::factory()->for($owner, 'user')->create();
+
+    expect(Gate::forUser($owner)->allows('removeCopypasta', $folder))->toBeTrue()
+        ->and(Gate::forUser(User::factory()->create())->allows('removeCopypasta', $folder))->toBeFalse();
 });

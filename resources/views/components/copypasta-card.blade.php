@@ -24,8 +24,10 @@
         linkCopiedMessage: @js(__('public.copy.link_copied')),
         loginRequiredVoteMessage: @js(__('public.login_modal.vote')),
         loginRequiredFavoriteMessage: @js(__('public.login_modal.favorite')),
+            loginRequiredFolderMessage: @js(__('public.login_modal.folder')),
         actionFailedMessage: @js(__('public.copy.action_failed')),
     })"
+    x-on:copypasta-folders-saved="applyFolderState($event.detail)"
     class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200"
     {{ $attributes }}
 >

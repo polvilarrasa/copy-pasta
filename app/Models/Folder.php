@@ -23,6 +23,8 @@ class Folder extends Model
 {
     public const DEFAULT_NAME = 'Favoritos';
 
+    public const MAX_PER_USER = 50;
+
     /** @use HasFactory<FolderFactory> */
     use HasFactory;
 
@@ -35,6 +37,17 @@ class Folder extends Model
             'is_default' => 'boolean',
             'position' => 'integer',
         ];
+    }
+
+    /**
+     * Returns the user's protected default folder, creating it when the user does not have one yet.
+     */
+    public static function ensureDefaultFor(User $user): self
+    {
+        return self::query()->firstOrCreate(
+            ['user_id' => $user->getKey(), 'is_default' => true],
+            ['name' => self::DEFAULT_NAME, 'position' => 0],
+        );
     }
 
     /**

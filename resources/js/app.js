@@ -17,7 +17,93 @@ async function postJson(url, body = {}) {
     return response.ok ? response.json() : null;
 }
 
+/**
+ * Sends a JSON request and reports the status and body, so callers can show server validation messages.
+ */
+async function sendJson(url, method, body = null) {
+    const response = await fetch(url, {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        },
+        body: body === null ? null : JSON.stringify(body),
+    });
+
+    return { ok: response.ok, data: await response.json().catch(() => ({})) };
+}
+
 document.addEventListener('alpine:init', () => {
+    Alpine.data('copypastaFolders', ({ copypastaId, indexUrl, syncUrl, storeUrl, messages }) => ({
+        visible: false,
+        loading: false,
+        folders: [],
+        selected: [],
+        newName: '',
+        error: '',
+
+        async open() {
+            this.visible = true;
+            this.error = '';
+            this.loading = true;
+
+            const response = await sendJson(indexUrl, 'GET');
+
+            this.loading = false;
+
+            if (! response.ok) {
+                this.error = messages.failed;
+                return;
+            }
+
+            this.folders = response.data.folders;
+            this.selected = this.folders.filter((folder) => folder.contains).map((folder) => String(folder.id));
+        },
+
+        close() {
+            this.visible = false;
+        },
+
+        async save() {
+            const response = await sendJson(syncUrl, 'PUT', { folder_ids: this.selected.map(Number) });
+
+            if (! response.ok) {
+                this.error = response.data.errors?.folder_ids?.[0] ?? messages.failed;
+                return;
+            }
+
+            this.$dispatch('copypasta-folders-saved', response.data);
+            this.toast(messages.saved);
+            this.close();
+        },
+
+        async createFolder() {
+            const name = this.newName.trim();
+
+            if (name === '') {
+                return;
+            }
+
+            const response = await sendJson(storeUrl, 'POST', { name });
+
+            if (! response.ok) {
+                this.error = response.data.errors?.name?.[0] ?? messages.failed;
+                return;
+            }
+
+            this.folders.push(response.data.folder);
+            this.selected.push(String(response.data.folder.id));
+            this.newName = '';
+            this.error = '';
+            this.$dispatch('copypasta-folders-saved', response.data);
+        },
+
+        toast(message) {
+            window.dispatchEvent(new CustomEvent('toast', { detail: message }));
+        },
+    }));
+
     Alpine.data('copypastaActions', ({
         body,
         copyUrl,
@@ -34,6 +120,7 @@ document.addEventListener('alpine:init', () => {
         linkCopiedMessage,
         loginRequiredVoteMessage,
         loginRequiredFavoriteMessage,
+        loginRequiredFolderMessage,
         actionFailedMessage,
     }) => ({
         revealed: false,
@@ -41,6 +128,14 @@ document.addEventListener('alpine:init', () => {
         myVote,
         isFavorite,
         favoritesCount,
+
+        /**
+         * Keeps the star in step when the folder selector moves the copy-pasta into or out of Favoritos.
+         */
+        applyFolderState({ favorited, favorites_count }) {
+            this.isFavorite = favorited;
+            this.favoritesCount = favorites_count;
+        },
 
         async copy() {
             await navigator.clipboard.writeText(body);

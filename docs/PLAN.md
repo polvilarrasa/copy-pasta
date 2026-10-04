@@ -375,12 +375,29 @@ Aceptación: tests de contadores tras secuencias de votos (+1, +1 de nuevo, -1),
 
 ### Fase 7 — Carpetas
 
-- [ ] FolderResource en `/app`: crear, renombrar, reordenar (drag and drop), borrar; Favoritos protegida.
-- [ ] Vista de carpeta con su lista de copy-pastas, quitar de la carpeta y placeholder "Contenido retirado".
-- [ ] Selector "Añadir a carpeta" en la web pública con checkboxes y creación rápida.
-- [ ] Límite de 50 carpetas por usuario.
+- [x] FolderResource en `/app`: crear, renombrar, reordenar (drag and drop), borrar; Favoritos protegida.
+- [x] Vista de carpeta con su lista de copy-pastas, quitar de la carpeta y placeholder "Contenido retirado".
+- [x] Selector "Añadir a carpeta" en la web pública con checkboxes y creación rápida.
+- [x] Límite de 50 carpetas por usuario.
 
 Aceptación: tests de propiedad (no se accede a carpetas ajenas), Favoritos no borrable ni renombrable, un copy-pasta en varias carpetas.
+
+**Desviaciones de la Fase 7:**
+
+- **Actions de carpetas.** El plan solo nombraba `AddToFolder`. Se añaden `CreateFolder`, `RenameFolder`, `DeleteFolder`, `RemoveFromFolder` y `SyncCopypastaFolders`, para que cada mutación tenga su Action reutilizable desde Filament y desde la web pública.
+- **Favoritos y contador.** Añadir o quitar la carpeta por defecto desde el selector mueve `favorites_count` igual que el corazón. `ToggleFavorite` usa ahora `Folder::ensureDefaultFor()`, el mismo helper que el listener de registro y el selector.
+- **Selector en JSON y Alpine, no Livewire.** Mismo motivo que en la Fase 6: un componente por tarjeta rehidrataría modelos. Endpoints `GET`, `PUT` y `POST /c/{copypasta}/carpetas`; la creación rápida crea la carpeta y la añade en una transacción.
+- **Orden de rutas.** Las rutas del selector se declaran antes de `/c/{copypasta}/{slug?}`, porque el slug opcional capturaría `GET /c/{id}/carpetas` y respondería con un 301.
+- **Sin FormRequest.** La validación del selector va inline en el controlador, como en `CopypastaVoteController`, en lugar de crear `app/Http/Requests`.
+- **Policy por `user_id`.** `FolderPolicy` compara `$folder->user_id` en vez de `$folder->user`, porque `preventLazyLoading` lanzaba al cargar la relación desde el selector.
+- **Permisos de carpeta.** `FolderPolicy::addCopypasta` exige copy-pasta publicado y no oculto, y `removeCopypasta` solo al dueño. Quitar siempre es posible, incluso si el copy-pasta luego se oculta.
+- **Ocultos y borrados.** Siguen en la carpeta con placeholder "Contenido retirado" (sin título ni cuerpo). La relación del relation manager usa `withoutGlobalScopes([SoftDeletingScope::class])` para incluir los borrados.
+- **Reordenar.** Filament escribe `position` y `beforeReordering` comprueba que todas las claves sean carpetas del usuario. Favoritos se puede reordenar; solo se protegen renombrar y borrar, como pide la especificación.
+- **Límite de 50.** Se aplica en `CreateFolder` (la fuente de verdad) y como regla en el formulario, para mostrar el error junto al campo.
+- **Límites de petición.** El selector usa `throttle:60,1`. Las acciones de carpeta de Filament no tienen `RateLimiter` propio, igual que las de `/app` en la Fase 5; queda pendiente para la Fase 10.
+- **Cobertura sin prueba de UI.** La acción "Quitar de la carpeta" del relation manager no se ejecuta en el harness de Livewire de Filament 5 (`callAction` no monta la acción en un relation manager). Está cubierta por `RemoveFromFolderTest` (lógica y contador) y en `FolderResourceTest` se comprueba que la acción existe. Pendiente de comprobar en el navegador antes de la Fase 10.
+- **Sin migraciones.** `folders` y `copypasta_folder` ya tenían `position`, la unicidad por usuario, el índice parcial de Favoritos y la clave compuesta.
+
 
 ### Fase 8 — Reportes y moderación
 

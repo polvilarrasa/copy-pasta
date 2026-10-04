@@ -31,7 +31,7 @@
             </div>
         @endif
 
-        <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200" x-data="copypastaActions({
+        <article class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200" x-on:copypasta-folders-saved="applyFolderState($event.detail)" x-data="copypastaActions({
             body: @js($copypasta->body),
             copyUrl: @js(route('copypastas.copy', $copypasta)),
             voteUrl: @js(route('copypastas.vote', $copypasta)),
@@ -47,6 +47,7 @@
             linkCopiedMessage: @js(__('public.copy.link_copied')),
             loginRequiredVoteMessage: @js(__('public.login_modal.vote')),
             loginRequiredFavoriteMessage: @js(__('public.login_modal.favorite')),
+            loginRequiredFolderMessage: @js(__('public.login_modal.folder')),
             actionFailedMessage: @js(__('public.copy.action_failed')),
         })">
             <header class="flex items-start justify-between gap-3">

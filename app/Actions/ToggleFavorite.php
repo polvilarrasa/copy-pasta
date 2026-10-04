@@ -22,10 +22,7 @@ class ToggleFavorite
         return DB::transaction(function () use ($user, $copypasta): bool {
             $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
 
-            $favorites = Folder::query()->firstOrCreate(
-                ['user_id' => $user->getKey(), 'is_default' => true],
-                ['name' => Folder::DEFAULT_NAME, 'position' => 0],
-            );
+            $favorites = Folder::ensureDefaultFor($user);
 
             $isFavorite = $favorites->copypastas()->whereKey($locked->getKey())->exists();
 

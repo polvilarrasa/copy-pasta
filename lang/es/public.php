@@ -66,10 +66,23 @@ return [
         'remove' => 'Quitar de favoritos',
     ],
 
+    'folders' => [
+        'button' => 'Añadir a carpeta',
+        'title' => 'Añadir a carpeta',
+        'loading' => 'Cargando carpetas…',
+        'empty' => 'Todavía no tienes carpetas.',
+        'new_placeholder' => 'Nombre de una carpeta nueva',
+        'create' => 'Crear',
+        'save' => 'Guardar',
+        'cancel' => 'Cancelar',
+        'saved' => 'Carpetas actualizadas',
+    ],
+
     'login_modal' => [
         'title' => 'Inicia sesión',
         'vote' => 'Inicia sesión para votar.',
         'favorite' => 'Inicia sesión para guardar copy-pastas en favoritos.',
+        'folder' => 'Inicia sesión para guardar copy-pastas en tus carpetas.',
         'confirm' => 'Entrar',
         'cancel' => 'Cancelar',
     ],
