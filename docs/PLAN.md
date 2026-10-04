@@ -501,7 +501,7 @@ Aceptación: despliegue en staging desde CI con migraciones automáticas y check
 - **TLS.** `SERVER_NAME` admite un dominio (HTTPS automático) o `:8080` detrás de un proxy que termine TLS. Con `APP_ENV=production` las URL salen en `https`.
 - **Contraseña del admin fuera de la caché de configuración.** `app:create-admin` lee `ADMIN_PASSWORD` con `getenv()`, no con `config()`: `config:cache` la escribiría en disco.
 - **Locale de la imagen.** `APP_LOCALE=es` en el Dockerfile; sin él, los mensajes del comando salían como claves.
-- **Pendiente: validación en español.** Los mensajes de validación de Laravel salen en inglés porque el proyecto no tiene `lang/es/validation.php`. Afecta a todos los formularios, no solo al comando.
+- **Validación en español.** Añadido `lang/es/validation.php` con las reglas de Laravel traducidas y los nombres de campo de los formularios. Lo escribí a mano en lugar de añadir `laravel-lang`, para no introducir una dependencia nueva sin aprobación. Cubierto por `tests/Feature/Validation/SpanishValidationMessagesTest.php`.
 - **Test intermitente corregido.** `ModerationOverviewWidgetTest` comprobaba `assertDontSee('3')`, que coincidía con cualquier número de la página. Ahora compara el valor cacheado.
 - **Backups y monitorización.** Los backups quedan en un volumen local con 14 días de retención; la copia fuera del servidor y los logs a un agregador quedan a cargo del operador. Sin Sentry, como acordamos.
 
