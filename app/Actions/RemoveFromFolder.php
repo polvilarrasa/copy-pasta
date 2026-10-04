@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Concerns\LimitsFolderChanges;
 use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\User;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Gate;
 
 class RemoveFromFolder
 {
+    use LimitsFolderChanges;
+
     /**
      * Removes the copy-pasta from the folder, lowering the favorites counter when the folder is the default one.
      * Returns false when the copy-pasta was not in the folder.
@@ -19,6 +22,7 @@ class RemoveFromFolder
     public function handle(User $user, Folder $folder, Copypasta $copypasta): bool
     {
         Gate::forUser($user)->authorize('removeCopypasta', $folder);
+        $this->ensureFolderChangeIsAllowed($user);
 
         return DB::transaction(function () use ($folder, $copypasta): bool {
             $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();

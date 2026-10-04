@@ -38,6 +38,7 @@ return [
         'tags_count' => 'Elige entre 1 y :max etiquetas.',
         'tags_inactive' => 'Alguna etiqueta elegida ya no está disponible.',
         'publish_rate_limited' => 'Has publicado demasiados copy-pastas en la última hora. Inténtalo más tarde.',
+        'folder_rate_limited' => 'Has hecho demasiados cambios en tus carpetas en el último minuto. Espera un momento.',
     ],
 
     'duplicate' => [

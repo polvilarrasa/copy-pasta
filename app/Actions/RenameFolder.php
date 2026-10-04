@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Concerns\LimitsFolderChanges;
 use App\Models\Folder;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
@@ -11,12 +12,15 @@ use Illuminate\Validation\ValidationException;
 
 class RenameFolder
 {
+    use LimitsFolderChanges;
+
     /**
      * Renames a folder. The default folder is protected by the policy, so Favoritos keeps its name.
      */
     public function handle(User $user, Folder $folder, string $name): Folder
     {
         Gate::forUser($user)->authorize('update', $folder);
+        $this->ensureFolderChangeIsAllowed($user);
 
         $name = trim($name);
 

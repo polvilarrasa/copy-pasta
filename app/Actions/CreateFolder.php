@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Concerns\LimitsFolderChanges;
 use App\Models\Folder;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class CreateFolder
 {
+    use LimitsFolderChanges;
+
     /**
      * Creates a named folder at the end of the member's list. The count check runs under a row lock so two
      * simultaneous requests cannot both slip past the limit.
@@ -19,6 +22,7 @@ class CreateFolder
     public function handle(User $user, string $name): Folder
     {
         Gate::forUser($user)->authorize('create', Folder::class);
+        $this->ensureFolderChangeIsAllowed($user);
 
         $name = trim($name);
 
