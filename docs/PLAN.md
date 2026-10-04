@@ -279,12 +279,22 @@ Aceptación: tests de cada scope de `FeedQuery` (órdenes, ventanas de top, etiq
 
 ### Fase 3 — Panel `/admin` base
 
-- [ ] Panel Filament `admin` con `canAccessPanel` limitado a staff; tema y marca.
-- [ ] TagResource completo.
-- [ ] CopypastaResource de solo lectura con filtros; acciones ocultar, restaurar y marcar NSFW vía Actions; registro en `moderation_actions`.
-- [ ] ModerationActionResource de solo lectura.
+- [x] Panel Filament `admin` con `canAccessPanel` limitado a staff; tema y marca.
+- [x] TagResource completo (sin borrado, ver desviaciones).
+- [x] CopypastaResource de solo lectura con filtros; acciones ocultar, restaurar y marcar NSFW vía Actions; registro en `moderation_actions`.
+- [x] ModerationActionResource de solo lectura.
 
 Aceptación: un usuario normal recibe 403 en `/admin`; tests Livewire de las acciones ocultar y restaurar y de su entrada en el log.
+
+Desviaciones de la Fase 3 respecto al plan original:
+
+- **Login del panel**: no hay login propio de Filament (`->login()` omitido). El panel reutiliza el login de Fortify: un invitado en `/admin` es redirigido a `/login`. Así hay una sola pantalla de acceso.
+- **Tema**: el panel usa el tema por defecto de Filament con color primario y nombre de marca. Un tema Vite propio (`resources/css/filament/admin/theme.css`) queda pendiente; no aporta nada en esta fase y obligaría a compilar para los tests.
+- **Sin borrado de etiquetas**: el CRUD de etiquetas no incluye borrar. El enum `ModerationActionType` no tiene `tag_deleted`, y la especificación habla de desactivar, no de borrar.
+- **Color de etiqueta de paleta fija**: el color se elige de `App\Enums\TagColor`, no es texto libre.
+- **Policies `viewAny`**: `CopypastaPolicy` y `TagPolicy` no tenían `viewAny` y Filament lo exige para listar. Se añaden, junto con `ModerationActionPolicy`.
+- **Acceso al panel**: `User` implementa `FilamentUser` y `HasName`. El acceso lo decide `canAccessPanel()`: staff no baneado, solo en el panel `admin`. Fase 5 ampliará esto para `/app`.
+
 
 ### Fase 4 — Web pública: feed y detalle
 

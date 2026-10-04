@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Enums\Role;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
+use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -35,7 +38,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  */
 #[Fillable(['username', 'email', 'password', 'show_nsfw'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
+class User extends Authenticatable implements FilamentUser, HasName, MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
@@ -90,5 +93,21 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function isBanned(): bool
     {
         return $this->banned_at !== null;
+    }
+
+    /**
+     * Name shown in the Filament user menu.
+     */
+    public function getFilamentName(): string
+    {
+        return $this->username;
+    }
+
+    /**
+     * Staff who are not banned can sign in to the admin panel.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $panel->getId() === 'admin' && $this->isStaff() && ! $this->isBanned();
     }
 }

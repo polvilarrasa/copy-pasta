@@ -59,3 +59,11 @@ test('un admin tiene los mismos permisos de moderación que un moderador', funct
     expect(Gate::forUser($admin)->allows('restore', $hidden))->toBeTrue();
     expect(Gate::forUser($admin)->allows('markNsfw', $hidden))->toBeTrue();
 });
+
+test('solo el staff lista copy-pastas en el panel de administración', function (): void {
+    $user = User::factory()->create();
+    $moderator = User::factory()->moderator()->create();
+
+    expect(Gate::forUser($user)->allows('viewAny', Copypasta::class))->toBeFalse();
+    expect(Gate::forUser($moderator)->allows('viewAny', Copypasta::class))->toBeTrue();
+});

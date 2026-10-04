@@ -32,3 +32,14 @@ test('un admin crea, edita y borra etiquetas', function (): void {
     expect(Gate::forUser($admin)->allows('update', $tag))->toBeTrue();
     expect(Gate::forUser($admin)->allows('delete', $tag))->toBeTrue();
 });
+
+test('solo el staff lista y ve etiquetas en el panel de administración', function (): void {
+    $user = User::factory()->create();
+    $moderator = User::factory()->moderator()->create();
+    $tag = Tag::factory()->create();
+
+    expect(Gate::forUser($user)->allows('viewAny', Tag::class))->toBeFalse();
+    expect(Gate::forUser($user)->allows('view', $tag))->toBeFalse();
+    expect(Gate::forUser($moderator)->allows('viewAny', Tag::class))->toBeTrue();
+    expect(Gate::forUser($moderator)->allows('view', $tag))->toBeTrue();
+});

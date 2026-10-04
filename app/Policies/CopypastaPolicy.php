@@ -9,6 +9,11 @@ use App\Models\User;
 
 class CopypastaPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->isStaff();
+    }
+
     public function view(?User $user, Copypasta $copypasta): bool
     {
         if ($copypasta->published_at !== null && ! $copypasta->isHidden()) {
