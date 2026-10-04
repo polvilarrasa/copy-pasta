@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Impersonation\LeaveImpersonationController;
 use App\Http\Controllers\Public\CopypastaController;
 use App\Http\Controllers\Public\CopypastaCopyController;
 use App\Http\Controllers\Public\CopypastaFavoriteController;
@@ -43,6 +44,10 @@ Route::post('/c/{copypasta}/reporte', CopypastaReportController::class)
 Route::post('/nsfw/confirmar', NsfwConfirmationController::class)->name('nsfw.confirm');
 
 Route::view('/normas', 'public.normas')->name('normas');
+
+Route::post('/impersonacion/salir', LeaveImpersonationController::class)
+    ->middleware('auth')
+    ->name('impersonation.leave');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');

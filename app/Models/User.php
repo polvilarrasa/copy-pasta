@@ -17,6 +17,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Lab404\Impersonate\Models\Impersonate;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -43,7 +44,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable implements FilamentUser, HasName, MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasFactory, Impersonate, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -59,6 +60,46 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'banned_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Only admins impersonate, and only members who are not staff and not banned can be impersonated.
+     */
+    public function canImpersonate(): bool
+    {
+        return $this->isAdmin();
+    }
+
+    public function canBeImpersonated(): bool
+    {
+        return ! $this->isStaff() && ! $this->isBanned();
+    }
+
+    /**
+     * @return HasMany<Copypasta, $this>
+     */
+    public function copypastas(): HasMany
+    {
+        return $this->hasMany(Copypasta::class);
+    }
+
+    /**
+     * @return HasMany<Report, $this>
+     */
+    public function reportsSent(): HasMany
+    {
+        return $this->hasMany(Report::class, 'reporter_id');
+    }
+
+    /**
+     * Moderation log entries whose subject is this user (bans, role changes, impersonations, ...).
+     *
+     * @return HasMany<ModerationAction, $this>
+     */
+    public function subjectActions(): HasMany
+    {
+        return $this->hasMany(ModerationAction::class, 'subject_id')
+            ->where('subject_type', self::class);
     }
 
     /**

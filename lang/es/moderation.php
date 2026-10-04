@@ -6,6 +6,13 @@ return [
 
     'auto_hidden_reason' => 'Pendiente de revisión',
 
+    'impersonation' => [
+        'banner' => 'Estás actuando como @:username',
+        'leave' => 'Volver',
+        'already_impersonating' => 'Ya estás actuando como otro usuario.',
+        'not_impersonating' => 'No hay ninguna impersonación activa.',
+    ],
+
     'reasons' => [
         'spam' => 'Spam',
         'hate_or_harassment' => 'Odio o acoso',

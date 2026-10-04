@@ -40,3 +40,35 @@ test('un admin no impersona a otro miembro del staff ni a sí mismo', function (
     expect(Gate::forUser($admin)->allows('impersonate', $otherModerator))->toBeFalse();
     expect(Gate::forUser($admin)->allows('impersonate', $admin))->toBeFalse();
 });
+
+test('un admin modera a otros usuarios pero no a sí mismo', function (): void {
+    $admin = User::factory()->admin()->create();
+    $other = User::factory()->create();
+
+    expect(Gate::forUser($admin)->allows('ban', $other))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('unban', $other))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('changeRole', $other))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('sendPasswordReset', $other))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('ban', $admin))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('changeRole', $admin))->toBeFalse();
+});
+
+test('un moderador no banea, no cambia roles, no envía resets ni impersona', function (): void {
+    $moderator = User::factory()->moderator()->create();
+    $other = User::factory()->create();
+
+    expect(Gate::forUser($moderator)->allows('ban', $other))->toBeFalse()
+        ->and(Gate::forUser($moderator)->allows('changeRole', $other))->toBeFalse()
+        ->and(Gate::forUser($moderator)->allows('sendPasswordReset', $other))->toBeFalse()
+        ->and(Gate::forUser($moderator)->allows('impersonate', $other))->toBeFalse();
+});
+
+test('un admin no impersona a staff ni a usuarios baneados, ni a sí mismo', function (): void {
+    $admin = User::factory()->admin()->create();
+
+    expect(Gate::forUser($admin)->allows('impersonate', User::factory()->moderator()->create()))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('impersonate', User::factory()->admin()->create()))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('impersonate', User::factory()->banned()->create()))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('impersonate', $admin))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('impersonate', User::factory()->create()))->toBeTrue();
+});

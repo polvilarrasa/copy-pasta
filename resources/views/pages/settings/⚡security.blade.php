@@ -68,6 +68,8 @@ new #[Title('Security settings')] class extends Component {
      */
     public function updatePassword(): void
     {
+        abort_if(is_impersonating(), 403);
+
         try {
             $validated = $this->validate([
                 'current_password' => $this->currentPasswordRules(),

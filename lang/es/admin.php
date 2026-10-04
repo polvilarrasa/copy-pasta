@@ -12,6 +12,8 @@ return [
         'tag' => 'Etiqueta',
         'tags' => 'Etiquetas',
         'moderation_action' => 'Acción de moderación',
+        'user' => 'Usuario',
+        'users' => 'Usuarios',
         'moderation_actions' => 'Log de moderación',
     ],
 
@@ -51,6 +53,17 @@ return [
         'action' => 'Acción',
         'subject' => 'Sobre',
         'reason' => 'Motivo',
+        'username' => 'Nombre de usuario',
+        'email' => 'Email',
+        'role' => 'Rol',
+        'banned' => 'Baneado desde',
+        'status' => 'Estado',
+    ],
+
+    'roles' => [
+        'user' => 'Usuario',
+        'moderator' => 'Moderador',
+        'admin' => 'Admin',
     ],
 
     'filters' => [
@@ -60,6 +73,41 @@ return [
         'nsfw' => 'NSFW',
         'nsfw_yes' => 'Solo NSFW',
         'nsfw_no' => 'Excluir NSFW',
+        'banned' => 'Baneo',
+        'banned_yes' => 'Solo baneados',
+        'banned_no' => 'Solo activos',
+    ],
+
+    'users' => [
+        'tabs' => [
+            'copypastas' => 'Copy-pastas',
+            'reports_sent' => 'Reportes enviados',
+            'moderation_log' => 'Historial de moderación',
+        ],
+        'empty' => [
+            'copypastas' => 'Este usuario no ha publicado copy-pastas.',
+            'reports_sent' => 'Este usuario no ha enviado reportes.',
+            'moderation_log' => 'No hay acciones de moderación sobre este usuario.',
+        ],
+        'copypasta_status' => [
+            'visible' => 'Visible',
+            'hidden' => 'Oculto',
+            'deleted' => 'Borrado',
+        ],
+        'actions' => [
+            'ban' => 'Banear',
+            'ban_heading' => 'Banear usuario',
+            'ban_submit' => 'Banear',
+            'unban' => 'Desbanear',
+            'change_role' => 'Cambiar rol',
+            'change_role_heading' => 'Cambiar rol del usuario',
+            'send_reset' => 'Enviar enlace de reset',
+            'send_reset_confirm' => 'Se enviará el enlace estándar para restablecer la contraseña al email del usuario. Nadie ve ni fija la contraseña desde aquí.',
+            'send_reset_sent' => 'Enlace de restablecimiento enviado.',
+            'send_reset_failed' => 'No se pudo enviar el enlace. Puede que se haya pedido hace poco.',
+            'impersonate' => 'Actuar como',
+            'impersonate_confirm' => 'Verás la web como este usuario. Mientras dure, no podrás cambiar su email ni su contraseña.',
+        ],
     ],
 
     'actions' => [

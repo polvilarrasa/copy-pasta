@@ -426,12 +426,26 @@ Aceptación: tests del umbral de auto-ocultación, de la resolución en bloque d
 
 ### Fase 9 — Gestión de usuarios
 
-- [ ] UserResource: lectura para moderadores, edición para admins; pestañas con copy-pastas, reportes enviados y log.
-- [ ] Acciones: enviar enlace de reset, banear y desbanear con motivo, cambiar rol, con las restricciones de la sección Roles.
-- [ ] Impersonación con el paquete elegido (verificar compatibilidad con Filament 5); banda superior en web pública y paneles; bloqueo de cambio de email y contraseña mientras dura.
-- [ ] Registro de todas las acciones en `moderation_actions`.
+- [x] UserResource: lectura para moderadores, edición para admins; pestañas con copy-pastas, reportes enviados y log.
+- [x] Acciones: enviar enlace de reset, banear y desbanear con motivo, cambiar rol, con las restricciones de la sección Roles.
+- [x] Impersonación con el paquete elegido (verificar compatibilidad con Filament 5); banda superior en web pública y paneles; bloqueo de cambio de email y contraseña mientras dura.
+- [x] Registro de todas las acciones en `moderation_actions`.
 
 Aceptación: tests de que un moderador no puede banear ni impersonar, un admin no puede impersonar staff ni cambiarse el rol, y la impersonación queda registrada al empezar y al terminar.
+
+**Desviaciones de la Fase 9:**
+
+- **Paquete de impersonación.** Se usa `lab404/laravel-impersonate` 1.7.8, aprobado por ti. Es independiente de Filament, así que la misma banda y la misma lógica sirven en la web y en los paneles. No se publica su configuración: se usan los valores por defecto. `stechstudio/filament-impersonate` quedó descartado porque sus requisitos publicados solo mencionan Filament.
+- **Acciones de usuario.** Además de las del plan se añaden `UnbanUser`, `ChangeUserRole`, `SendPasswordReset`, `ImpersonateUser` y `StopImpersonating`. `UserModerationActions` comparte las acciones entre la tabla y la vista; el Policy gana `unban` y `sendPasswordReset`.
+- **Pestañas.** Son los relation managers de la vista (Filament los muestra como pestañas): copy-pastas, reportes enviados e historial. El historial muestra las acciones *sobre* el usuario (baneo, rol, reset, impersonación). Las acciones que el staff hizo *como* actor se consultan en el log general, que ya filtra por actor.
+- **Impersonación registrada.** `ImpersonateUser` registra el inicio con el admin como actor; `StopImpersonating` registra el fin con el mismo actor y el usuario como sujeto.
+- **Bloqueo durante la impersonación.** Solo se bloquea el email y la contraseña, como pide la especificación: en ajustes (`profile` y `security`) y en el perfil de `/app`. El campo de email aparece deshabilitado y el servidor rechaza el cambio. El nombre de usuario sigue editable. Los cambios de 2FA y passkeys no están bloqueados; lo dejo como pregunta abierta.
+- **Banda.** Va en la web pública, en el layout autenticado de ajustes, y como render hook `BODY_START` en `/admin` y `/app`.
+- **Baneo.** Lo rechaza el `authenticateUsing` de Fortify y, con sesión abierta, el middleware `EnsureUserIsNotBanned` cierra la sesión en la siguiente petición. Ya existían; los tests lo comprueban.
+- **Admin sobre otros admins.** La Policy permite a un admin banear o cambiar el rol de otro staff, pero no a sí mismo, como indica el plan. Impersonar sigue prohibido a staff y a baneados.
+- **Tests de bloqueo.** El harness de Livewire captura el 403 de `abort_if` y no lo relanza. Los tests comprueban que email y contraseña no cambian en la base de datos, en vez de esperar una excepción.
+- **Pendiente de comprobar en navegador.** La banda, el botón "Actuar como" y las pestañas no los he probado clicando en el navegador. Los tests cubren el backend, las rutas y la presencia de la banda.
+
 
 ### Fase 10 — Endurecimiento
 

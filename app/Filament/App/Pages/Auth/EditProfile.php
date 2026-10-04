@@ -24,11 +24,11 @@ class EditProfile extends BaseEditProfile
         return $schema
             ->components([
                 $this->getUsernameFormComponent(),
-                $this->getEmailFormComponent(),
+                $this->getEmailFormComponent()->disabled(fn (): bool => is_impersonating()),
                 $this->getShowNsfwFormComponent(),
-                $this->getPasswordFormComponent(),
-                $this->getPasswordConfirmationFormComponent(),
-                $this->getCurrentPasswordFormComponent(),
+                $this->getPasswordFormComponent()->disabled(fn (): bool => is_impersonating()),
+                $this->getPasswordConfirmationFormComponent()->disabled(fn (): bool => is_impersonating()),
+                $this->getCurrentPasswordFormComponent()->disabled(fn (): bool => is_impersonating()),
             ]);
     }
 
@@ -39,6 +39,11 @@ class EditProfile extends BaseEditProfile
      */
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
+        $changesEmailOrPassword = (array_key_exists('email', $data) && $data['email'] !== $record->getAttributeValue('email'))
+            || filled($data['password'] ?? null);
+
+        abort_if(is_impersonating() && $changesEmailOrPassword, 403);
+
         $this->emailChanged = array_key_exists('email', $data)
             && $data['email'] !== $record->getAttributeValue('email');
 

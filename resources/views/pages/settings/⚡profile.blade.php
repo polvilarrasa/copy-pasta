@@ -33,6 +33,8 @@ new #[Title('Profile settings')] class extends Component {
 
         $validated = $this->validate($this->profileRules($user->id));
 
+        abort_if(is_impersonating() && $validated['email'] !== $user->email, 403);
+
         $user->fill($validated);
 
         if ($user->isDirty('email')) {
@@ -86,7 +88,7 @@ new #[Title('Profile settings')] class extends Component {
             <flux:input wire:model="username" :label="__('auth.username')" type="text" required autofocus autocomplete="username" />
 
             <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" :disabled="is_impersonating()" />
 
                 @if ($this->hasUnverifiedEmail)
                     <div>

@@ -15,6 +15,7 @@
     @livewireStyles
 </head>
 <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
+    <x-impersonation-banner />
     <header class="border-b border-zinc-200 bg-white">
         <div class="mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-4 py-3">
             <a href="{{ route('home') }}" class="text-lg font-bold tracking-tight">{{ config('app.name') }}</a>
