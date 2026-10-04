@@ -16,6 +16,8 @@ new class extends Component {
      */
     public function deleteUser(DeleteOwnAccount $deleteOwnAccount, Logout $logout): void
     {
+        abort_if(is_impersonating(), 403);
+
         $this->validate([
             'password' => $this->currentPasswordRules(),
         ]);

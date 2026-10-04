@@ -10,7 +10,7 @@ use App\Models\User;
 use Livewire\Livewire;
 
 test('un moderador ve el listado de etiquetas', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $tag = Tag::factory()->create();
 
     Livewire::actingAs($moderator)
@@ -19,7 +19,7 @@ test('un moderador ve el listado de etiquetas', function (): void {
 });
 
 test('un moderador crea una etiqueta desde el formulario', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
 
     Livewire::actingAs($moderator)
         ->test(CreateTag::class)
@@ -37,7 +37,7 @@ test('un moderador crea una etiqueta desde el formulario', function (): void {
 });
 
 test('un moderador desactiva una etiqueta desde el formulario de edición', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $tag = Tag::factory()->create(['is_active' => true]);
 
     Livewire::actingAs($moderator)

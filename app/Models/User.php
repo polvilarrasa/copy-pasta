@@ -76,6 +76,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'banned_at' => 'datetime',
             'anonymized_at' => 'datetime',
             'must_change_password' => 'boolean',
+            'is_owner' => 'boolean',
             'password' => 'hashed',
         ];
     }

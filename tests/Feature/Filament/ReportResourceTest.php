@@ -16,7 +16,7 @@ test('el histórico muestra reportes de cualquier estado al staff', function ():
     $pending = Report::factory()->create();
     $resolved = Report::factory()->resolved(ReportStatus::Rejected)->create();
 
-    Livewire::actingAs(User::factory()->moderator()->create())
+    Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->test(ListReports::class)
         ->assertCanSeeTableRecords([$pending, $resolved]);
 });

@@ -4,9 +4,12 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Middleware\BlockDuringImpersonation;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Events\RouteMatched;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -31,6 +34,22 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
+        $this->blockAuthenticationFactorRoutesDuringImpersonation();
+    }
+
+    /**
+     * Two-factor and passkey routes change the account's authentication factors, so an impersonating admin cannot
+     * reach them. Sign-in routes stay open, because a guest is never impersonating.
+     */
+    private function blockAuthenticationFactorRoutesDuringImpersonation(): void
+    {
+        Event::listen(RouteMatched::class, function (RouteMatched $event): void {
+            $name = (string) $event->route->getName();
+
+            if (Str::startsWith($name, ['two-factor.', 'passkey.']) && ! Str::startsWith($name, ['two-factor.login', 'passkey.login'])) {
+                $event->route->middleware(BlockDuringImpersonation::class);
+            }
+        });
     }
 
     /**

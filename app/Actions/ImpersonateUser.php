@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Gate;
 
 class ImpersonateUser
 {
+    public const STARTED_AT_KEY = 'impersonation.started_at';
+
     /**
      * Starts acting as the member. The start is logged here; the matching end is logged by StopImpersonating.
      */
@@ -26,6 +28,10 @@ class ImpersonateUser
             if (! $actor->impersonate($target)) {
                 return false;
             }
+
+            // A confirmation given by the admin must not unlock the member's security settings.
+            session()->put(self::STARTED_AT_KEY, now()->timestamp);
+            session()->forget('auth.password_confirmed_at');
 
             ModerationAction::query()->create([
                 'actor_id' => $actor->getKey(),

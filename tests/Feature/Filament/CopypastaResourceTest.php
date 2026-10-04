@@ -10,7 +10,7 @@ use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
 
 test('un moderador ve la lista de copy-pastas con los ocultos incluidos', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $visible = Copypasta::factory()->create();
     $hidden = Copypasta::factory()->hidden()->create();
 
@@ -20,7 +20,7 @@ test('un moderador ve la lista de copy-pastas con los ocultos incluidos', functi
 });
 
 test('un moderador oculta un copy-pasta desde la tabla con un motivo', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $copypasta = Copypasta::factory()->create();
 
     Livewire::actingAs($moderator)
@@ -38,7 +38,7 @@ test('un moderador oculta un copy-pasta desde la tabla con un motivo', function 
 });
 
 test('ocultar sin motivo muestra error de validación y no oculta nada', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $copypasta = Copypasta::factory()->create();
 
     Livewire::actingAs($moderator)
@@ -51,7 +51,7 @@ test('ocultar sin motivo muestra error de validación y no oculta nada', functio
 });
 
 test('un moderador restaura un copy-pasta oculto desde la tabla', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $copypasta = Copypasta::factory()->hidden()->create();
 
     Livewire::actingAs($moderator)
@@ -69,7 +69,7 @@ test('un moderador restaura un copy-pasta oculto desde la tabla', function (): v
 });
 
 test('un moderador marca un copy-pasta como NSFW desde la tabla', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $copypasta = Copypasta::factory()->create(['is_nsfw' => false]);
 
     Livewire::actingAs($moderator)

@@ -14,7 +14,7 @@ beforeEach(fn () => Filament::setCurrentPanel(Filament::getPanel('admin')));
 test('el escritorio muestra los reportes pendientes y reutiliza los conteos cacheados', function (): void {
     Report::factory()->count(2)->create();
 
-    Livewire::actingAs(User::factory()->moderator()->create())
+    Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->test(ModerationOverviewWidget::class)
         ->assertSee('Reportes pendientes');
 
@@ -22,14 +22,14 @@ test('el escritorio muestra los reportes pendientes y reutiliza los conteos cach
 
     Report::factory()->create();
 
-    Livewire::actingAs(User::factory()->moderator()->create())
+    Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->test(ModerationOverviewWidget::class);
 
     expect(Cache::get(ModerationOverviewWidget::CACHE_KEY)['pending_reports'])->toBe(2);
 
     Cache::forget(ModerationOverviewWidget::CACHE_KEY);
 
-    Livewire::actingAs(User::factory()->moderator()->create())
+    Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->test(ModerationOverviewWidget::class);
 
     expect(Cache::get(ModerationOverviewWidget::CACHE_KEY)['pending_reports'])->toBe(3);

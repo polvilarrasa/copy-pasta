@@ -9,6 +9,7 @@ return [
         'password_mismatch' => 'Las contraseñas no coinciden.',
     ],
 
+    'two_factor_required' => 'Activa la autenticación en dos pasos para acceder al panel de administración.',
     'reason_required' => 'Indica un motivo para esta acción.',
 
     'models' => [

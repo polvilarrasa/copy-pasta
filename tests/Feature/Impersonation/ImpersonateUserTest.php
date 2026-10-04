@@ -61,3 +61,15 @@ test('no se puede impersonar a otro usuario mientras ya se actúa como uno', fun
 test('dejar la impersonación sin una activa falla', function (): void {
     app(StopImpersonating::class)->handle(app(ImpersonateManager::class));
 })->throws(AuthorizationException::class);
+
+test('impersonar descarta la confirmación de contraseña del admin', function (): void {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->create();
+
+    $this->actingAs($admin);
+    session(['auth.password_confirmed_at' => now()->timestamp]);
+
+    app(ImpersonateUser::class)->handle($admin, $member);
+
+    expect(session()->has('auth.password_confirmed_at'))->toBeFalse();
+});

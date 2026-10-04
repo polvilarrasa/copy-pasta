@@ -16,7 +16,7 @@ test('las respuestas web llevan cabeceras de seguridad y una CSP que permite a L
 });
 
 test('las páginas de los paneles también llevan cabeceras de seguridad', function (): void {
-    $this->actingAs(User::factory()->moderator()->create())
+    $this->actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->get('/admin')
         ->assertOk()
         ->assertHeader('X-Frame-Options', 'DENY');

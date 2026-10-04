@@ -14,7 +14,7 @@ use Livewire\Livewire;
 beforeEach(fn () => Filament::setCurrentPanel(Filament::getPanel('admin')));
 
 test('un admin crea un usuario desde el panel con su rol y contraseña temporal', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
 
     Livewire::actingAs($admin)
         ->test(CreateUser::class)
@@ -33,13 +33,13 @@ test('un admin crea un usuario desde el panel con su rol y contraseña temporal'
 });
 
 test('un moderador no abre el formulario de creación de usuarios', function (): void {
-    $this->actingAs(User::factory()->moderator()->create())
+    $this->actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->get(UserResource::getUrl('create'))
         ->assertForbidden();
 });
 
 test('un admin borra a un miembro desde la tabla y puede restaurarlo', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
     $member = User::factory()->create();
 
     Livewire::actingAs($admin)
@@ -58,7 +58,7 @@ test('un admin borra a un miembro desde la tabla y puede restaurarlo', function 
 });
 
 test('un admin marca como verificado a un miembro desde la tabla', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
     $member = User::factory()->unverified()->create();
 
     Livewire::actingAs($admin)
@@ -70,7 +70,7 @@ test('un admin marca como verificado a un miembro desde la tabla', function (): 
 });
 
 test('un usuario borrado solo ofrece restaurar en la tabla', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
     $member = User::factory()->create();
     $member->delete();
 
@@ -82,7 +82,7 @@ test('un usuario borrado solo ofrece restaurar en la tabla', function (): void {
 });
 
 test('un admin no puede editar un usuario borrado, ni siquiera por URL', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
     $member = User::factory()->create();
     $member->delete();
 
@@ -92,7 +92,7 @@ test('un admin no puede editar un usuario borrado, ni siquiera por URL', functio
 });
 
 test('un admin abre la ficha de un usuario borrado para poder restaurarlo', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
     $member = User::factory()->create();
     $member->delete();
 

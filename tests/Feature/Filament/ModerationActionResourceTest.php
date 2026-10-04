@@ -8,7 +8,7 @@ use App\Models\User;
 use Livewire\Livewire;
 
 test('un moderador ve el log de moderación', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $entry = ModerationAction::factory()->create(['actor_id' => $moderator->id]);
 
     Livewire::actingAs($moderator)
@@ -17,7 +17,7 @@ test('un moderador ve el log de moderación', function (): void {
 });
 
 test('el log no ofrece crear ni editar entradas', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
 
     Livewire::actingAs($moderator)
         ->test(ListModerationActions::class)

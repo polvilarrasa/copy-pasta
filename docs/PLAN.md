@@ -540,13 +540,22 @@ Aceptación: tras borrar una cuenta con votos, favoritos, copy-pastas y reportes
 
 #### 12.2a — Impersonación y staff
 
-- [ ] Middleware `BlockDuringImpersonation` en 2FA, passkeys y borrado de cuenta, con un test por ruta. El bloqueo es por diseño y no depende de `password.confirm` ni de `current_password` (C3).
-- [ ] Limpiar `auth.password_confirmed_at` al iniciar y terminar una impersonación (`ImpersonateUser`, `StopImpersonating`), con un test de que `password.confirm` falla durante la impersonación (N1).
-- [ ] Impersonación con caducidad de 30 minutos y registro del fin al expirar.
-- [ ] 2FA obligatorio para acceder a `/admin` (A2).
-- [ ] Protección del último admin y flag de propietario para promover o degradar admins (A2).
+- [x] Middleware `BlockDuringImpersonation` en 2FA, passkeys y borrado de cuenta, con un test por ruta. El bloqueo es por diseño y no depende de `password.confirm` ni de `current_password` (C3).
+- [x] Limpiar `auth.password_confirmed_at` al iniciar y terminar una impersonación (`ImpersonateUser`, `StopImpersonating`), con un test de que `password.confirm` falla durante la impersonación (N1).
+- [x] Impersonación con caducidad de 30 minutos y registro del fin al expirar.
+- [x] 2FA obligatorio para acceder a `/admin` (A2).
+- [x] Protección del último admin y flag de propietario para promover o degradar admins (A2).
 
 Aceptación: un admin impersonando no puede cambiar ningún factor de autenticación ni borrar la cuenta, aunque haya confirmado su contraseña antes; ningún flujo deja la plataforma sin admins.
+
+**Desviaciones de la Fase 12.2a:**
+
+- **Bloqueo de los componentes Livewire sin trait.** Las acciones mutadoras llevan `abort_if(is_impersonating(), 403)`, igual que `updatePassword`. Los componentes que mostrarían secretos (códigos de recuperación y clave de 2FA) no los cargan durante la impersonación, en lugar de fallar. Livewire absorbe el `abort` dentro de `Livewire::test`, así que los tests comprueban el estado de la base de datos.
+- **Rutas HTTP de 2FA y passkeys por evento.** `FortifyServiceProvider` añade `BlockDuringImpersonation` a las rutas `two-factor.*` y `passkey.*` en `RouteMatched`. Quedan fuera las de inicio de sesión, porque un invitado nunca está impersonando.
+- **El último admin no necesita guarda.** El propietario no puede ser baneado, degradado ni borrado por nadie, y un admin que actúa siempre queda activo. El único camino a cero admins era el autoborrado del propietario, que la policy ya impide. Se descartó un guarda genérico, porque no podía dispararse.
+- **Propietario inicial.** La migración marca como propietario al admin más antiguo, y `app:create-admin` marca al primero que crea si todavía no hay propietario.
+- **Caducidad sin ventana deslizante.** Los 30 minutos cuentan desde el inicio. Una impersonación sin hora de inicio se considera caducada. El fin queda como `ImpersonateEnd` con `meta.reason = expired`.
+- **Staff sin 2FA redirigido, no expulsado.** `EnsureStaffHasTwoFactor` lleva a `/settings/security` con un aviso. Los tests de Filament crean sus cuentas de staff con 2FA activo, porque el panel ya lo exige.
 
 #### 12.2b — Usuarios
 

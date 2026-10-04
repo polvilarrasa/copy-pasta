@@ -19,7 +19,7 @@ use Livewire\Livewire;
 beforeEach(fn () => Filament::setCurrentPanel(Filament::getPanel('admin')));
 
 test('un moderador lista usuarios pero no ve acciones de baneo ni de cambio de rol', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $member = User::factory()->create();
 
     Livewire::actingAs($moderator)
@@ -31,13 +31,13 @@ test('un moderador lista usuarios pero no ve acciones de baneo ni de cambio de r
 });
 
 test('un moderador no abre la edición de un usuario', function (): void {
-    $this->actingAs(User::factory()->moderator()->create())
+    $this->actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->get(UserResource::getUrl('edit', ['record' => User::factory()->create()]))
         ->assertForbidden();
 });
 
 test('un admin no ve el baneo de sí mismo', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
 
     Livewire::actingAs($admin)
         ->test(ListUsers::class)
@@ -45,7 +45,7 @@ test('un admin no ve el baneo de sí mismo', function (): void {
 });
 
 test('un admin banea a un miembro desde la tabla con motivo', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
     $member = User::factory()->create();
 
     Livewire::actingAs($admin)
@@ -57,7 +57,7 @@ test('un admin banea a un miembro desde la tabla con motivo', function (): void 
 });
 
 test('un admin cambia el rol de un miembro desde la tabla', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
     $member = User::factory()->create();
 
     Livewire::actingAs($admin)
@@ -69,7 +69,7 @@ test('un admin cambia el rol de un miembro desde la tabla', function (): void {
 });
 
 test('la vista del usuario tiene pestañas con sus copy-pastas, reportes y log de moderación', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
     $member = User::factory()->create();
     $copypasta = Copypasta::factory()->for($member, 'user')->create();
     $entry = ModerationAction::query()->create([

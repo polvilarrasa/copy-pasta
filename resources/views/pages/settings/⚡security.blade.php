@@ -114,6 +114,8 @@ new #[Title('Security settings')] class extends Component {
      */
     public function confirmDelete(int $passkeyId): void
     {
+        abort_if(is_impersonating(), 403);
+
         $passkey = auth()->user()->passkeys()->findOrFail($passkeyId);
 
         $this->deletingPasskeyId = $passkey->id;
@@ -126,6 +128,8 @@ new #[Title('Security settings')] class extends Component {
      */
     public function deletePasskey(DeletePasskey $deletePasskey): void
     {
+        abort_if(is_impersonating(), 403);
+
         if (! $this->deletingPasskeyId) {
             return;
         }
@@ -162,6 +166,8 @@ new #[Title('Security settings')] class extends Component {
      */
     public function disable(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
     {
+        abort_if(is_impersonating(), 403);
+
         $disableTwoFactorAuthentication(auth()->user());
 
         $this->twoFactorEnabled = false;

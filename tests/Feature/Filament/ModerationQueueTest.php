@@ -14,7 +14,7 @@ use Livewire\Livewire;
 beforeEach(fn () => Filament::setCurrentPanel(Filament::getPanel('admin')));
 
 test('solo el staff abre la cola de reportes', function (): void {
-    $this->actingAs(User::factory()->moderator()->create())
+    $this->actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->get(ModerationQueue::getUrl(panel: 'admin'))
         ->assertOk();
 
@@ -29,7 +29,7 @@ test('la cola agrupa por copy-pasta y solo muestra los que tienen reportes pendi
     $resolvedOnly = Copypasta::factory()->create();
     Report::factory()->for($resolvedOnly)->resolved()->create();
 
-    Livewire::actingAs(User::factory()->moderator()->create())
+    Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->test(ModerationQueue::class)
         ->assertCanSeeTableRecords([$reported])
         ->assertCanNotSeeTableRecords([$resolvedOnly]);
@@ -41,13 +41,13 @@ test('los copy-pastas ocultos aparecen primero en la cola', function (): void {
     $hidden = Copypasta::factory()->hidden()->create();
     Report::factory()->for($hidden)->create();
 
-    Livewire::actingAs(User::factory()->moderator()->create())
+    Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->test(ModerationQueue::class)
         ->assertCanSeeTableRecords([$hidden, $visible], inOrder: true);
 });
 
 test('el staff oculta desde la cola con motivo y los reportes quedan aceptados', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $copypasta = Copypasta::factory()->create();
     Report::factory()->for($copypasta)->create();
 
@@ -61,7 +61,7 @@ test('el staff oculta desde la cola con motivo y los reportes quedan aceptados',
 });
 
 test('restaurar solo aparece en los copy-pastas ocultos', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $visible = Copypasta::factory()->create();
     Report::factory()->for($visible)->create();
     $hidden = Copypasta::factory()->hidden()->create();
@@ -76,7 +76,7 @@ test('restaurar solo aparece en los copy-pastas ocultos', function (): void {
 });
 
 test('la resolución en bloque descarta los reportes de varios copy-pastas a la vez', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
     $first = Copypasta::factory()->create();
     Report::factory()->for($first)->count(2)->create();
     $second = Copypasta::factory()->create();

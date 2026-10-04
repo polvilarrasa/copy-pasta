@@ -116,3 +116,38 @@ test('una cuenta anonimizada no se puede restaurar aunque la borrara un admin', 
 
     expect(Gate::forUser($admin)->allows('restore', $member))->toBeFalse();
 });
+
+test('solo el propietario promueve, degrada, banea o borra a otros admins', function (): void {
+    $owner = User::factory()->admin()->create(['is_owner' => true]);
+    $otherAdmin = User::factory()->admin()->create();
+    $targetAdmin = User::factory()->admin()->create();
+
+    expect(Gate::forUser($owner)->allows('changeRole', $targetAdmin))->toBeTrue()
+        ->and(Gate::forUser($owner)->allows('ban', $targetAdmin))->toBeTrue()
+        ->and(Gate::forUser($owner)->allows('delete', $targetAdmin))->toBeTrue()
+        ->and(Gate::forUser($otherAdmin)->allows('changeRole', $targetAdmin))->toBeFalse()
+        ->and(Gate::forUser($otherAdmin)->allows('ban', $targetAdmin))->toBeFalse()
+        ->and(Gate::forUser($otherAdmin)->allows('delete', $targetAdmin))->toBeFalse();
+});
+
+test('ningún admin gestiona al propietario, ni siquiera otro admin con más antigüedad', function (): void {
+    $owner = User::factory()->admin()->create(['is_owner' => true]);
+    $otherAdmin = User::factory()->admin()->create();
+
+    expect(Gate::forUser($otherAdmin)->allows('ban', $owner))->toBeFalse()
+        ->and(Gate::forUser($otherAdmin)->allows('changeRole', $owner))->toBeFalse()
+        ->and(Gate::forUser($owner)->allows('ban', $owner))->toBeFalse();
+});
+
+test('un admin sin ser propietario sigue baneando a miembros', function (): void {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->create();
+
+    expect(Gate::forUser($admin)->allows('ban', $member))->toBeTrue();
+});
+
+test('el propietario no puede borrar su propia cuenta', function (): void {
+    $owner = User::factory()->admin()->create(['is_owner' => true]);
+
+    expect(Gate::forUser($owner)->allows('deleteOwnAccount', $owner))->toBeFalse();
+});

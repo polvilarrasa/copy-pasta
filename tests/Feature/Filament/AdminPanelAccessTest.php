@@ -16,7 +16,7 @@ test('un invitado es redirigido al login de la aplicación', function (): void {
 });
 
 test('un moderador accede al panel de administración', function (): void {
-    $moderator = User::factory()->moderator()->create();
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
 
     $this->actingAs($moderator)->get('/admin')->assertOk();
 });
@@ -28,7 +28,7 @@ test('un moderador baneado no accede al panel aunque tenga sesión', function ()
 });
 
 test('el panel de usuario se abre a miembros verificados, también a staff, pero no sin verificar', function (): void {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->admin()->withTwoFactor()->create();
     $unverified = User::factory()->unverified()->create();
 
     expect($admin->canAccessPanel(Panel::make()->id('app')))->toBeTrue()

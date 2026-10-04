@@ -21,6 +21,8 @@ new class extends Component {
      */
     public function regenerateRecoveryCodes(GenerateNewRecoveryCodes $generateNewRecoveryCodes): void
     {
+        abort_if(is_impersonating(), 403);
+
         $generateNewRecoveryCodes(auth()->user());
 
         $this->loadRecoveryCodes();
@@ -31,6 +33,11 @@ new class extends Component {
      */
     private function loadRecoveryCodes(): void
     {
+        // The codes are the account's secret: an impersonating admin sees the component without them.
+        if (is_impersonating()) {
+            return;
+        }
+
         $user = auth()->user();
 
         if ($user->hasEnabledTwoFactorAuthentication() && $user->two_factor_recovery_codes) {

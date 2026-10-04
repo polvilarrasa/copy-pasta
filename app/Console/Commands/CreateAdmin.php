@@ -52,6 +52,7 @@ class CreateAdmin extends Command
             'email' => $email,
             'password' => $password,
             'role' => Role::Admin,
+            'is_owner' => ! User::query()->where('is_owner', true)->exists(),
             'email_verified_at' => now(),
         ])->save();
 

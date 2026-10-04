@@ -36,6 +36,8 @@ new class extends Component {
     #[On('start-two-factor-setup')]
     public function startTwoFactorSetup(): void
     {
+        abort_if(is_impersonating(), 403);
+
         $enableTwoFactorAuthentication = app(EnableTwoFactorAuthentication::class);
         $enableTwoFactorAuthentication(auth()->user());
 
@@ -68,6 +70,8 @@ new class extends Component {
      */
     public function showVerificationIfNecessary(): void
     {
+        abort_if(is_impersonating(), 403);
+
         if ($this->requiresConfirmation) {
             $this->showVerificationStep = true;
 
@@ -85,6 +89,8 @@ new class extends Component {
      */
     public function confirmTwoFactor(ConfirmTwoFactorAuthentication $confirmTwoFactorAuthentication): void
     {
+        abort_if(is_impersonating(), 403);
+
         $this->validate();
 
         $confirmTwoFactorAuthentication(auth()->user(), $this->code);

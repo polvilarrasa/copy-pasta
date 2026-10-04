@@ -32,11 +32,15 @@ class UserPolicy
     }
 
     /**
-     * Admins act on anyone but themselves; a staff member cannot ban or change their own role.
+     * Admins act on anyone but themselves. Only the owner acts on other admins, and nobody acts on the owner.
      */
     public function ban(User $user, User $target): bool
     {
-        return $user->isAdmin() && ! $user->is($target);
+        if ($target->is_owner) {
+            return false;
+        }
+
+        return $user->isAdmin() && ! $user->is($target) && (! $target->isAdmin() || $user->is_owner);
     }
 
     public function unban(User $user, User $target): bool
@@ -75,11 +79,12 @@ class UserPolicy
     }
 
     /**
-     * Members delete only their own account, and only while it is still active.
+     * Members delete only their own account. The owner keeps theirs, because that account is what lets the platform
+     * keep at least one admin.
      */
     public function deleteOwnAccount(User $user, User $target): bool
     {
-        return $user->is($target) && ! $target->isAnonymized();
+        return $user->is($target) && ! $target->isAnonymized() && ! $target->is_owner;
     }
 
     public function verifyEmail(User $user, User $target): bool

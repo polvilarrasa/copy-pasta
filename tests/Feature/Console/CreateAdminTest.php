@@ -58,3 +58,15 @@ test('app:create-admin no duplica usuarios existentes', function (): void {
         '--no-interaction' => true,
     ])->assertFailed();
 });
+
+test('el primer admin creado por comando es el propietario y los siguientes no', function (): void {
+    putenv('ADMIN_PASSWORD=contraseña-segura-2026');
+
+    $this->artisan('app:create-admin', ['--username' => 'primer_admin', '--email' => 'primero@example.com', '--no-interaction' => true])
+        ->assertSuccessful();
+    $this->artisan('app:create-admin', ['--username' => 'segundo_admin', '--email' => 'segundo@example.com', '--no-interaction' => true])
+        ->assertSuccessful();
+
+    expect(User::query()->where('email', 'primero@example.com')->sole()->is_owner)->toBeTrue()
+        ->and(User::query()->where('email', 'segundo@example.com')->sole()->is_owner)->toBeFalse();
+});
