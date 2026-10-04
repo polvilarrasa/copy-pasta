@@ -161,6 +161,18 @@ class Copypasta extends Model
     }
 
     /**
+     * Drops copy-pastas whose tags are all deactivated; untagged ones stay visible.
+     *
+     * @param  Builder<Copypasta>  $query
+     */
+    public function scopeNotOnlyInactiveTags(Builder $query): void
+    {
+        $query->where(fn (Builder $tagged) => $tagged
+            ->doesntHave('tags')
+            ->orWhereHas('tags', fn (Builder $tag) => $tag->where('tags.is_active', true)));
+    }
+
+    /**
      * @param  Builder<Copypasta>  $query
      */
     public function scopeNsfw(Builder $query, bool $include): void
@@ -201,12 +213,14 @@ class Copypasta extends Model
             FeedSort::Random => $query->orderByRaw('md5(id || ?)', [$randomSeed ?? Str::random(16)]),
             FeedSort::TopWeek => $query->where('published_at', '>=', now()->subDays(7))
                 ->orderByDesc('score')
-                ->orderByDesc('published_at'),
+                ->orderByDesc('published_at')
+                ->orderByDesc('id'),
             FeedSort::TopMonth => $query->where('published_at', '>=', now()->subDays(30))
                 ->orderByDesc('score')
-                ->orderByDesc('published_at'),
-            FeedSort::TopAll => $query->orderByDesc('score')->orderByDesc('published_at'),
-            FeedSort::Newest => $query->orderByDesc('published_at'),
+                ->orderByDesc('published_at')
+                ->orderByDesc('id'),
+            FeedSort::TopAll => $query->orderByDesc('score')->orderByDesc('published_at')->orderByDesc('id'),
+            FeedSort::Newest => $query->orderByDesc('published_at')->orderByDesc('id'),
         };
     }
 }

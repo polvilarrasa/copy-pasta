@@ -298,15 +298,33 @@ Desviaciones de la Fase 3 respecto al plan original:
 
 ### Fase 4 — Web pública: feed y detalle
 
-- [ ] Layout público con Tailwind, cabecera, buscador y footer con enlace a `/normas`.
-- [ ] Componente `Feed` con orden, filtros de etiqueta, búsqueda, toggle NSFW y estado en la query string.
-- [ ] Orden aleatorio con semilla en sesión y botón "Barajar"; "Cargar más".
-- [ ] Componente `CopypastaCard`: copiar (Clipboard API + toast + contador limitado), compartir, NSFW difuminado.
-- [ ] Página de detalle con redirección 301 de slug, meta Open Graph y Twitter Card.
-- [ ] Modal de confirmación +18 para anónimos con cookie de 1 año.
-- [ ] Rutas alias `/top/semana`, `/top/mes`, `/top`, `/nuevos`, `/etiqueta/{slug}`.
+- [x] Layout público con Tailwind, cabecera, buscador y footer con enlace a `/normas`.
+- [x] Componente `Feed` con orden, filtros de etiqueta, búsqueda, toggle NSFW y estado en la query string.
+- [x] Orden aleatorio con semilla en sesión y botón "Barajar"; "Cargar más".
+- [x] Componente `CopypastaCard`: copiar (Clipboard API + toast + contador limitado), compartir, NSFW difuminado.
+- [x] Página de detalle con redirección 301 de slug, meta Open Graph y Twitter Card.
+- [x] Modal de confirmación +18 para anónimos con cookie de 1 año.
+- [x] Rutas alias `/top/semana`, `/top/mes`, `/top`, `/nuevos`, `/etiqueta/{slug}`.
 
 Aceptación: tests de feed para anónimos (sin NSFW por defecto, con NSFW tras cookie), paginación aleatoria sin repetidos en 3 páginas, 404 para ocultos y 301 de slug.
+
+**Desviaciones de la Fase 4:**
+
+- **Tarjeta como componente Blade, no Livewire.** `CopypastaCard` es `<x-copypasta-card>` con Alpine. Un componente Livewire por tarjeta obligaría a rehidratar 20 modelos en cada petición y rompería el objetivo de 5 consultas de la Fase 10. Los componentes Livewire quedan para el feed y los filtros.
+- **Copiar cuenta por petición HTTP.** Copiar envía `POST /c/{copypasta}/copia` (throttle de 120/min) y la Action `RecordCopypastaCopy` aplica el límite de una copia por copy-pasta, visitante y hora con la caché. Es una Action nueva que no estaba en la lista de Estructura.
+- **Detalle sin Livewire.** `/c/{ulid}/{slug?}` es un controlador (`CopypastaController`) que autoriza con `CopypastaPolicy::view`, redirige con 301 si el slug no coincide y devuelve una vista Blade con meta tags. Los ocultos devuelven 404 a visitantes; el autor y el staff los ven con el motivo.
+- **Copy-pastas sin etiquetas.** `FeedQuery` excluye solo los que tienen etiquetas y todas están desactivadas. Los que no tienen ninguna siguen visibles, porque las factories de la Fase 2 no asignan etiquetas.
+- **Filtros.** Las etiquetas desactivadas se ignoran en `?tags=`, así que un enlace antiguo no devuelve vacío por error.
+- **Toggle NSFW solo para anónimos.** Los usuarios registrados se rigen por `show_nsfw` (ajustes de la Fase 5) y el staff ve NSFW siempre.
+- **Orden estable.** `Copypasta::scopeSort` añade `id` como último desempate. Sin él, la paginación de los tops podía repetir o perder elementos cuando empatan score y fecha.
+- **`/normas` provisional.** Enlace del footer funcional con texto de marcador; el contenido real llega en la Fase 10.
+- **`welcome.blade.php` eliminada.** Era la página del starter kit; `/` es ahora el feed. `ExampleTest` sigue pasando porque `home` existe.
+- **`preventLazyLoading` activo fuera de producción.** Se adelanta de la Fase 10 porque la sección Rendimiento lo exige desde ya y el feed se diseñó con eager loading.
+- **Botón "Publicar" provisional.** Lleva al login para invitados y al panel de usuario para autenticados hasta que exista `/app/copypastas/create` (Fase 5).
+- **Índices revisados.** Con el seeder de 300 copy-pastas, `EXPLAIN ANALYZE` de las consultas del feed (aleatorio, top semanal, búsqueda y nuevos) queda por debajo de 1 ms usando los índices existentes. No se añade índice nuevo; el `Seq Scan` sobre `copypasta_tag` es aceptable con 910 filas y conviene revisarlo al crecer.
+- **Compilación de assets.** `npm run build` falla dentro de Sail porque `node_modules` se instaló en macOS y `vite-plus` no encuentra su binario de Linux. Se compila con `node node_modules/.bin/vite build` usando Node 22 en el host.
+- **Pendiente para fases futuras.** Los botones de votar, favorito y "..." de la tarjeta llegan en las Fases 6, 7 y 8. El criterio de 5 consultas por home se comprobará en la Fase 10.
+
 
 ### Fase 5 — Panel `/app`: publicar y ajustes
 

@@ -15,7 +15,7 @@ final class FeedQuery
 
     public function __construct()
     {
-        $this->query = Copypasta::query()->visible();
+        $this->query = Copypasta::query()->visible()->notOnlyInactiveTags();
     }
 
     public static function make(): self

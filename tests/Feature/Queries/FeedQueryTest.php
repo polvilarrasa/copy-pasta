@@ -124,3 +124,23 @@ test('nsfw(false) excluye copy-pastas marcados como nsfw y nsfw(true) los incluy
     expect($withoutNsfw)->toContain($sfw->id)->not->toContain($nsfw->id)
         ->and($withNsfw)->toContain($sfw->id)->toContain($nsfw->id);
 });
+
+test('el feed excluye copy-pastas cuyas etiquetas están todas desactivadas', function (): void {
+    $inactive = Tag::factory()->inactive()->create();
+    $active = Tag::factory()->create();
+
+    $onlyInactive = Copypasta::factory()->create();
+    $onlyInactive->tags()->attach($inactive->id);
+
+    $mixed = Copypasta::factory()->create();
+    $mixed->tags()->attach([$inactive->id, $active->id]);
+
+    $untagged = Copypasta::factory()->create();
+
+    $ids = FeedQuery::make()->sort(FeedSort::Newest)->builder()->pluck('id');
+
+    expect($ids)
+        ->not->toContain($onlyInactive->id)
+        ->toContain($mixed->id)
+        ->toContain($untagged->id);
+});
