@@ -19,4 +19,10 @@ enum ModerationActionType: string
     case ImpersonateEnd = 'impersonate_end';
     case TagCreated = 'tag_created';
     case TagUpdated = 'tag_updated';
+    case UserCreated = 'user_created';
+    case UserDeleted = 'user_deleted';
+    case UserRestored = 'user_restored';
+    case EmailVerified = 'email_verified';
+    case EmailUnverified = 'email_unverified';
+    case VerificationResent = 'verification_resent';
 }

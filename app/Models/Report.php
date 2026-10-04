@@ -67,7 +67,7 @@ class Report extends Model
      */
     public function reporter(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'reporter_id');
+        return $this->belongsTo(User::class, 'reporter_id')->withTrashed();
     }
 
     /**
@@ -75,6 +75,6 @@ class Report extends Model
      */
     public function resolvedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'resolved_by_id');
+        return $this->belongsTo(User::class, 'resolved_by_id')->withTrashed();
     }
 }

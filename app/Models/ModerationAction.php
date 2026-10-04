@@ -46,6 +46,6 @@ class ModerationAction extends Model
      */
     public function actor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'actor_id');
+        return $this->belongsTo(User::class, 'actor_id')->withTrashed();
     }
 }

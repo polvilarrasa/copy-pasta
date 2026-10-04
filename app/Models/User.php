@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -31,6 +32,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $banned_at
  * @property string|null $ban_reason
+ * @property bool $must_change_password
+ * @property Carbon|null $deleted_at
  * @property string $password
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
@@ -44,7 +47,20 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable implements FilamentUser, HasName, MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Impersonate, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasFactory, Impersonate, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
+
+    /**
+     * Any password change clears the temporary-password flag, unless the caller sets the flag in the same save
+     * (as admin-created accounts do). Covers the settings page, the reset flow and the Filament profile.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            if ($user->isDirty('password') && ! $user->isDirty('must_change_password')) {
+                $user->must_change_password = false;
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -58,6 +74,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'show_nsfw' => 'boolean',
             'email_verified_at' => 'datetime',
             'banned_at' => 'datetime',
+            'must_change_password' => 'boolean',
             'password' => 'hashed',
         ];
     }

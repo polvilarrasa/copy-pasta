@@ -176,6 +176,9 @@ Cada bloque describe el comportamiento esperado; los criterios de aceptación de
 - Banear o desbanear con motivo; cambiar rol; ver sus copy-pastas, reportes enviados e historial de moderación.
 - Impersonar: solo admin, no a staff. Una banda fija en la parte superior muestra "Estás actuando como @usuario · Volver". Inicio y fin quedan en el log.
 - Durante la impersonación no se pueden cambiar email ni contraseña del usuario.
+- Verificar a mano el email de un miembro, quitar la verificación y reenviar el correo de verificación (máximo tres veces por hora y miembro).
+- Crear usuarios desde el admin con rol elegido y contraseña temporal generada. El usuario debe cambiarla antes de usar cualquier panel.
+- Borrado y restauración lógicos. Un usuario borrado no puede entrar; su contenido se mantiene.
 
 ## Modelo de datos
 
@@ -446,6 +449,14 @@ Aceptación: tests de que un moderador no puede banear ni impersonar, un admin n
 - **Tests de bloqueo.** El harness de Livewire captura el 403 de `abort_if` y no lo relanza. Los tests comprueban que email y contraseña no cambian en la base de datos, en vez de esperar una excepción.
 - **Pendiente de comprobar en navegador.** La banda, el botón "Actuar como" y las pestañas no los he probado clicando en el navegador. Los tests cubren el backend, las rutas y la presencia de la banda.
 
+
+- **Ampliación posterior a la Fase 11.** Se añaden verificación manual, creación de usuarios con contraseña temporal y borrado lógico, con estas decisiones:
+  - **Contraseña temporal.** Se genera con 16 caracteres sin símbolos y se muestra una sola vez en una notificación persistente. No se envía por email. `must_change_password` obliga a cambiarla antes de cualquier panel (`EnsurePasswordIsChanged`, también en el grupo `web`). El cambio se hace en `/contrasena-temporal`. Cualquier cambio de contraseña limpia el flag desde el modelo, salvo que se fije en el mismo guardado.
+  - **Cuentas creadas por admin** se marcan con email verificado, porque el admin responde de ellas.
+  - **Borrado lógico.** `SoftDeletes` en `users`. Los copy-pastas, reportes y entradas de log siguen apuntando al usuario y se muestra su nombre con `withTrashed()` en las relaciones. Un copy-pasta de un usuario borrado sigue visible con su autor. Si prefieres ocultarlos, es un cambio aparte.
+  - **Borrado de cuenta propia** (ajustes) sigue siendo definitivo (`forceDelete`), como dice el texto de la pantalla.
+  - **Tipos de log nuevos:** `user_created`, `user_deleted`, `user_restored`, `email_verified`, `email_unverified` y `verification_resent`. El campo `action` es un string, así que no hace falta cambiar el esquema.
+  - **Sin 2FA ni cierre de sesiones desde admin**, como se decidió.
 
 ### Fase 10 — Endurecimiento
 

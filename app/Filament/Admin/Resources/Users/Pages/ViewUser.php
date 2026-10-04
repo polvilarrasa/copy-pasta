@@ -6,6 +6,7 @@ namespace App\Filament\Admin\Resources\Users\Pages;
 
 use App\Filament\Admin\Resources\Users\UserModerationActions;
 use App\Filament\Admin\Resources\Users\UserResource;
+use App\Models\User;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -16,7 +17,7 @@ class ViewUser extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
+            EditAction::make()->hidden(fn (User $record): bool => $record->trashed()),
             ...UserModerationActions::all(),
         ];
     }

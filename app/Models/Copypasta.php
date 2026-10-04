@@ -107,7 +107,7 @@ class Copypasta extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     /**
@@ -115,7 +115,7 @@ class Copypasta extends Model
      */
     public function hiddenBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'hidden_by_id');
+        return $this->belongsTo(User::class, 'hidden_by_id')->withTrashed();
     }
 
     /**

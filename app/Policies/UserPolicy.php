@@ -52,4 +52,29 @@ class UserPolicy
             && $target->canBeImpersonated()
             && ! $user->is($target);
     }
+
+    public function create(User $user): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function delete(User $user, User $target): bool
+    {
+        return $this->ban($user, $target);
+    }
+
+    public function restore(User $user, User $target): bool
+    {
+        return $this->ban($user, $target);
+    }
+
+    public function verifyEmail(User $user, User $target): bool
+    {
+        return $this->ban($user, $target);
+    }
+
+    public function resendVerification(User $user, User $target): bool
+    {
+        return $this->ban($user, $target);
+    }
 }

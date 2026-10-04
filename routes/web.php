@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\TemporaryPasswordController;
 use App\Http\Controllers\Impersonation\LeaveImpersonationController;
 use App\Http\Controllers\Public\CopypastaController;
 use App\Http\Controllers\Public\CopypastaCopyController;
@@ -55,6 +56,11 @@ Route::get('/robots.txt', RobotsController::class)->name('robots');
 Route::post('/impersonacion/salir', LeaveImpersonationController::class)
     ->middleware('auth')
     ->name('impersonation.leave');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/contrasena-temporal', [TemporaryPasswordController::class, 'edit'])->name('password.temporary.edit');
+    Route::put('/contrasena-temporal', [TemporaryPasswordController::class, 'update'])->name('password.temporary.update');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');

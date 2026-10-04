@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureUserIsNotBanned;
 use App\Http\Middleware\SecurityHeaders;
 use Filament\Http\Middleware\Authenticate;
@@ -46,6 +47,7 @@ class AdminPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 EnsureUserIsNotBanned::class,
+                EnsurePasswordIsChanged::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 PreventRequestForgery::class,
