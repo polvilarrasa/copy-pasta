@@ -13,6 +13,29 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: copypastas
+          POSTGRES_USER: sail
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U sail -d copypastas"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: copypastas
+      DB_USERNAME: sail
+      DB_PASSWORD: password
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -33,6 +56,9 @@ jobs:
 
       - name: Setup Application
         run: composer setup
+
+      - name: Create testing database
+        run: PGPASSWORD=password psql -h 127.0.0.1 -U sail -d copypastas -c "CREATE DATABASE testing;"
 
       - name: Run CI Checks
         run: composer ci:check
