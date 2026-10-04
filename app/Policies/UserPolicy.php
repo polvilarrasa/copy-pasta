@@ -18,9 +18,12 @@ class UserPolicy
         return $user->isStaff();
     }
 
+    /**
+     * Soft-deleted members cannot be edited; restoring them comes first.
+     */
     public function update(User $user, User $target): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() && ! $target->trashed();
     }
 
     public function sendPasswordReset(User $user, User $target): bool

@@ -81,6 +81,16 @@ test('un usuario borrado solo ofrece restaurar en la tabla', function (): void {
         ->assertTableActionVisible('restore', $member);
 });
 
+test('un admin no puede editar un usuario borrado, ni siquiera por URL', function (): void {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->create();
+    $member->delete();
+
+    $this->actingAs($admin)
+        ->get(UserResource::getUrl('edit', ['record' => $member]))
+        ->assertForbidden();
+});
+
 test('un admin abre la ficha de un usuario borrado para poder restaurarlo', function (): void {
     $admin = User::factory()->admin()->create();
     $member = User::factory()->create();

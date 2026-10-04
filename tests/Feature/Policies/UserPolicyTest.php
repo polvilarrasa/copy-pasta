@@ -92,3 +92,11 @@ test('solo un admin crea usuarios y gestiona borrados, verificación y reenvíos
         ->and(Gate::forUser($admin)->allows('delete', $admin))->toBeFalse()
         ->and(Gate::forUser($admin)->allows('verifyEmail', $admin))->toBeFalse();
 });
+
+test('un usuario borrado no se edita hasta que se restaura', function (): void {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->create();
+    $member->delete();
+
+    expect(Gate::forUser($admin)->allows('update', $member))->toBeFalse();
+});
