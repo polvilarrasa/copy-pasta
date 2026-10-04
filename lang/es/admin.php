@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 return [
 
+    'commands' => [
+        'admin_created' => 'Administrador :username creado. Ya puede entrar y su email está verificado.',
+        'password_mismatch' => 'Las contraseñas no coinciden.',
+    ],
+
     'reason_required' => 'Indica un motivo para esta acción.',
 
     'models' => [

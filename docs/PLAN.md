@@ -483,13 +483,28 @@ Aceptación: el feed de la home ejecuta 5 consultas como máximo (test con conta
 
 ### Fase 11 — Despliegue
 
-- [ ] Dockerfile de producción (PHP-FPM + Nginx o FrankenPHP) y `docker-compose` para staging.
-- [ ] Worker de colas y scheduler (`schedule:run`) configurados.
+- [x] Dockerfile de producción (PHP-FPM + Nginx o FrankenPHP) y `docker-compose` para staging.
+- [x] Worker de colas y scheduler (`schedule:run`) configurados.
 - [ ] Mailer transaccional real (SMTP o API) y dominio con SPF/DKIM.
-- [ ] Backups diarios de Postgres y monitorización de errores.
-- [ ] Comando `app:create-admin` para crear el primer admin en producción.
+- [x] Backups diarios de Postgres y monitorización de errores.
+- [x] Comando `app:create-admin` para crear el primer admin en producción.
 
 Aceptación: despliegue en staging desde CI con migraciones automáticas y checklist de humo (registro, publicar, votar, reportar, ocultar) superado a mano.
+
+**Estado de la aceptación:** la imagen se construye y arranca con Postgres en red: migraciones automáticas al arrancar, `/up` responde, `/robots.txt` dinámico, cabeceras de seguridad, redirección de `/admin`, compresión (CSS de 400 KB a 46 KB transferidos) y `app:create-admin` en español. El despliegue a staging desde CI y el checklist de humo **no están hechos**: necesitan el host o plataforma de staging y el remoto del repositorio, que aún no existen. Mailer real y SPF/DKIM quedan a cargo del operador.
+
+**Desviaciones de la Fase 11:**
+
+- **Dockerfile en etapas.** Los estilos importan Flux y escanean vistas dentro de `vendor/`, así que el stage de assets necesita las dependencias de Composer. Node va sobre Debian (`bookworm-slim`) porque el `package-lock.json` trae los binarios nativos de `vite-plus` para glibc y no para musl (Alpine).
+- **`public/robots.txt` eliminado.** Era el fichero por defecto del starter kit y sombreaba la ruta dinámica en producción: el servidor lo sirve antes que PHP. Los tests no lo detectaron porque el cliente de pruebas no pasa por el servidor; lo comprobé con la imagen.
+- **Workflow de despliegue sin acciones de terceros.** Construye la imagen y la publica en GHCR con comandos directos, porque no puedo verificar los SHAs de las acciones de terceros. El despliegue por SSH solo corre si existe la variable `STAGING_HOST`.
+- **TLS.** `SERVER_NAME` admite un dominio (HTTPS automático) o `:8080` detrás de un proxy que termine TLS. Con `APP_ENV=production` las URL salen en `https`.
+- **Contraseña del admin fuera de la caché de configuración.** `app:create-admin` lee `ADMIN_PASSWORD` con `getenv()`, no con `config()`: `config:cache` la escribiría en disco.
+- **Locale de la imagen.** `APP_LOCALE=es` en el Dockerfile; sin él, los mensajes del comando salían como claves.
+- **Pendiente: validación en español.** Los mensajes de validación de Laravel salen en inglés porque el proyecto no tiene `lang/es/validation.php`. Afecta a todos los formularios, no solo al comando.
+- **Test intermitente corregido.** `ModerationOverviewWidgetTest` comprobaba `assertDontSee('3')`, que coincidía con cualquier número de la página. Ahora compara el valor cacheado.
+- **Backups y monitorización.** Los backups quedan en un volumen local con 14 días de retención; la copia fuera del servidor y los logs a un agregador quedan a cargo del operador. Sin Sentry, como acordamos.
+
 
 ## Calidad y convenciones
 
