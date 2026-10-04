@@ -259,14 +259,23 @@ Aceptación: tests de registro, login, verificación, recuperación de contrase�
 
 ### Fase 2 — Modelo de dominio
 
-- [ ] Migraciones de copypastas, tags, copypasta\_tag, votes, folders, copypasta\_folder, reports y moderation\_actions según la sección Modelo de datos.
-- [ ] Extensión `unaccent`, columna generada `search_vector` e índice GIN.
-- [ ] Modelos con relaciones, casts, enums y scopes; `FeedQuery`.
-- [ ] Policies: CopypastaPolicy, FolderPolicy, ReportPolicy, TagPolicy, UserPolicy.
-- [ ] Factories y seeder: 15 etiquetas, 300 copy-pastas (10 % NSFW, fechas repartidas en 90 días), votos y favoritos aleatorios.
-- [ ] Listener que crea la carpeta "Favoritos" al registrarse un usuario.
+- [x] Migraciones de copypastas, tags, copypasta\_tag, votes, folders, copypasta\_folder, reports y moderation\_actions según la sección Modelo de datos.
+- [x] Extensión `unaccent`, columna generada `search_vector` e índice GIN.
+- [x] Modelos con relaciones, casts, enums y scopes; `FeedQuery`.
+- [x] Policies: CopypastaPolicy, FolderPolicy, ReportPolicy, TagPolicy, UserPolicy.
+- [x] Factories y seeder: 15 etiquetas, 300 copy-pastas (10 % NSFW, fechas repartidas en 90 días), votos y favoritos aleatorios.
+- [x] Listener que crea la carpeta "Favoritos" al registrarse un usuario.
 
 Aceptación: tests de cada scope de `FeedQuery` (órdenes, ventanas de top, etiquetas, búsqueda con acentos, exclusión de ocultos) y de cada Policy.
+
+**Desviaciones de esta fase:**
+
+- `FeedSort::New` se llama `FeedSort::Newest` en PHP. `new` es palabra reservada y no es un nombre de caso válido de forma segura. El valor de backing sigue siendo `'new'`, así que `?sort=new` no cambia.
+- `body_hash` se calcula en un mutator de `body` (`Copypasta::body()`), no en un hook `saving`. `DatabaseSeeder` usa `WithoutModelEvents`, que desactivaba el hook y dejaba el hash a `null` durante el seed. Un mutator no depende de eventos. La normalización (`squish` + `lower`) vive en `Copypasta::normalizeBody()`.
+- `TagPolicy` y `UserPolicy` no reciben instancia de `Tag` en `update`/`delete` cuando la regla no depende de ella (todo el staff gestiona todas las etiquetas). Las llamadas pueden seguir pasando la instancia sin problema.
+- Los usuarios creados con factories no disparan `Registered`, así que `CopypastaSeeder` crea su carpeta "Favoritos" antes de añadir favoritos.
+- Los índices parciales únicos (`folders` por `is_default`, `reports` por `pending`) y el `CHECK` de `votes.value` se crean con `DB::statement`, porque el constructor de migraciones de Laravel no los soporta.
+- Se añade `copypastas.user_id` y `published_at` a los `#[Fillable]` del modelo para poder crear copy-pastas con autor y fecha desde factories y seeders.
 
 ### Fase 3 — Panel `/admin` base
 

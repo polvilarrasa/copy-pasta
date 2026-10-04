@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Listeners\CreateDefaultFolder;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -27,6 +30,15 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureGates();
+        $this->configureListeners();
+    }
+
+    /**
+     * Register the application's event listeners.
+     */
+    protected function configureListeners(): void
+    {
+        Event::listen(Registered::class, CreateDefaultFolder::class);
     }
 
     /**
