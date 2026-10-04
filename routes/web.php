@@ -4,6 +4,7 @@ use App\Http\Controllers\Public\CopypastaController;
 use App\Http\Controllers\Public\CopypastaCopyController;
 use App\Http\Controllers\Public\CopypastaFavoriteController;
 use App\Http\Controllers\Public\CopypastaFolderController;
+use App\Http\Controllers\Public\CopypastaReportController;
 use App\Http\Controllers\Public\CopypastaVoteController;
 use App\Http\Controllers\Public\FeedController;
 use App\Http\Controllers\Public\NsfwConfirmationController;
@@ -34,6 +35,10 @@ Route::post('/c/{copypasta}/voto', CopypastaVoteController::class)
 Route::post('/c/{copypasta}/favorito', CopypastaFavoriteController::class)
     ->middleware(['auth', 'throttle:120,1'])
     ->name('copypastas.favorite');
+
+Route::post('/c/{copypasta}/reporte', CopypastaReportController::class)
+    ->middleware('auth')
+    ->name('copypastas.report');
 
 Route::post('/nsfw/confirmar', NsfwConfirmationController::class)->name('nsfw.confirm');
 

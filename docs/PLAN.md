@@ -401,14 +401,28 @@ Aceptación: tests de propiedad (no se accede a carpetas ajenas), Favoritos no b
 
 ### Fase 8 — Reportes y moderación
 
-- [ ] Action `ReportCopypasta` con validación de motivo, unicidad de pendiente y rate limit de 10 por hora.
-- [ ] Modal de reporte en la web pública.
-- [ ] Auto-ocultación a los 5 reportes pendientes de usuarios distintos; ocultación inmediata y email a admins en reportes por menores.
-- [ ] Página `ModerationQueue` en `/admin` agrupada por copy-pasta con acciones ocultar, restaurar, marcar NSFW y descartar.
-- [ ] ReportResource histórico; badge con el número de pendientes en la navegación.
-- [ ] Notificación por email al autor cuando se oculta su copy-pasta.
+- [x] Action `ReportCopypasta` con validación de motivo, unicidad de pendiente y rate limit de 10 por hora.
+- [x] Modal de reporte en la web pública.
+- [x] Auto-ocultación a los 5 reportes pendientes de usuarios distintos; ocultación inmediata y email a admins en reportes por menores.
+- [x] Página `ModerationQueue` en `/admin` agrupada por copy-pasta con acciones ocultar, restaurar, marcar NSFW y descartar.
+- [x] ReportResource histórico; badge con el número de pendientes en la navegación.
+- [x] Notificación por email al autor cuando se oculta su copy-pasta.
 
 Aceptación: tests del umbral de auto-ocultación, de la resolución en bloque de reportes, de los emails (Mail::fake) y de que no se pueden reportar copy-pastas propios.
+
+**Desviaciones de la Fase 8:**
+
+- **Auto-ocultación deja los reportes pendientes.** La especificación dice que el copy-pasta "queda arriba en la cola", y solo es posible si sus reportes siguen pendientes para que el staff los revise. Ocultar a mano sí los marca como aceptados, como pide el plan.
+- **Acción compartida de ocultación.** `ConcealCopypasta` escribe el estado, resuelve (o no) los pendientes, registra en `moderation_actions` (actor nulo en la automática) y avisa al autor tras confirmar la transacción. `HideCopypasta` y `ReportCopypasta` la usan, para no duplicar la lógica.
+- **Límite de 10 reportes por hora dentro de la Action.** Va con `RateLimiter::attempt` y lanza `ThrottleRequestsException` (429), así se cumple también fuera de la ruta pública.
+- **Emails como Mailables en cola.** `CopypastaHiddenMail` (autor) y `ReportedMinorAlertMail` (admins verificados). Se comprueban con `Mail::fake()` y `assertQueued`. El aviso de menores no llega a moderadores ni a admins sin email verificado.
+- **Solo se reportan copy-pastas visibles.** Un copy-pasta oculto o sin publicar no admite reportes (`ReportPolicy::create`). La Policy compara `user_id` para no cargar la relación.
+- **Descartar reportes.** `DismissCopypastaReports` y `CopypastaPolicy::dismissReports`; el log `dismiss_reports` solo se escribe si hubo reportes pendientes que descartar.
+- **Relación `pendingReports`.** `Copypasta::pendingReports()` filtra por estado pendiente; la cola la usa con `whereHas`, `with` y `withCount`/`withMin`/`withMax` sin closures, lo que permite a PHPStan tipar la consulta.
+- **Recarga del autor.** `ConcealCopypasta` usa `load('user')`, no `loadMissing`: la cola carga el autor con `user:id,username` y el correo se quedaba sin dirección. Lo detectó el test de ocultación desde la cola.
+- **Badge en la cola.** El número de pendientes va en la navegación de la página `ModerationQueue`, no en `ReportResource`, que es histórico de solo lectura.
+- **Acciones duplicadas.** Ocultar, restaurar y NSFW en la cola repiten las de `CopypastasTable`. Extraerlas a una clase compartida queda como limpieza posterior.
+- **Pendiente de comprobar en navegador.** El modal de reporte y el botón de la tarjeta están cubiertos por los tests de backend y el build de assets, pero no los he probado clicando en el navegador.
 
 ### Fase 9 — Gestión de usuarios
 

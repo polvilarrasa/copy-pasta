@@ -53,6 +53,11 @@ class CopypastaPolicy
         return $user->isStaff();
     }
 
+    public function dismissReports(User $user, Copypasta $copypasta): bool
+    {
+        return $user->isStaff();
+    }
+
     public function vote(User $user, Copypasta $copypasta): bool
     {
         return $this->canEngage($user, $copypasta);

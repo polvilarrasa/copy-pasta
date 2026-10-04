@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\FeedSort;
+use App\Enums\ReportStatus;
 use Database\Factories\CopypastaFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -147,6 +148,14 @@ class Copypasta extends Model
     public function reports(): HasMany
     {
         return $this->hasMany(Report::class);
+    }
+
+    /**
+     * @return HasMany<Report, $this>
+     */
+    public function pendingReports(): HasMany
+    {
+        return $this->hasMany(Report::class)->where('status', ReportStatus::Pending);
     }
 
     public function isHidden(): bool

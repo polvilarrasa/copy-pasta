@@ -35,6 +35,48 @@ async function sendJson(url, method, body = null) {
 }
 
 document.addEventListener('alpine:init', () => {
+    Alpine.data('copypastaReport', ({ copypastaId, url, messages }) => ({
+        visible: false,
+        sending: false,
+        reason: '',
+        details: '',
+        error: '',
+
+        open() {
+            this.visible = true;
+            this.error = '';
+        },
+
+        close() {
+            this.visible = false;
+        },
+
+        async submit() {
+            this.sending = true;
+            this.error = '';
+
+            const response = await sendJson(url, 'POST', { reason: this.reason, details: this.details });
+
+            this.sending = false;
+
+            if (response.ok) {
+                this.details = '';
+                this.close();
+                window.dispatchEvent(new CustomEvent('toast', { detail: messages.sent }));
+                return;
+            }
+
+            if (response.status === 422) {
+                this.error = response.data.errors?.details?.[0]
+                    ?? response.data.errors?.reason?.[0]
+                    ?? messages.failed;
+                return;
+            }
+
+            this.error = response.status === 429 ? messages.rateLimited : messages.failed;
+        },
+    }));
+
     Alpine.data('copypastaFolders', ({ copypastaId, indexUrl, syncUrl, storeUrl, messages }) => ({
         visible: false,
         loading: false,

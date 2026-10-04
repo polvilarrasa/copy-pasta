@@ -37,6 +37,16 @@
     class="rounded-md px-2 py-1 font-medium text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
 >{{ __('public.folders.button') }}</button>
 
+@auth
+    @if (auth()->id() !== $copypasta->user_id)
+        <button
+            type="button"
+            x-on:click="$dispatch('report-open', { copypasta: '{{ $copypasta->getKey() }}' })"
+            class="rounded-md px-2 py-1 font-medium text-zinc-500 ring-1 ring-zinc-200 hover:bg-zinc-50"
+        >{{ __('public.report.button') }}</button>
+    @endif
+@endauth
+
 <button
     type="button"
     x-on:click="copy()"
@@ -51,3 +61,6 @@
 >{{ __('public.card.share') }}</button>
 
 @include('components.copypasta-folder-selector')
+@auth
+    @include('components.copypasta-report-modal')
+@endauth

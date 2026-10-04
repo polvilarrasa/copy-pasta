@@ -87,6 +87,19 @@ return [
         'cancel' => 'Cancelar',
     ],
 
+    'report' => [
+        'button' => 'Reportar',
+        'title' => 'Reportar copy-pasta',
+        'reason' => 'Motivo',
+        'details' => 'Explica el motivo',
+        'details_helper' => 'Obligatorio solo si eliges «Otro». Entre 10 y 500 caracteres.',
+        'submit' => 'Enviar reporte',
+        'cancel' => 'Cancelar',
+        'sent' => 'Gracias. Revisaremos el reporte.',
+        'failed' => 'No se pudo enviar el reporte. Inténtalo de nuevo.',
+        'rate_limited' => 'Has enviado demasiados reportes en la última hora. Inténtalo más tarde.',
+    ],
+
     'show' => [
         'hidden_notice' => 'Este copy-pasta está oculto por moderación. Motivo: :reason',
         'unpublished_notice' => 'Este copy-pasta todavía no está publicado.',

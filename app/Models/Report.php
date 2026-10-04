@@ -8,6 +8,7 @@ use App\Enums\ReportReason;
 use App\Enums\ReportStatus;
 use Database\Factories\ReportFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +28,9 @@ use Illuminate\Support\Carbon;
 #[Fillable(['copypasta_id', 'reporter_id', 'reason', 'details', 'status'])]
 class Report extends Model
 {
+    /** Pending reports from distinct members that hide a copy-pasta automatically. */
+    public const AUTO_HIDE_THRESHOLD = 5;
+
     /** @use HasFactory<ReportFactory> */
     use HasFactory;
 
@@ -40,6 +44,14 @@ class Report extends Model
             'status' => ReportStatus::class,
             'resolved_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @param  Builder<Report>  $query
+     */
+    public function scopePending(Builder $query): void
+    {
+        $query->where('status', ReportStatus::Pending);
     }
 
     /**
