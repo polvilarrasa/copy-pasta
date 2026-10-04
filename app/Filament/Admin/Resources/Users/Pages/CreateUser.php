@@ -17,13 +17,13 @@ class CreateUser extends CreateRecord
     protected static string $resource = UserResource::class;
 
     /**
-     * The temporary password is shown once, in a notification that stays until the admin closes it.
+     * The member receives the invitation by email, so no password ever reaches the admin.
      *
      * @param  array<string, mixed>  $data
      */
     protected function handleRecordCreation(array $data): Model
     {
-        $created = app(CreateUserByAdmin::class)->handle(
+        $user = app(CreateUserByAdmin::class)->handle(
             UserModerationActions::actor(),
             (string) $data['username'],
             (string) $data['email'],
@@ -33,10 +33,9 @@ class CreateUser extends CreateRecord
         Notification::make()
             ->success()
             ->title(__('admin.users.create.created'))
-            ->body(__('admin.users.create.temporary_password', ['password' => $created['temporary_password']]))
-            ->persistent()
+            ->body(__('admin.users.create.invitation_sent', ['email' => $user->email]))
             ->send();
 
-        return $created['user'];
+        return $user;
     }
 }

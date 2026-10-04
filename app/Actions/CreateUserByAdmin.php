@@ -6,37 +6,33 @@ namespace App\Actions;
 
 use App\Enums\ModerationActionType;
 use App\Enums\Role;
+use App\Mail\UserInvitationMail;
 use App\Models\ModerationAction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class CreateUserByAdmin
 {
-    public const TEMPORARY_PASSWORD_LENGTH = 16;
-
     /**
-     * Creates a member with a generated temporary password that must be changed at the first sign-in. The address
-     * is marked verified because the admin vouches for it. The password is returned once so the admin can share it.
-     *
-     * @return array{user: User, temporary_password: string}
+     * Creates a member who has no password yet and sends them an invitation. The address stays unverified until the
+     * member follows the invitation and chooses a password, which proves they own it. Nobody else learns the password.
      */
-    public function handle(User $actor, string $username, string $email, Role $role): array
+    public function handle(User $actor, string $username, string $email, Role $role): User
     {
         Gate::forUser($actor)->authorize('create', User::class);
 
-        $temporaryPassword = Str::password(self::TEMPORARY_PASSWORD_LENGTH, symbols: false);
-
-        $user = DB::transaction(function () use ($actor, $username, $email, $role, $temporaryPassword): User {
+        $user = DB::transaction(function () use ($actor, $username, $email, $role): User {
             $user = new User;
             $user->forceFill([
                 'username' => $username,
                 'email' => $email,
                 'role' => $role,
-                'password' => $temporaryPassword,
-                'must_change_password' => true,
-                'email_verified_at' => now(),
+                // An unguessable placeholder that nobody holds, so the account cannot be entered before the invitation.
+                'password' => Str::random(64),
+                'email_verified_at' => null,
             ])->save();
 
             ModerationAction::query()->create([
@@ -50,6 +46,8 @@ class CreateUserByAdmin
             return $user;
         });
 
-        return ['user' => $user, 'temporary_password' => $temporaryPassword];
+        Mail::to($user)->queue(new UserInvitationMail($user));
+
+        return $user;
     }
 }

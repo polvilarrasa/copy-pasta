@@ -15,7 +15,7 @@ class UserForm
 {
     /**
      * Admins edit the public identity only. Passwords are never set here: resets go through the broker, and new
-     * accounts get a generated temporary password. Roles are set on creation here and changed afterwards by action.
+     * accounts receive an invitation by email. Roles are set on creation here and changed afterwards by action.
      * The username rules mirror App\Concerns\ProfileValidationRules.
      */
     public static function configure(Schema $schema): Schema

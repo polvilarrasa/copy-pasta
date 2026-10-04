@@ -32,7 +32,6 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $banned_at
  * @property string|null $ban_reason
- * @property bool $must_change_password
  * @property Carbon|null $deleted_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -50,19 +49,6 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     use HasFactory, Impersonate, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
-     * Any password change clears the temporary-password flag, unless the caller sets the flag in the same save
-     * (as admin-created accounts do). Covers the settings page, the reset flow and the Filament profile.
-     */
-    protected static function booted(): void
-    {
-        static::saving(function (User $user): void {
-            if ($user->isDirty('password') && ! $user->isDirty('must_change_password')) {
-                $user->must_change_password = false;
-            }
-        });
-    }
-
-    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -75,7 +61,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'email_verified_at' => 'datetime',
             'banned_at' => 'datetime',
             'anonymized_at' => 'datetime',
-            'must_change_password' => 'boolean',
+            'nsfw_confirmed_at' => 'datetime',
             'is_owner' => 'boolean',
             'password' => 'hashed',
         ];
@@ -92,6 +78,22 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     public function canBeImpersonated(): bool
     {
         return ! $this->isStaff() && ! $this->isBanned();
+    }
+
+    /**
+     * Adult content shows for staff, and for members who turned the preference on and confirmed their age.
+     */
+    public function canSeeNsfw(): bool
+    {
+        return $this->isStaff() || ($this->show_nsfw && $this->nsfw_confirmed_at !== null);
+    }
+
+    /**
+     * Identifies the password an invitation was issued for. The invitation stops working once the password changes.
+     */
+    public function invitationFingerprint(): string
+    {
+        return sha1((string) $this->password);
     }
 
     public function isAnonymized(): bool
@@ -208,7 +210,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
 
         return match ($panel->getId()) {
             'admin' => $this->isStaff(),
-            'app' => $this->hasVerifiedEmail(),
+            'app' => true,
             default => false,
         };
     }

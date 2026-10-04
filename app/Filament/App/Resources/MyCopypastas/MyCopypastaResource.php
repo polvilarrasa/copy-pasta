@@ -10,13 +10,13 @@ use App\Filament\App\Resources\MyCopypastas\Pages\ListMyCopypastas;
 use App\Filament\App\Resources\MyCopypastas\Schemas\CopypastaForm;
 use App\Filament\App\Resources\MyCopypastas\Tables\MyCopypastasTable;
 use App\Models\Copypasta;
-use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 
 class MyCopypastaResource extends Resource
 {
@@ -43,9 +43,7 @@ class MyCopypastaResource extends Resource
      */
     public static function canViewAny(): bool
     {
-        $user = auth()->user();
-
-        return $user instanceof User && $user->hasVerifiedEmail() && ! $user->isBanned();
+        return Gate::allows('viewOwn', Copypasta::class);
     }
 
     /**

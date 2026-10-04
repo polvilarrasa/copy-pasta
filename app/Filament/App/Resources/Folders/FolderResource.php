@@ -10,13 +10,13 @@ use App\Filament\App\Resources\Folders\RelationManagers\CopypastasRelationManage
 use App\Filament\App\Resources\Folders\Schemas\FolderForm;
 use App\Filament\App\Resources\Folders\Tables\FoldersTable;
 use App\Models\Folder;
-use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 
 class FolderResource extends Resource
 {
@@ -43,9 +43,7 @@ class FolderResource extends Resource
      */
     public static function canViewAny(): bool
     {
-        $user = auth()->user();
-
-        return $user instanceof User && $user->hasVerifiedEmail() && ! $user->isBanned();
+        return Gate::allows('viewAny', Folder::class);
     }
 
     /**

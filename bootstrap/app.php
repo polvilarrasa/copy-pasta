@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\EndExpiredImpersonation;
-use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureUserIsNotBanned;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -18,7 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             EnsureUserIsNotBanned::class,
-            EnsurePasswordIsChanged::class,
             EndExpiredImpersonation::class,
             SecurityHeaders::class,
         ]);

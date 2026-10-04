@@ -159,7 +159,7 @@ class Feed extends Component
         $user = auth()->user();
 
         if ($user instanceof User) {
-            return $user->isStaff() || $user->show_nsfw;
+            return $user->canSeeNsfw();
         }
 
         return $this->nsfw && $this->hasNsfwConsent();

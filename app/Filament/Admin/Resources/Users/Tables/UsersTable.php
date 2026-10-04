@@ -28,7 +28,8 @@ class UsersTable
                     ->searchable(),
                 TextColumn::make('email')
                     ->label(__('admin.fields.email'))
-                    ->searchable(),
+                    ->visible(fn (): bool => auth()->user()?->isAdmin() === true)
+                    ->searchable(fn (): bool => auth()->user()?->isAdmin() === true),
                 TextColumn::make('role')
                     ->label(__('admin.fields.role'))
                     ->badge()

@@ -559,12 +559,21 @@ Aceptación: un admin impersonando no puede cambiar ningún factor de autenticac
 
 #### 12.2b — Usuarios
 
-- [ ] Sustituir la contraseña temporal por invitación con enlace firmado de 72 horas que verifica el email; eliminar `must_change_password` y sus piezas (A1). Hasta que esté hecho, el admin conoce la contraseña de los usuarios que crea.
-- [ ] Unificar ajustes en `/settings` y mover allí la preferencia NSFW con confirmación +18 (M2, M6).
-- [ ] Abrir `/app` a usuarios no verificados y restringir con Policies; método `viewOwn` en lugar de la comprobación manual (M1, M7).
-- [ ] Ocultar el email de los usuarios a los moderadores (M10).
+- [x] Sustituir la contraseña temporal por invitación con enlace firmado de 72 horas que verifica el email; eliminar `must_change_password` y sus piezas (A1).
+- [x] Unificar ajustes en `/settings` y mover allí la preferencia NSFW con confirmación +18 (M2, M6).
+- [x] Abrir `/app` a usuarios no verificados y restringir con Policies; método `viewOwn` en lugar de la comprobación manual (M1, M7).
+- [x] Ocultar el email de los usuarios a los moderadores (M10).
 
 Aceptación: un admin no puede conocer la contraseña de otro usuario; los ajustes de cuenta se editan desde un único sitio.
+
+**Desviaciones de la Fase 12.2b:**
+
+- **Invitación con huella, no con tabla de tokens.** El enlace firma la huella de la contraseña actual (`User::invitationFingerprint()`). En cuanto el miembro elige contraseña, el enlace deja de valer (404), sin tabla de tokens. Así una desverificación posterior por un admin no reabre una invitación vieja. El enlace caduca a las 72 horas por la firma (`signed`).
+- **Cuenta sin contraseña conocida.** `CreateUserByAdmin` guarda una contraseña aleatoria que nadie posee y deja el email sin verificar. El admin ya no recibe ninguna contraseña; la notificación confirma el envío.
+- **Perfil de `/app` eliminado.** Username y preferencia NSFW viven en `/settings/profile`. El feed usa `User::canSeeNsfw()`, que exige preferencia y confirmación de edad. Staff sigue viendo +18 sin preferencia, como antes.
+- **Policies también para `FolderResource`.** Igual que `MyCopypastaResource`, la visibilidad pasa a `FolderPolicy::viewAny` en lugar de comprobar la verificación a mano. Un usuario sin verificar ve sus carpetas y su lista vacía, pero no puede publicar (`CopypastaPolicy::create` sigue exigiendo verificación).
+- **Email oculto a moderadores en tabla y búsqueda.** La columna y su búsqueda solo se muestran a admin. Otras vistas de moderación (reportes, log) no se han revisado en esta fase.
+- **Tests reemplazados, no borrados sin aviso.** `TemporaryPasswordTest` pasa a `InvitationTest`, `EditProfileTest` a `NsfwPreferenceTest` y los casos de username de `ProfileUpdateTest`. Se aprobó la sustitución al dar el OK a la lista.
 
 #### 12.3 — Moderación
 

@@ -73,6 +73,7 @@ return [
     'profile' => [
         'username' => 'Nombre de usuario',
         'show_nsfw' => 'Mostrar contenido +18 en el feed',
+        'nsfw_age_confirm' => 'Confirmo que soy mayor de 18 años y quiero ver contenido para adultos.',
         'show_nsfw_helper' => 'Si está desactivado, el feed oculta los copy-pastas +18 salvo que confirmes la edad en la web.',
     ],
 

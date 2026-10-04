@@ -9,9 +9,13 @@ test('un invitado es redirigido al login desde el panel de usuario', function ()
     $this->get('/app/copypastas')->assertRedirect(route('login'));
 });
 
-test('un usuario sin email verificado no accede al panel de usuario', function (): void {
+test('un usuario sin email verificado entra a su lista, pero no puede publicar', function (): void {
     $this->actingAs(User::factory()->unverified()->create())
         ->get('/app/copypastas')
+        ->assertOk();
+
+    $this->actingAs(User::factory()->unverified()->create())
+        ->get('/app/copypastas/create')
         ->assertForbidden();
 });
 
@@ -43,4 +47,14 @@ test('el botón publicar de la web pública lleva al formulario para verificados
     $this->actingAs(User::factory()->unverified()->create())
         ->get(route('home'))
         ->assertSee(route('verification.notice'), false);
+});
+
+test('los ajustes de cuenta viven solo en /settings: el panel de usuario ya no tiene perfil propio', function (): void {
+    $this->actingAs(User::factory()->create())
+        ->get('/app/profile')
+        ->assertNotFound();
+
+    $this->actingAs(User::factory()->create())
+        ->get('/settings/profile')
+        ->assertOk();
 });

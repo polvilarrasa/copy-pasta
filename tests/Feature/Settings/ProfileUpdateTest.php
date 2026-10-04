@@ -87,4 +87,18 @@ class ProfileUpdateTest extends TestCase
 
         $this->assertNotNull($user->fresh());
     }
+
+    public function test_username_already_taken_by_another_member_is_rejected(): void
+    {
+        User::factory()->create(['username' => 'ocupado']);
+        $user = User::factory()->create(['username' => 'libre']);
+
+        $this->actingAs($user);
+
+        Livewire::test('pages::settings.profile')
+            ->set('username', 'ocupado')
+            ->set('email', $user->email)
+            ->call('updateProfileInformation')
+            ->assertHasErrors(['username' => 'unique']);
+    }
 }

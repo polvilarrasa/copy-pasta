@@ -15,6 +15,14 @@ class FolderPolicy
         return $user->getKey() === $folder->user_id;
     }
 
+    /**
+     * Any member who can sign in to the user panel sees their own folders.
+     */
+    public function viewAny(User $user): bool
+    {
+        return ! $user->isBanned();
+    }
+
     public function create(User $user): bool
     {
         return true;

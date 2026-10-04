@@ -151,12 +151,12 @@ test('el autor borra su copy-pasta con borrado lógico', function (): void {
     expect(Copypasta::withTrashed()->whereKey($copypasta->getKey())->first()?->deleted_at)->not->toBeNull();
 });
 
-test('el recurso solo es visible para miembros verificados y activos', function (): void {
+test('el recurso es visible para cualquier miembro no baneado, también sin verificar', function (): void {
     $this->actingAs(User::factory()->unverified()->create());
-    expect(MyCopypastaResource::canViewAny())->toBeFalse();
-
-    $this->actingAs(User::factory()->create());
     expect(MyCopypastaResource::canViewAny())->toBeTrue();
+
+    $this->actingAs(User::factory()->banned()->create());
+    expect(MyCopypastaResource::canViewAny())->toBeFalse();
 });
 
 test('la página de creación usa el recurso propio', function (): void {

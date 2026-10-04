@@ -45,7 +45,7 @@ test('un usuario ve NSFW solo si lo tiene activado en su preferencia', function 
         ->test(Feed::class)
         ->assertDontSee('Titulo adulto');
 
-    Livewire::actingAs(User::factory()->create(['show_nsfw' => true]))
+    Livewire::actingAs(User::factory()->create(['show_nsfw' => true, 'nsfw_confirmed_at' => now()]))
         ->test(Feed::class)
         ->assertSee('Titulo adulto');
 });

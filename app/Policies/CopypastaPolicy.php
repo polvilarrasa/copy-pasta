@@ -23,6 +23,14 @@ class CopypastaPolicy
         return $user !== null && ($user->is($copypasta->user) || $user->isStaff());
     }
 
+    /**
+     * Lists the member's own copy-pastas. An unverified member sees an empty list until they can publish.
+     */
+    public function viewOwn(User $user): bool
+    {
+        return ! $user->isBanned();
+    }
+
     public function create(User $user): bool
     {
         return $user->hasVerifiedEmail();

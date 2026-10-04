@@ -37,7 +37,6 @@ class AnonymizeUser
                 'password' => Str::random(64),
                 'role' => Role::User,
                 'show_nsfw' => false,
-                'must_change_password' => false,
                 'email_verified_at' => null,
                 'two_factor_secret' => null,
                 'two_factor_recovery_codes' => null,

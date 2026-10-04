@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Http\Middleware\EndExpiredImpersonation;
-use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureStaffHasTwoFactor;
 use App\Http\Middleware\EnsureUserIsNotBanned;
 use App\Http\Middleware\SecurityHeaders;
@@ -50,7 +49,6 @@ class AdminPanelProvider extends PanelProvider
                 StartSession::class,
                 EndExpiredImpersonation::class,
                 EnsureUserIsNotBanned::class,
-                EnsurePasswordIsChanged::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 PreventRequestForgery::class,

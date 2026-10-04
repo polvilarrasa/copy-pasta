@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Auth\TemporaryPasswordController;
+use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Impersonation\LeaveImpersonationController;
 use App\Http\Controllers\Public\CopypastaController;
 use App\Http\Controllers\Public\CopypastaCopyController;
@@ -57,9 +57,9 @@ Route::post('/impersonacion/salir', LeaveImpersonationController::class)
     ->middleware('auth')
     ->name('impersonation.leave');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/contrasena-temporal', [TemporaryPasswordController::class, 'edit'])->name('password.temporary.edit');
-    Route::put('/contrasena-temporal', [TemporaryPasswordController::class, 'update'])->name('password.temporary.update');
+Route::middleware('signed')->group(function () {
+    Route::get('/invitacion/{user}', [InvitationController::class, 'show'])->name('invitation.show');
+    Route::post('/invitacion/{user}', [InvitationController::class, 'store'])->name('invitation.store');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

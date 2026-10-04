@@ -27,10 +27,12 @@ test('un moderador baneado no accede al panel aunque tenga sesión', function ()
     expect($moderator->canAccessPanel(Panel::make()->id('admin')))->toBeFalse();
 });
 
-test('el panel de usuario se abre a miembros verificados, también a staff, pero no sin verificar', function (): void {
+test('el panel de usuario se abre a cualquier miembro no baneado, también sin verificar', function (): void {
     $admin = User::factory()->admin()->withTwoFactor()->create();
     $unverified = User::factory()->unverified()->create();
+    $banned = User::factory()->banned()->create();
 
     expect($admin->canAccessPanel(Panel::make()->id('app')))->toBeTrue()
-        ->and($unverified->canAccessPanel(Panel::make()->id('app')))->toBeFalse();
+        ->and($unverified->canAccessPanel(Panel::make()->id('app')))->toBeTrue()
+        ->and($banned->canAccessPanel(Panel::make()->id('app')))->toBeFalse();
 });

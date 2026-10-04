@@ -15,6 +15,10 @@ new #[Title('Profile settings')] class extends Component {
     public string $username = '';
     public string $email = '';
 
+    public bool $showNsfw = false;
+
+    public bool $ageConfirmed = false;
+
     /**
      * Mount the component.
      */
@@ -22,6 +26,32 @@ new #[Title('Profile settings')] class extends Component {
     {
         $this->username = Auth::user()->username;
         $this->email = Auth::user()->email;
+        $this->showNsfw = Auth::user()->show_nsfw;
+    }
+
+    /**
+     * Turning the adult-content preference on needs the +18 confirmation, and the date of that confirmation is kept.
+     */
+    public function updateNsfwPreference(): void
+    {
+        $user = Auth::user();
+
+        if (! $this->showNsfw) {
+            $user->forceFill(['show_nsfw' => false])->save();
+            $this->ageConfirmed = false;
+
+            Flux::toast(variant: 'success', text: __('Profile updated.'));
+
+            return;
+        }
+
+        if (! $user->show_nsfw) {
+            $this->validate(['ageConfirmed' => ['accepted']]);
+
+            $user->forceFill(['show_nsfw' => true, 'nsfw_confirmed_at' => now()])->save();
+        }
+
+        Flux::toast(variant: 'success', text: __('Profile updated.'));
     }
 
     /**
@@ -116,6 +146,18 @@ new #[Title('Profile settings')] class extends Component {
                     </flux:button>
                 </div>
 
+            </div>
+        </form>
+
+        <form wire:submit="updateNsfwPreference" class="my-6 w-full space-y-6" data-test="nsfw-preference-form">
+            <flux:switch wire:model="showNsfw" :label="__('app.profile.show_nsfw')" :description="__('app.profile.show_nsfw_helper')" />
+
+            <flux:checkbox wire:model="ageConfirmed" :label="__('app.profile.nsfw_age_confirm')" />
+
+            <div class="flex items-center justify-end">
+                <flux:button variant="primary" type="submit" data-test="update-nsfw-button">
+                    {{ __('Save') }}
+                </flux:button>
             </div>
         </form>
 

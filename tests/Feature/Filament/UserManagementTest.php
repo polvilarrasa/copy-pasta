@@ -6,14 +6,17 @@ use App\Enums\Role;
 use App\Filament\Admin\Resources\Users\Pages\CreateUser;
 use App\Filament\Admin\Resources\Users\Pages\ListUsers;
 use App\Filament\Admin\Resources\Users\UserResource;
+use App\Mail\UserInvitationMail;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
 beforeEach(fn () => Filament::setCurrentPanel(Filament::getPanel('admin')));
 
-test('un admin crea un usuario desde el panel con su rol y contraseña temporal', function (): void {
+test('un admin crea un usuario desde el panel con su rol y le envía una invitación', function (): void {
+    Mail::fake();
     $admin = User::factory()->admin()->withTwoFactor()->create();
 
     Livewire::actingAs($admin)
@@ -29,7 +32,23 @@ test('un admin crea un usuario desde el panel con su rol y contraseña temporal'
     $created = User::query()->where('email', 'nuevo@example.com')->sole();
 
     expect($created->role)->toBe(Role::Moderator)
-        ->and($created->must_change_password)->toBeTrue();
+        ->and($created->email_verified_at)->toBeNull();
+
+    Mail::assertQueued(UserInvitationMail::class, fn (UserInvitationMail $mail): bool => $mail->hasTo('nuevo@example.com'));
+});
+
+test('el email de los usuarios solo lo ve un admin, y un moderador no lo puede buscar', function (): void {
+    $member = User::factory()->create(['email' => 'secreto@example.com']);
+
+    Livewire::actingAs(User::factory()->admin()->withTwoFactor()->create())
+        ->test(ListUsers::class)
+        ->assertTableColumnVisible('email');
+
+    Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
+        ->test(ListUsers::class)
+        ->assertTableColumnHidden('email')
+        ->searchTable('secreto')
+        ->assertCanNotSeeTableRecords([$member]);
 });
 
 test('un moderador no abre el formulario de creación de usuarios', function (): void {

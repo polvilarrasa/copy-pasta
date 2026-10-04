@@ -142,7 +142,7 @@ return [
         ],
         'create' => [
             'created' => 'Usuario creado.',
-            'temporary_password' => 'Contraseña temporal: :password. Cópiala ahora: no se volverá a mostrar. El usuario tendrá que cambiarla al entrar.',
+            'invitation_sent' => 'Invitación enviada a :email. El enlace caduca en 72 horas.',
         ],
     ],
 

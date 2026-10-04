@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 use App\Actions\ImpersonateUser;
 use App\Enums\ModerationActionType;
-use App\Filament\App\Pages\Auth\EditProfile;
 use App\Models\ModerationAction;
 use App\Models\User;
-use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 
@@ -72,19 +70,19 @@ test('durante la impersonación la contraseña no cambia desde ajustes', functio
         ->and(Hash::check('nueva-contraseña-123', $member->password))->toBeFalse();
 });
 
-test('durante la impersonación ni el email ni la contraseña cambian desde el perfil de /app', function (): void {
-    Filament::setCurrentPanel(Filament::getPanel('app'));
+test('durante la impersonación ni el email ni la contraseña cambian desde ajustes', function (): void {
     [, $member] = impersonating();
     $emailBefore = $member->email;
 
-    Livewire::test(EditProfile::class)
-        ->fillForm([
-            'email' => 'nuevo@example.com',
-            'password' => 'nueva-contraseña-123',
-            'passwordConfirmation' => 'nueva-contraseña-123',
-            'currentPassword' => 'contraseña-actual',
-        ])
-        ->call('save');
+    Livewire::test('pages::settings.profile')
+        ->set('email', 'nuevo@example.com')
+        ->call('updateProfileInformation');
+
+    Livewire::test('pages::settings.security')
+        ->set('current_password', 'contraseña-actual')
+        ->set('password', 'nueva-contraseña-123')
+        ->set('password_confirmation', 'nueva-contraseña-123')
+        ->call('updatePassword');
 
     $member->refresh();
 
