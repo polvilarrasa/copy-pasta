@@ -4,7 +4,7 @@ Oct 4, 2026 · @Pol
 
 ## Cómo usar este plan en Claude Code
 
-El plan se ejecuta en 12 fases secuenciales dentro de una misma sesión. Cada fase termina con tests en verde y un commit.
+El plan se ejecuta en 13 fases secuenciales (0 a 12) dentro de una misma sesión. Cada fase termina con tests en verde y un commit.
 
 1. Exporta este documento a Markdown y guárdalo en la raíz del repo como `docs/PLAN.md`.
 2. Primer prompt: *"Lee docs/PLAN.md entero. Crea CLAUDE.md con el resumen del stack, las convenciones de la sección Calidad y el comando de tests. No escribas código todavía."*
@@ -231,7 +231,7 @@ Navegación común de la web pública: logo, buscador, botón "Publicar" (lleva 
 
 ## Fases de implementación
 
-12 fases, de la 0 a la 11. Cada una deja la app funcionando, con tests en verde y un commit. Las fases 0 a 4 dan una web navegable con contenido sembrado; la 8 completa el MVP funcional.
+13 fases, de la 0 a la 12. Cada una deja la app funcionando, con tests en verde y un commit. Las fases 0 a 4 dan una web navegable con contenido sembrado; la 8 completa el MVP funcional.
 
 ### Fase 0 — Esqueleto del proyecto
 
@@ -516,6 +516,68 @@ Aceptación: despliegue en staging desde CI con migraciones automáticas y check
 - **Test intermitente corregido.** `ModerationOverviewWidgetTest` comprobaba `assertDontSee('3')`, que coincidía con cualquier número de la página. Ahora compara el valor cacheado.
 - **Backups y monitorización.** Los backups quedan en un volumen local con 14 días de retención; la copia fuera del servidor y los logs a un agregador quedan a cargo del operador. Sin Sentry, como acordamos.
 
+### Fase 12 — Correcciones antes de producción
+
+Cubre los críticos y altos de la [auditoría del MVP](AUDITORIA.md), que tiene el detalle de cada hallazgo (C1–C5, A1–A6, M1–M10) y la verificación contra el código. Orden de ejecución: C1, 12.1, 12.2a, 12.2b, 12.3 y 12.4, con un commit por bloque. Ya incorpora las decisiones tomadas en esa auditoría.
+
+#### 12.1 — Proceso y datos
+
+- [ ] Subir el repo a un remoto privado y dejar CI en verde (C1).
+- [ ] Action `DeleteOwnAccount`: retira votos y favoritos con deltas, anonimiza el usuario y mantiene sus copy-pastas visibles como "usuario eliminado" (C2).
+- [ ] FK de `copypastas.user_id`, `votes.user_id` y `reports.reporter_id` a `restrictOnDelete` (C2).
+- [ ] Comando `app:recalculate-counters` que recalcula todos los contadores desde las tablas reales; ejecutarlo una vez (C2).
+- [ ] Anonimización programada de usuarios con borrado lógico de más de 30 días (M9).
+
+Aceptación: tras borrar una cuenta con votos, favoritos, copy-pastas y reportes, los contadores de los copy-pastas afectados coinciden con un recuento real y los copy-pastas de otros siguen en sus carpetas.
+
+#### 12.2a — Impersonación y staff
+
+- [ ] Middleware `BlockDuringImpersonation` en 2FA, passkeys y borrado de cuenta, con un test por ruta. El bloqueo es por diseño y no depende de `password.confirm` ni de `current_password` (C3).
+- [ ] Limpiar `auth.password_confirmed_at` al iniciar y terminar una impersonación (`ImpersonateUser`, `StopImpersonating`), con un test de que `password.confirm` falla durante la impersonación (N1).
+- [ ] Impersonación con caducidad de 30 minutos y registro del fin al expirar.
+- [ ] 2FA obligatorio para acceder a `/admin` (A2).
+- [ ] Protección del último admin y flag de propietario para promover o degradar admins (A2).
+
+Aceptación: un admin impersonando no puede cambiar ningún factor de autenticación ni borrar la cuenta, aunque haya confirmado su contraseña antes; ningún flujo deja la plataforma sin admins.
+
+#### 12.2b — Usuarios
+
+- [ ] Sustituir la contraseña temporal por invitación con enlace firmado de 72 horas que verifica el email; eliminar `must_change_password` y sus piezas (A1). Hasta que esté hecho, el admin conoce la contraseña de los usuarios que crea.
+- [ ] Unificar ajustes en `/settings` y mover allí la preferencia NSFW con confirmación +18 (M2, M6).
+- [ ] Abrir `/app` a usuarios no verificados y restringir con Policies; método `viewOwn` en lugar de la comprobación manual (M1, M7).
+- [ ] Ocultar el email de los usuarios a los moderadores (M10).
+
+Aceptación: un admin no puede conocer la contraseña de otro usuario; los ajustes de cuenta se editan desde un único sitio.
+
+#### 12.3 — Moderación
+
+- [ ] Nuevo rol `trusted` ("usuario de confianza") en el enum `Role`, entre `user` y `moderator`. No da acceso a `/admin`. Revisar las comparaciones de rol que asumen solo tres valores (C4).
+- [ ] Los admins asignan y retiran el rol desde la ficha de usuario, con registro en el log. El escritorio admin sugiere candidatos: al menos 10 reportes resueltos y un 80 % aceptados (C4).
+- [ ] Antigüedad mínima de 72 horas para reportar (C4).
+- [ ] Reportes ponderados: 1 punto un usuario normal, 3 un usuario de confianza. Auto-ocultación a los 5 puntos (C4).
+- [ ] El motivo "menores" solo auto-oculta si reporta un usuario de confianza o staff. En los demás casos, prioridad máxima en la cola y alerta inmediata a los admins (C4).
+- [ ] Pérdida temporal del derecho a reportar tras 3 reportes rechazados en 30 días (C4).
+- [ ] Test de descartar reportes sobre un auto-ocultado; si queda huérfano, restaurarlo en la misma Action (A3).
+- [ ] Tabla `copypasta_revisions`; cada reporte guarda la revisión vista; la cola muestra el diff (A5).
+- [ ] Edición libre con historial visible: "editado" en el detalle abre las versiones anteriores (A5).
+- [ ] Formulario de aviso para anónimos con email, que entra en la cola (A6).
+- [ ] Email de ocultación con motivo y vía de recurso (A6).
+
+Aceptación: una cuenta de menos de 72 horas no puede reportar; un reporte por menores de un usuario que no es de confianza no oculta pero sí alerta; el moderador ve la versión reportada aunque el autor haya editado.
+
+#### 12.4 — Infraestructura y calidad
+
+- [ ] Redis para caché, sesiones y rate limits, como un servicio más del compose (M4).
+- [ ] Semilla del orden aleatorio en la query string y columna `random_key` indexada; `EXPLAIN` con 200.000 copy-pastas (M3).
+- [ ] Tests de navegador de 6 flujos en CI: copiar, votar, guardar en carpeta, reportar, ocultar e impersonar (A4).
+- [ ] VPS en la UE con Ubuntu LTS: acceso solo por clave SSH, cortafuegos con 22, 80 y 443 abiertos, actualizaciones de seguridad automáticas.
+- [ ] `compose.production.yaml` a partir del de staging: app, worker, scheduler, Postgres y Redis, con HTTPS automático vía `SERVER_NAME` y el dominio. `RUN_MIGRATIONS=true` solo en el servicio `app`; worker y scheduler sin esa variable; la migración se ejecuta con `migrate --isolated --force` (M5 descartado tras la verificación; esto es endurecimiento).
+- [ ] Workflow de despliegue apuntando al VPS con una variable de host de producción.
+- [ ] Mailer transaccional con SPF, DKIM y DMARC en el dominio (C5).
+- [ ] Backups diarios de Postgres copiados a un almacenamiento externo compatible con S3, con prueba de restauración (C5).
+- [ ] Checklist de humo y Lighthouse sobre el VPS.
+
+Aceptación: el VPS desplegado desde CI con los 6 tests de navegador en verde; restauración de un backup probada; el feed aleatorio con 200.000 filas responde en menos de 50 ms.
 
 ## Calidad y convenciones
 
