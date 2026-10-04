@@ -36,6 +36,7 @@ async function sendJson(url, method, body = null) {
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('copypastaReport', ({ copypastaId, url, messages }) => ({
+        copypastaId,
         visible: false,
         sending: false,
         reason: '',
@@ -78,6 +79,8 @@ document.addEventListener('alpine:init', () => {
     }));
 
     Alpine.data('copypastaFolders', ({ copypastaId, indexUrl, syncUrl, storeUrl, messages }) => ({
+        copypastaId,
+        messages,
         visible: false,
         loading: false,
         folders: [],
@@ -166,6 +169,8 @@ document.addEventListener('alpine:init', () => {
         actionFailedMessage,
     }) => ({
         revealed: false,
+        authenticated,
+        loginRequiredFolderMessage,
         score,
         myVote,
         isFavorite,

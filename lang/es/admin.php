@@ -60,6 +60,13 @@ return [
         'status' => 'Estado',
     ],
 
+    'widgets' => [
+        'pending_reports' => 'Reportes pendientes',
+        'published_today' => 'Publicados hoy',
+        'published_week' => 'Publicados en 7 días',
+        'new_users' => 'Usuarios nuevos (7 días)',
+    ],
+
     'roles' => [
         'user' => 'Usuario',
         'moderator' => 'Moderador',

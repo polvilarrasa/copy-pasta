@@ -13,6 +13,24 @@ return [
         'register' => 'Registrarse',
         'logout' => 'Salir',
         'rules' => 'Normas',
+        'privacy' => 'Privacidad',
+        'cookies' => 'Cookies',
+    ],
+
+    'legal' => [
+        'draft_notice' => 'Texto provisional pendiente de revisión legal antes del lanzamiento.',
+    ],
+
+    'errors' => [
+        'back_home' => 'Volver al inicio',
+        '403' => [
+            'title' => 'No tienes acceso a esta página',
+            'body' => 'Puede que necesites iniciar sesión o que tu cuenta no tenga permiso para verla.',
+        ],
+        '404' => [
+            'title' => 'Página no encontrada',
+            'body' => 'La página que buscas no existe o se ha movido.',
+        ],
     ],
 
     'sorts' => [
@@ -112,7 +130,35 @@ return [
 
     'rules' => [
         'title' => 'Normas de la comunidad',
-        'placeholder' => 'Las normas se publicarán antes del lanzamiento.',
+        'items' => [
+            'Publica solo texto que puedas compartir: nada de datos personales de terceros ni información privada.',
+            'Prohibido el acoso, los insultos dirigidos a personas y el discurso de odio.',
+            'El contenido sexual con menores se elimina de inmediato y se notifica.',
+            'Marca como +18 los copy-pastas con contenido sexual explícito o gráfico.',
+            'Los copy-pastas que repitan el mismo texto pueden ser retirados.',
+            'Los moderadores pueden ocultar cualquier contenido que incumpla estas normas, con motivo, y el autor recibe un aviso.',
+            'Para apelar una ocultación, escribe al equipo desde la dirección de contacto del sitio.',
+        ],
+    ],
+
+    'privacy' => [
+        'title' => 'Política de privacidad',
+        'sections' => [
+            ['heading' => 'Responsable', 'body' => 'El responsable del tratamiento es el titular del sitio, con los datos de contacto que se publicarán antes del lanzamiento.'],
+            ['heading' => 'Datos que tratamos', 'body' => 'Email, nombre de usuario, contraseña cifrada, los copy-pastas y votos que publicas, tus carpetas y tus reportes, además de los registros de moderación.'],
+            ['heading' => 'Finalidad y base', 'body' => 'Prestar el servicio de la cuenta, mostrar tu contenido, moderar la comunidad y atender reportes. La base es la ejecución del servicio y, para los emails, la verificación de tu cuenta.'],
+            ['heading' => 'Conservación', 'body' => 'Mientras mantengas la cuenta. Los registros de moderación se conservan para garantizar la trazabilidad de las decisiones.'],
+            ['heading' => 'Tus derechos', 'body' => 'Puedes acceder, rectificar y suprimir tus datos, y solicitar su portabilidad u oponerte a su tratamiento escribiendo al contacto del sitio.'],
+        ],
+    ],
+
+    'cookies' => [
+        'title' => 'Política de cookies',
+        'sections' => [
+            ['heading' => 'Cookies técnicas', 'body' => 'La sesión y la protección contra falsificación de formularios necesitan cookies. No se pueden desactivar si quieres usar tu cuenta.'],
+            ['heading' => 'Confirmación +18', 'body' => 'Si confirmas que eres mayor de edad, se guarda una cookie durante un año para no volver a preguntarte en este navegador.'],
+            ['heading' => 'Sin cookies de terceros', 'body' => 'No usamos cookies de publicidad ni de analítica de terceros.'],
+        ],
     ],
 
 ];

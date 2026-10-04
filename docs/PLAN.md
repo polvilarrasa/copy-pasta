@@ -449,14 +449,37 @@ Aceptación: tests de que un moderador no puede banear ni impersonar, un admin n
 
 ### Fase 10 — Endurecimiento
 
-- [ ] Rate limits finales: publicar 10 por hora, registro 5 por hora por IP, contador de copias.
-- [ ] Revisión de N+1 con `Model::preventLazyLoading()` en local; eager loading en el feed.
-- [ ] Caché de la lista de etiquetas activas y de los conteos del escritorio admin.
-- [ ] Cabeceras de seguridad (CSP compatible con Livewire), cookies seguras, HTTPS forzado en producción.
-- [ ] `sitemap.xml` con copy-pastas no NSFW, `robots.txt`, páginas 404 y 403 personalizadas.
-- [ ] Páginas de privacidad y cookies; textos de las normas.
+- [x] Rate limits finales: publicar 10 por hora, registro 5 por hora por IP, contador de copias.
+- [x] Revisión de N+1 con `Model::preventLazyLoading()` en local; eager loading en el feed.
+- [x] Caché de la lista de etiquetas activas y de los conteos del escritorio admin.
+- [x] Cabeceras de seguridad (CSP compatible con Livewire), cookies seguras, HTTPS forzado en producción.
+- [x] `sitemap.xml` con copy-pastas no NSFW, `robots.txt`, páginas 404 y 403 personalizadas.
+- [x] Páginas de privacidad y cookies; textos de las normas.
 
 Aceptación: el feed de la home ejecuta 5 consultas como máximo (test con contador de queries); auditoría de Lighthouse de 90 o más en rendimiento y accesibilidad.
+
+**Estado de la aceptación:** el test de consultas del feed pasa (4 consultas como invitado y como miembro, máximo 5). Lighthouse **no está cumplido**: accesibilidad 100, pero rendimiento 64 con el servidor local, que no comprime. Ver la desviación de rendimiento.
+
+**Desviaciones de la Fase 10:**
+
+- **Límites en las Actions.** Publicar (10 por hora por autor) va en `PublishCopypasta`, y el registro (5 por hora por IP) en `CreateNewUser`, porque Fortify no admite middleware por ruta de registro. Así se aplican también fuera de la página.
+- **Contador de copias.** Ya cumplía lo pedido (una copia por visitante y hora, más throttle de 120/min); no se cambia.
+- **CSP con `unsafe-eval`.** Alpine y Livewire necesitan `unsafe-eval` en la build estándar. Migrar a `@alpinejs/csp` permitiría quitarlo; queda para el backlog. Las fuentes ya van en local, así que la política es `'self'` más lo anterior.
+- **Cabeceras también en los paneles.** Las rutas de Filament no pasan por el grupo `web`, así que `SecurityHeaders` se añade a los dos paneles. Las redirecciones de autenticación de los paneles no las llevan; las páginas renderizadas sí.
+- **Widgets del escritorio admin.** La Fase 3 los planificó y no existían. Se crean ahora (`ModerationOverviewWidget`), con los conteos cacheados 5 minutos, que es lo que la caché del plan necesitaba.
+- **Caché de etiquetas con atributos planos.** `ListActiveTags` cachea atributos y los rehidrata con `Tag::hydrate()`, con clave versionada. La primera versión cacheaba modelos serializados, que al leerlos de un store real devolvían `__PHP_Incomplete_Class` y daban 500 en la home. Los tests usaban el store `array` y no lo detectaron; ahora hay un test de ida y vuelta por el store `file`.
+- **Sitemap y robots sin paquete.** `/sitemap.xml` lista copy-pastas visibles y no NSFW, con tope de 50.000 URLs por el protocolo, y se cachea una hora. `/robots.txt` se genera con la URL de la app.
+- **Legales como borrador.** Privacidad, cookies y normas están escritas en español y marcadas en pantalla como pendientes de revisión legal. No son textos definitivos.
+- **Enlaces `unsafe` y HTTPS.** En producción se fuerza `https` en las URL y las cookies son seguras mediante `SESSION_SECURE_COOKIE`, documentado en `.env.example`. El valor real se fija en el despliegue (Fase 11).
+- **Script de Livewire diferido.** El `livewire.js` del `<head>`/`body` bloqueaba el primer render (Lighthouse lo marcó con 6 s de bloqueo). Se añade `defer` con `useScriptTagAttributes`. `app.js` es un módulo de Vite en el `<head>`, así que sigue ejecutándose antes.
+- **Errores de Alpine heredados de las Fases 7 y 8.** Los componentes del selector de carpetas, del modal de reporte y de las acciones de tarjeta usaban en la plantilla variables que no estaban expuestas como propiedades (`messages`, `copypastaId`, `authenticated`, `loginRequiredFolderMessage`). Las consola lo mostraba como `messages is not defined` y el botón "Añadir a carpeta" nunca abría el modal. Lo detecté al probarlo en el navegador, no con los tests PHP.
+
+**Rendimiento de Lighthouse (pendiente).** Medido en la home como invitado, con la configuración móvil de Lighthouse:
+
+- Accesibilidad: 100.
+- Rendimiento: 64. El servidor de Sail no comprime: `livewire.js` pesa 595 KB y el CSS 400 KB sin comprimir. Con gzip serían 125 KB y 39 KB, según lo calculado con `gzip -9`.
+- Pendiente: habilitar compresión en la imagen de producción (Fase 11) y repetir la auditoría. Si sigue por debajo de 90, el siguiente paso es reducir JS (la build de Livewire es fija) y el CSS.
+
 
 ### Fase 11 — Despliegue
 

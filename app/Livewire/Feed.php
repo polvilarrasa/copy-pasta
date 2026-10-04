@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Actions\ListActiveTags;
 use App\Enums\FeedSort;
 use App\Http\Controllers\Public\NsfwConfirmationController;
 use App\Models\Copypasta;
@@ -83,7 +84,7 @@ class Feed extends Component
             'hasMore' => $results->count() > $this->limit,
             'sortOptions' => $this->fixedSort === null ? FeedSort::cases() : [],
             'activeSort' => $this->activeSort(),
-            'availableTags' => Tag::query()->where('is_active', true)->orderBy('name')->get(),
+            'availableTags' => app(ListActiveTags::class)->handle(),
             'activeTagSlugs' => $this->activeTagSlugs(),
             'includesNsfw' => $this->includesNsfw(),
             'canToggleNsfw' => ! auth()->check(),

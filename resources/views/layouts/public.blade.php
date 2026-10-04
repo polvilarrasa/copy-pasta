@@ -60,6 +60,8 @@
 
     <footer class="mx-auto max-w-3xl px-4 py-8 text-center text-xs text-zinc-500">
         <a href="{{ route('normas') }}" class="underline hover:text-zinc-900">{{ __('public.layout.rules') }}</a>
+        <a href="{{ route('privacy') }}" class="underline hover:text-zinc-900">{{ __('public.layout.privacy') }}</a>
+        <a href="{{ route('cookies') }}" class="underline hover:text-zinc-900">{{ __('public.layout.cookies') }}</a>
     </footer>
 
     <div

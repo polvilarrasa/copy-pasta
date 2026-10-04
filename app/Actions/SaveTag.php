@@ -31,7 +31,7 @@ class SaveTag
             Gate::forUser($actor)->authorize('update', $tag);
         }
 
-        return DB::transaction(function () use ($actor, $attributes, $tag): Tag {
+        $saved = DB::transaction(function () use ($actor, $attributes, $tag): Tag {
             $isNew = $tag === null;
             $tag ??= new Tag;
             $tag->fill($attributes)->save();
@@ -46,5 +46,9 @@ class SaveTag
 
             return $tag;
         });
+
+        ListActiveTags::forget();
+
+        return $saved;
     }
 }

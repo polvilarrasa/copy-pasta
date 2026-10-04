@@ -14,8 +14,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Livewire\Mechanisms\FrontendAssets\FrontendAssets;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -61,6 +63,13 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        if (app()->isProduction()) {
+            URL::forceScheme('https');
+        }
+
+        // Deferred so the page paints before Livewire runs; Vite's module script in the head still runs first.
+        app(FrontendAssets::class)->useScriptTagAttributes(['defer' => true]);
 
         Model::preventLazyLoading(! app()->isProduction());
         Model::preventSilentlyDiscardingAttributes(! app()->isProduction());
