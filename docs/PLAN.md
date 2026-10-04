@@ -242,13 +242,20 @@ Aceptación: `sail artisan test`, `vendor/bin/phpstan` y `vendor/bin/pint --test
 
 ### Fase 1 — Usuarios, roles y auth
 
-- [ ] Migración de `users` con username, role, show\_nsfw, banned\_at y ban\_reason; enum `Role`.
-- [ ] Registro con username; verificación de email obligatoria para publicar y reportar.
-- [ ] Middleware `EnsureUserIsNotBanned`: cierra sesión y muestra el motivo.
-- [ ] Gates `access-admin` y `manage-users`; helpers `isStaff()` e `isAdmin()` en el modelo.
-- [ ] Seeder con un admin, un moderador y 20 usuarios, con credenciales en `.env.example`.
+- [x] Migración de `users` con username, role, show\_nsfw, banned\_at y ban\_reason; enum `Role`.
+- [x] Registro con username; verificación de email obligatoria para publicar y reportar.
+- [x] Middleware `EnsureUserIsNotBanned`: cierra sesión y muestra el motivo.
+- [x] Gates `access-admin` y `manage-users`; helpers `isStaff()` e `isAdmin()` en el modelo.
+- [x] Seeder con un admin, un moderador y 20 usuarios, con credenciales en `.env.example`.
 
 Aceptación: tests de registro, login, verificación, recuperación de contraseña y usuario baneado expulsado.
+
+**Desviaciones de esta fase:**
+
+- El starter kit de Livewire trae un campo `name` en `users` que **no existe** en el modelo de datos de este documento (solo `username`). Se ha eliminado `name` y sustituido por `username` (3–30 caracteres, `^[a-zA-Z0-9_]+$`, único) en migración, modelo, registro, ajustes de perfil y seeders/factories. Afecta a `app/Models/User.php`, `app/Concerns/ProfileValidationRules.php`, `app/Actions/Fortify/CreateNewUser.php` y las vistas de registro/perfil/menú de usuario.
+- "Baneado no puede iniciar sesión" se implementó como un callback `Fortify::authenticateUsing()` que rechaza el login si `banned_at` no es nulo (antes de establecer sesión). "Se cierra en la siguiente petición" se cubre con el middleware `EnsureUserIsNotBanned` añadido al grupo `web`, para el caso de un usuario al que se banea mientras ya tenía sesión abierta.
+- Alcance de `lang/es` limitado a los textos nuevos de esta fase (`lang/es/auth.php`: etiqueta de usuario y mensajes de baneo). Las pantallas de Fortify ya existentes (login, 2FA, reset de contraseña, ajustes) siguen en inglés — traducirlas por completo es trabajo de i18n aparte, no un entregable de la Fase 1, y se abordará junto a la web pública (Fase 4) para no tocar a medias.
+- Añadido `config/seed.php` (nuevo, no listado originalmente) para exponer `SEED_ADMIN_EMAIL/PASSWORD` y `SEED_MODERATOR_EMAIL/PASSWORD` sin llamar a `env()` directamente en el seeder.
 
 ### Fase 2 — Modelo de dominio
 

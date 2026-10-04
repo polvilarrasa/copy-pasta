@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -25,8 +26,10 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
             'email' => fake()->unique()->safeEmail(),
+            'role' => Role::User,
+            'show_nsfw' => false,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -55,6 +58,37 @@ class UserFactory extends Factory
             'two_factor_secret' => encrypt('secret'),
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a moderator.
+     */
+    public function moderator(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::Moderator,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is an admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::Admin,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is banned.
+     */
+    public function banned(string $reason = 'Incumplimiento de las normas de la comunidad'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'banned_at' => now(),
+            'ban_reason' => $reason,
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,9 +18,13 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
  * @property int $id
- * @property string $name
+ * @property string $username
  * @property string $email
+ * @property Role $role
+ * @property bool $show_nsfw
  * @property Carbon|null $email_verified_at
+ * @property Carbon|null $banned_at
+ * @property string|null $ban_reason
  * @property string $password
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
@@ -28,7 +33,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['username', 'email', 'password', 'show_nsfw'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -43,7 +48,10 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     protected function casts(): array
     {
         return [
+            'role' => Role::class,
+            'show_nsfw' => 'boolean',
             'email_verified_at' => 'datetime',
+            'banned_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -53,10 +61,34 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function initials(): string
     {
-        $initials = Str::initials($this->name, true);
+        $initials = Str::initials($this->username, true);
 
         return Str::length($initials) > 1
             ? Str::substr($initials, 0, 1).Str::substr($initials, -1)
             : $initials;
+    }
+
+    /**
+     * Moderators and admins can access staff-only areas.
+     */
+    public function isStaff(): bool
+    {
+        return in_array($this->role, [Role::Moderator, Role::Admin], true);
+    }
+
+    /**
+     * Only admins can manage users, roles and bans.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === Role::Admin;
+    }
+
+    /**
+     * Whether the user is currently banned.
+     */
+    public function isBanned(): bool
+    {
+        return $this->banned_at !== null;
     }
 }
