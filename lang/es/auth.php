@@ -27,4 +27,5 @@ return [
         'accepted' => 'Contraseña guardada. Ya puedes iniciar sesión.',
     ],
 
+    'username_cooldown' => 'Solo puedes cambiar tu usuario una vez cada :days días.',
 ];

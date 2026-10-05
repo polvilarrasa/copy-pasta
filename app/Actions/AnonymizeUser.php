@@ -11,6 +11,7 @@ use App\Models\Folder;
 use App\Models\ModerationAction;
 use App\Models\TrackedEvent;
 use App\Models\User;
+use App\Models\UsernameHistory;
 use App\Models\Vote;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -47,6 +48,8 @@ class AnonymizeUser
                 'remember_token' => null,
                 'anonymized_at' => now(),
             ])->save();
+
+            UsernameHistory::query()->where('user_id', $user->getKey())->delete();
 
             if (! $user->trashed()) {
                 $user->delete();

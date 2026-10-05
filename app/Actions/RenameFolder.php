@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
+use App\Enums\EventType;
 use App\Models\Folder;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
@@ -35,6 +36,8 @@ class RenameFolder
         }
 
         $folder->update(['name' => $name]);
+
+        app(RecordEvent::class)->handle(EventType::FolderRename, $user);
 
         return $folder;
     }

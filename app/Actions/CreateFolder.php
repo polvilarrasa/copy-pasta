@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
+use App\Enums\EventType;
 use App\Models\Folder;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,7 @@ class CreateFolder
 
         $name = trim($name);
 
-        return DB::transaction(function () use ($user, $name): Folder {
+        $folder = DB::transaction(function () use ($user, $name): Folder {
             User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
 
             $folders = Folder::query()->where('user_id', $user->getKey());
@@ -48,5 +49,9 @@ class CreateFolder
                 'position' => (int) (clone $folders)->max('position') + 1,
             ]);
         });
+
+        app(RecordEvent::class)->handle(EventType::FolderCreate, $user);
+
+        return $folder;
     }
 }

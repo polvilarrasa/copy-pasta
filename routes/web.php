@@ -12,6 +12,7 @@ use App\Http\Controllers\Public\CopypastaShareController;
 use App\Http\Controllers\Public\CopypastaVoteController;
 use App\Http\Controllers\Public\FeedController;
 use App\Http\Controllers\Public\NsfwConfirmationController;
+use App\Http\Controllers\Public\ProfileController;
 use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SitemapController;
 use Illuminate\Support\Facades\Route;
@@ -60,6 +61,8 @@ Route::post('/aviso/{copypasta}', [AnonymousNoticeController::class, 'store'])
 Route::view('/normas', 'public.normas')->name('normas');
 Route::view('/privacidad', 'public.privacidad')->name('privacy');
 Route::view('/cookies', 'public.cookies')->name('cookies');
+
+Route::get('/u/{username}', [ProfileController::class, 'show'])->name('profile.show');
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/robots.txt', RobotsController::class)->name('robots');

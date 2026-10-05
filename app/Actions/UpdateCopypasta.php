@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\User;
+use App\Support\UnicodeText;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class UpdateCopypasta
 {
@@ -22,14 +25,18 @@ class UpdateCopypasta
     {
         Gate::forUser($editor)->authorize('update', $copypasta);
 
+        $title = UnicodeText::cleanTitle($data['title']);
+
+        throw_if($title === '', ValidationException::withMessages(['title' => __('app.errors.title_empty')]));
+
         $tagIds = app(ResolveCopypastaTags::class)->handle($data['tag_ids']);
 
-        return DB::transaction(function () use ($copypasta, $data, $tagIds): Copypasta {
-            $textChanged = $copypasta->title !== $data['title'] || $copypasta->body !== $data['body'];
+        $updated = DB::transaction(function () use ($copypasta, $data, $title, $tagIds): Copypasta {
+            $textChanged = $copypasta->title !== $title || $copypasta->body !== $data['body'];
 
             $copypasta->forceFill([
-                'title' => $data['title'],
-                'slug' => Str::slug($data['title']),
+                'title' => $title,
+                'slug' => Str::slug($title) ?: $copypasta->getKey(),
                 'body' => $data['body'],
                 'is_nsfw' => $data['is_nsfw'],
                 'edited_at' => now(),
@@ -45,5 +52,9 @@ class UpdateCopypasta
 
             return $copypasta;
         });
+
+        app(RecordEvent::class)->handle(EventType::Update, $editor, $updated);
+
+        return $updated;
     }
 }

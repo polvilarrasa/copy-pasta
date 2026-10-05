@@ -9,6 +9,7 @@ use App\Enums\EventType;
 use App\Http\Controllers\Controller;
 use App\Models\Copypasta;
 use App\Models\User;
+use App\Support\CrawlerDetector;
 use App\Support\EventContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,8 +18,16 @@ use Illuminate\Support\Facades\Gate;
 
 class CopypastaController extends Controller
 {
-    public function show(Request $request, Copypasta $copypasta, RecordEvent $recordEvent, ?string $slug = null): RedirectResponse|Response
-    {
+    /**
+     * Crawlers and link-preview bots see the page but leave no detail view, so they add no views and attribute no ref.
+     */
+    public function show(
+        Request $request,
+        Copypasta $copypasta,
+        RecordEvent $recordEvent,
+        CrawlerDetector $crawlerDetector,
+        ?string $slug = null,
+    ): RedirectResponse|Response {
         abort_unless(Gate::allows('view', $copypasta), 404);
 
         if ($slug !== $copypasta->slug) {
@@ -34,12 +43,14 @@ class CopypastaController extends Controller
 
         $context = EventContext::fromRequest($request);
 
-        $recordEvent->handle(
-            EventType::DetailView,
-            $viewer instanceof User ? $viewer : null,
-            $copypasta,
-            $context,
-        );
+        if (! $crawlerDetector->isBot($request)) {
+            $recordEvent->handle(
+                EventType::DetailView,
+                $viewer instanceof User ? $viewer : null,
+                $copypasta,
+                $context,
+            );
+        }
 
         return response()->view('public.copypasta', ['copypasta' => $copypasta, 'context' => $context]);
     }

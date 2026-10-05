@@ -18,4 +18,10 @@ enum EventType: string
     case FolderRemove = 'folder_remove';
     case Report = 'report';
     case Search = 'search';
+    case Publish = 'publish';
+    case Update = 'update';
+    case FolderCreate = 'folder_create';
+    case FolderRename = 'folder_rename';
+    case FolderDelete = 'folder_delete';
+    case UsernameChange = 'username_change';
 }

@@ -184,4 +184,5 @@ return [
         'verification_resent' => 'Verificación reenviada',
     ],
 
+    'back_to_web' => 'Volver a la web',
 ];
