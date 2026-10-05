@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\ChangeUsername;
 use App\Concerns\ProfileValidationRules;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Flux\Flux;
@@ -65,7 +66,9 @@ new #[Title('Profile settings')] class extends Component {
 
         abort_if(is_impersonating() && $validated['email'] !== $user->email, 403);
 
-        $user->fill($validated);
+        app(ChangeUsername::class)->handle($user, $validated['username']);
+
+        $user->email = $validated['email'];
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;

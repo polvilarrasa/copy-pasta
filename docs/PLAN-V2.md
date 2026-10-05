@@ -220,15 +220,28 @@ Once fases, de la 13 a la 23, y la 24 de lanzamiento. Las 13 a 15 cambian la bas
 
 ### Fase 13 — Base de la V2
 
-- [ ] Redirección tras el login: staff a `/admin`, resto a la página pedida o al feed. Enlaces cruzados entre web y `/admin`.
-- [ ] Endurecimiento básico de Unicode según la especificación.
-- [ ] Columnas `username_changed_at` y `share_code` en `users`; tabla `username_history`; límite de un cambio cada 30 días y redirección del username antiguo durante 90 días.
-- [ ] Componente de avatar generado (iniciales y color derivado del id).
-- [ ] Comprobar que el bloque 12.5 registra eventos de todas las acciones existentes; completar lo que falte.
-- [ ] Filtrado de bots por user agent: rastreadores y generadores de vista previa (WhatsApp, Telegram, Discord, Slack, X, Facebook, Google, etc.). Un bot no genera `detail_view`, no suma `views` y no atribuye `ref`.
-- [ ] Migración de `copypasta_daily_stats.copypasta_id` a `restrictOnDelete` (decisión 9).
+- [x] Redirección tras el login: staff a `/admin`, resto a la página pedida o al feed. Enlaces cruzados entre web y `/admin`.
+- [x] Endurecimiento básico de Unicode según la especificación.
+- [x] Columnas `username_changed_at` y `share_code` en `users`; tabla `username_history`; límite de un cambio cada 30 días y redirección del username antiguo durante 90 días.
+- [x] Componente de avatar generado (iniciales y color derivado del id).
+- [x] Comprobar que el bloque 12.5 registra eventos de todas las acciones existentes; completar lo que falte.
+- [x] Filtrado de bots por user agent: rastreadores y generadores de vista previa (WhatsApp, Telegram, Discord, Slack, X, Facebook, Google, etc.). Un bot no genera `detail_view`, no suma `views` y no atribuye `ref`.
+- [x] Migración de `copypasta_daily_stats.copypasta_id` a `restrictOnDelete` (decisión 9).
 
 Aceptación: tests de redirección por rol; un título con U+202E se guarda sin él; un segundo cambio de username en 30 días falla; el username antiguo redirige al nuevo; test con user agents reales de cada plataforma (los de bots no generan `detail_view` ni suman `views`); borrar un copy-pasta con estadísticas falla por la FK.
+
+**Desviaciones de la Fase 13:**
+
+- **Eventos nuevos (completa la lista de 12.5).** `EventType` suma `publish`, `update`, `folder_create`, `folder_rename`, `folder_delete` y `username_change`. Las acciones de publicar, editar, carpetas y cambio de usuario no registraban nada. La columna es `varchar`, así que no hay migración. La cuenta borrada sigue sin evento.
+- **Redirección tras el login.** El staff va siempre a `/admin` (decisión 2), aunque pidiera otra página. Fortify usa `TwoFactorLoginResponse` tras el reto de 2FA, así que la misma clase `LoginResponse` implementa los dos contratos. Un test de navegador cubre el staff sin 2FA: pasa por `/admin` y termina en la confirmación de contraseña previa a `/settings/security`.
+- **Test de login actualizado.** `AuthenticationTest` esperaba `dashboard`; ahora espera el feed (`route('home')`), que es lo que decide la fase.
+- **`/u/{username}` provisional.** La página de perfil es de la Fase 16. Hasta entonces el nombre actual responde 404 y un nombre antiguo redirige con 301 durante 90 días. Un nombre que otra cuenta ocupa ahora no redirige.
+- **Historial y anonimización.** `AnonymizeUser` borra el historial de la cuenta anonimizada: así no reserva el nombre ni redirige a una cuenta eliminada. Un cambio hecho por un admin desde Filament se guarda en el historial, pero no consume el cupo de 30 días del usuario.
+- **Bots.** Se usa `jaybizzle/crawler-detect` (1.4.1). Su lista no cubre Telegram ni Discord, así que `CrawlerDetector` añade esos dos patrones. Una petición sin user agent cuenta como bot. Los tests de navegador y de feature envían un user agent humano por defecto (`TestCase::HUMAN_USER_AGENT`), porque una petición sin UA ahora es bot.
+- **Títulos.** La limpieza elimina U+200B a U+200D, incluido el ZWJ. Como efecto colateral, un emoji compuesto con ZWJ (p. ej. de familia) se separa en sus partes al publicar. Es lo que pide la especificación; el conteo por grafemas llega en la Fase 23. La migración de datos no toca títulos que queden vacíos tras limpiarlos (no hay ninguno en la base de desarrollo).
+- **Migración de `share_code`.** Se rellena en la propia migración con `Str::random(8)` comprobando unicidad. La clave no depende del id ni del username.
+- **Avatar provisional.** `<x-avatar>` usa clases de Tailwind neutras y se rediseña en la Fase 14. Solo está montado en los tests; las vistas lo usan en la Fase 14.
+- **Zalgo y bidi.** El cuerpo de las tarjetas y del detalle usa `[unicode-bidi:isolate]` y un recorte vertical con `overflow-hidden`. No he revisado el resultado visual con texto zalgo.
 
 ### Fase 14 — Sistema de diseño
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
+use App\Enums\EventType;
 use App\Models\Folder;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
@@ -22,5 +23,7 @@ class DeleteFolder
         $this->ensureFolderChangeIsAllowed($user);
 
         $folder->delete();
+
+        app(RecordEvent::class)->handle(EventType::FolderDelete, $user);
     }
 }

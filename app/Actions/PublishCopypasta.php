@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\User;
+use App\Support\UnicodeText;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class PublishCopypasta
 {
@@ -27,12 +30,16 @@ class PublishCopypasta
             new ThrottleRequestsException(__('app.errors.publish_rate_limited')),
         );
 
+        $title = UnicodeText::cleanTitle($data['title']);
+
+        throw_if($title === '', ValidationException::withMessages(['title' => __('app.errors.title_empty')]));
+
         $tagIds = app(ResolveCopypastaTags::class)->handle($data['tag_ids']);
 
-        return DB::transaction(function () use ($author, $data, $tagIds): Copypasta {
+        $copypasta = DB::transaction(function () use ($author, $data, $title, $tagIds): Copypasta {
             $copypasta = Copypasta::query()->create([
                 'user_id' => $author->getKey(),
-                'title' => $data['title'],
+                'title' => $title,
                 'body' => $data['body'],
                 'is_nsfw' => $data['is_nsfw'],
                 'published_at' => now(),
@@ -44,5 +51,9 @@ class PublishCopypasta
 
             return $copypasta;
         });
+
+        app(RecordEvent::class)->handle(EventType::Publish, $author, $copypasta);
+
+        return $copypasta;
     }
 }

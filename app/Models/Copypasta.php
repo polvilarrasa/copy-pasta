@@ -74,7 +74,7 @@ class Copypasta extends Model
     {
         static::creating(function (Copypasta $copypasta): void {
             if (blank($copypasta->slug)) {
-                $copypasta->slug = Str::slug($copypasta->title);
+                $copypasta->slug = Str::slug($copypasta->title) ?: (string) $copypasta->getKey();
             }
         });
     }

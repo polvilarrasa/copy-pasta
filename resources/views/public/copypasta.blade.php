@@ -61,7 +61,7 @@
 
             <div class="relative mt-4">
                 <div
-                    class="whitespace-pre-wrap break-words font-mono text-sm text-zinc-800"
+                    class="-my-1 overflow-hidden py-1 whitespace-pre-wrap break-words font-mono text-sm text-zinc-800 [unicode-bidi:isolate]"
                     @if ($copypasta->is_nsfw) :class="{ 'blur-md select-none': ! revealed }" @endif
                 >{{ $copypasta->body }}</div>
 

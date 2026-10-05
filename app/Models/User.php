@@ -26,6 +26,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 /**
  * @property int $id
  * @property string $username
+ * @property Carbon|null $username_changed_at
+ * @property string $share_code
  * @property string $email
  * @property Role $role
  * @property bool $show_nsfw
@@ -64,7 +66,42 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'nsfw_confirmed_at' => 'datetime',
             'is_owner' => 'boolean',
             'password' => 'hashed',
+            'username_changed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Every member gets a share code when created, and a username change keeps the previous name in the history.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            if (blank($user->share_code)) {
+                $user->share_code = self::uniqueShareCode();
+            }
+        });
+
+        static::updating(function (User $user): void {
+            if ($user->isDirty('username')) {
+                UsernameHistory::query()->create([
+                    'user_id' => $user->getKey(),
+                    'username' => (string) $user->getOriginal('username'),
+                    'changed_at' => now(),
+                ]);
+            }
+        });
+    }
+
+    /**
+     * Eight random letters and digits: unrelated to the id and the username, and checked against the stored codes.
+     */
+    private static function uniqueShareCode(): string
+    {
+        do {
+            $code = Str::random(8);
+        } while (self::query()->withTrashed()->where('share_code', $code)->exists());
+
+        return $code;
     }
 
     /**
