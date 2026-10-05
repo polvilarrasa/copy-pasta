@@ -5,6 +5,8 @@
 
 **{{ __('moderation.mail.hidden.reason') }}:** {{ $copypasta->hidden_reason }}
 
+{{ __('moderation.mail.hidden.appeal', ['email' => config('mail.from.address')]) }}
+
 {{ __('moderation.mail.hidden.footer') }}
 
 <x-mail::button :url="url('/app/copypastas')">

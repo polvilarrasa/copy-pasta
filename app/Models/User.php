@@ -75,6 +75,14 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
         return $this->isAdmin();
     }
 
+    /**
+     * Trusted members' reports weigh more and, for the sexual-content-with-minors reason, hide copy-pastas on their own.
+     */
+    public function isTrusted(): bool
+    {
+        return $this->role === Role::Trusted;
+    }
+
     public function canBeImpersonated(): bool
     {
         return ! $this->isStaff() && ! $this->isBanned();

@@ -80,6 +80,21 @@
                     @endforeach
                     <span>{{ __('public.card.by', ['username' => $copypasta->user->displayName()]) }}</span>
                     <span>· {{ $copypasta->published_at?->diffForHumans() }}</span>
+                    @if ($copypasta->revisions->count() > 1)
+                        <details class="w-full">
+                            <summary class="cursor-pointer">{{ __('public.show.edited', ['date' => $copypasta->edited_at?->diffForHumans()]) }}</summary>
+                            <ol class="mt-2 space-y-3">
+                                @foreach ($copypasta->revisions->reverse()->skip(1) as $revision)
+                                    <li class="rounded-md bg-zinc-50 p-3">
+                                        <p class="font-medium text-zinc-700">{{ $revision->title }}</p>
+                                        <p class="whitespace-pre-wrap text-zinc-600">{{ $revision->body }}</p>
+                                        <time class="text-zinc-400">{{ $revision->created_at->diffForHumans() }}</time>
+                                    </li>
+                                @endforeach
+                            </ol>
+                        </details>
+                    @endif
+                    <a href="{{ route('notice.create', $copypasta) }}" class="underline hover:text-zinc-900">{{ __('public.notice.link') }}</a>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">

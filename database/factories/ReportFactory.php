@@ -26,7 +26,7 @@ class ReportFactory extends Factory
         return [
             'copypasta_id' => Copypasta::factory(),
             'reporter_id' => User::factory(),
-            'reason' => fake()->randomElement(ReportReason::cases()),
+            'reason' => ReportReason::Spam,
             'details' => null,
             'status' => ReportStatus::Pending,
         ];

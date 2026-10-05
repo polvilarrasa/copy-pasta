@@ -64,6 +64,24 @@ class UserFactory extends Factory
     /**
      * Indicate that the user is a moderator.
      */
+    /**
+     * A member whose account is older than the 72 hours a new account must wait before reporting.
+     */
+    public function established(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'created_at' => now()->subDays(4),
+        ]);
+    }
+
+    public function trusted(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::Trusted,
+            'created_at' => now()->subDays(4),
+        ]);
+    }
+
     public function moderator(): static
     {
         return $this->state(fn (array $attributes) => [

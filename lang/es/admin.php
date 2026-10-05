@@ -69,6 +69,10 @@ return [
     ],
 
     'widgets' => [
+        'trust_candidates' => 'Candidatos a usuario de confianza',
+        'trust_candidates_hint' => 'Usuarios con al menos 10 reportes resueltos y 80 % aceptados. Asígnalo desde su ficha.',
+        'resolved_reports' => 'Resueltos',
+        'accepted_reports' => 'Aceptados',
         'pending_reports' => 'Reportes pendientes',
         'published_today' => 'Publicados hoy',
         'published_week' => 'Publicados en 7 días',
@@ -77,6 +81,7 @@ return [
 
     'roles' => [
         'user' => 'Usuario',
+        'trusted' => 'Usuario de confianza',
         'moderator' => 'Moderador',
         'admin' => 'Admin',
     ],

@@ -119,7 +119,19 @@ return [
         'rate_limited' => 'Has enviado demasiados reportes en la última hora. Inténtalo más tarde.',
     ],
 
+    'notice' => [
+        'title' => 'Avisar de un contenido',
+        'link' => 'Avisar de un contenido ilegal',
+        'description' => 'Cuéntanos qué pasa con «:title». Revisaremos el aviso y te responderemos al email que indiques.',
+        'email' => 'Tu email de contacto',
+        'reason' => 'Motivo',
+        'details' => 'Detalles (opcional)',
+        'submit' => 'Enviar aviso',
+        'sent' => 'Aviso recibido. Lo revisaremos cuanto antes.',
+    ],
+
     'show' => [
+        'edited' => 'Editado :date',
         'hidden_notice' => 'Este copy-pasta está oculto por moderación. Motivo: :reason',
         'unpublished_notice' => 'Este copy-pasta todavía no está publicado.',
         'back' => 'Volver al listado',

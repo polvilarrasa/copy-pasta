@@ -22,6 +22,8 @@ class ReportsTable
                     ->limit(60),
                 TextColumn::make('reporter.username')
                     ->label(__('moderation.log.reporter')),
+                TextColumn::make('contact_email')
+                    ->label(__('moderation.log.contact')),
                 TextColumn::make('reason')
                     ->label(__('moderation.log.reason'))
                     ->badge()

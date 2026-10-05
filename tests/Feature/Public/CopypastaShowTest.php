@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\SaveCopypastaRevision;
 use App\Models\Copypasta;
 use App\Models\User;
 
@@ -62,4 +63,16 @@ test('un visitante no ve un copy-pasta sin publicar', function (): void {
     $copypasta = Copypasta::factory()->unpublished()->create();
 
     $this->get(route('copypastas.show', [$copypasta, $copypasta->slug]))->assertNotFound();
+});
+
+test('el detalle de un copy-pasta editado muestra las versiones anteriores', function (): void {
+    $copypasta = Copypasta::factory()->create(['title' => 'Titulo viejo', 'body' => 'Cuerpo viejo']);
+    app(SaveCopypastaRevision::class)->handle($copypasta);
+    $copypasta->forceFill(['title' => 'Titulo nuevo', 'body' => 'Cuerpo nuevo', 'edited_at' => now()])->save();
+    app(SaveCopypastaRevision::class)->handle($copypasta);
+
+    $this->get(route('copypastas.show', [$copypasta, $copypasta->slug]))
+        ->assertOk()
+        ->assertSee('Titulo viejo')
+        ->assertSee('Cuerpo viejo');
 });

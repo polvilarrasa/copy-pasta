@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Actions\ConcealCopypasta;
 use App\Actions\DismissCopypastaReports;
 use App\Actions\HideCopypasta;
+use App\Actions\ReportCopypasta;
 use App\Enums\ModerationActionType;
+use App\Enums\ReportReason;
 use App\Enums\ReportStatus;
 use App\Models\Copypasta;
 use App\Models\ModerationAction;
@@ -61,3 +64,27 @@ test('sin reportes pendientes no se registra ninguna acción', function (): void
 test('un miembro normal no descarta reportes', function (): void {
     app(DismissCopypastaReports::class)->handle(User::factory()->create(), Copypasta::factory()->create());
 })->throws(AuthorizationException::class);
+
+test('descartar los reportes de un copy-pasta ocultado solo por reportes lo restaura y lo registra', function (): void {
+    $copypasta = Copypasta::factory()->create();
+    foreach (range(1, 5) as $_) {
+        app(ReportCopypasta::class)->handle(User::factory()->established()->create(), $copypasta, ReportReason::Spam, null);
+    }
+    expect($copypasta->refresh()->isHidden())->toBeTrue();
+
+    app(DismissCopypastaReports::class)->handle(User::factory()->moderator()->withTwoFactor()->create(), $copypasta);
+
+    expect($copypasta->refresh()->isHidden())->toBeFalse()
+        ->and(ModerationAction::query()->where('action', ModerationActionType::Restore)->where('subject_id', $copypasta->getKey())->exists())->toBeTrue();
+});
+
+test('descartar los reportes de un copy-pasta que el staff ocultó a mano no lo restaura', function (): void {
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
+    $copypasta = Copypasta::factory()->create();
+    Report::factory()->for($copypasta)->create();
+    app(ConcealCopypasta::class)->handle($moderator, $copypasta, 'Motivo manual', acceptsPendingReports: false);
+
+    app(DismissCopypastaReports::class)->handle($moderator, $copypasta);
+
+    expect($copypasta->refresh()->isHidden())->toBeTrue();
+});

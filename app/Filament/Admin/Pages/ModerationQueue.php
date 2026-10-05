@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Pages;
 
 use App\Actions\DismissCopypastaReports;
+use App\Enums\ReportReason;
 use App\Filament\Admin\Resources\Copypastas\Tables\CopypastaModerationActions;
 use App\Models\Copypasta;
+use App\Models\CopypastaRevision;
 use App\Models\Report;
 use App\Models\User;
+use App\Support\TextDiff;
 use BackedEnum;
+use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -19,6 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -74,6 +79,9 @@ class ModerationQueue extends Page implements HasTable
                 ->withCount('pendingReports as pending_reports_count')
                 ->withMin('pendingReports as first_reported_at', 'created_at')
                 ->withMax('pendingReports as last_reported_at', 'created_at')
+                ->withExists(['pendingReports as has_minors_report' => fn (Builder $query): Builder => $query
+                    ->where('reason', ReportReason::SexualContentMinors)])
+                ->orderByDesc('has_minors_report')
                 ->orderByRaw('copypastas.hidden_at IS NULL')
                 ->orderByDesc('pending_reports_count')
                 ->orderBy('first_reported_at'))
@@ -108,6 +116,17 @@ class ModerationQueue extends Page implements HasTable
                 CopypastaModerationActions::hide(),
                 CopypastaModerationActions::restore(),
                 CopypastaModerationActions::toggleNsfw(),
+                Action::make('diff')
+                    ->label(__('moderation.queue.diff'))
+                    ->icon(Heroicon::OutlinedArrowsRightLeft)
+                    ->color('gray')
+                    ->modal()
+                    ->modalHeading(__('moderation.queue.diff_heading'))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel(__('admin.actions.close'))
+                    ->modalContent(fn (Copypasta $copypasta): View => view('filament.admin.pages.reported-diff', [
+                        'sections' => $this->reportedDiffs($copypasta),
+                    ])),
                 Action::make('dismiss')
                     ->label(__('moderation.queue.dismiss'))
                     ->icon(Heroicon::OutlinedCheck)
@@ -134,6 +153,28 @@ class ModerationQueue extends Page implements HasTable
                         }),
                 ]),
             ]);
+    }
+
+    /**
+     * One comparison per version that was reported, against the current text. A report keeps the version the reporter
+     * saw, so an author's later edit does not hide what was reported.
+     *
+     * @return array<int, array{date: CarbonInterface, title: list<array{type: string, text: string}>, body: list<array{type: string, text: string}>}>
+     */
+    public function reportedDiffs(Copypasta $copypasta): array
+    {
+        $revisionIds = $copypasta->pendingReports->pluck('copypasta_revision_id')->filter()->unique();
+
+        return CopypastaRevision::query()
+            ->whereIn('id', $revisionIds)
+            ->orderBy('id')
+            ->get()
+            ->map(fn (CopypastaRevision $revision): array => [
+                'date' => $revision->created_at,
+                'title' => TextDiff::words($revision->title, $copypasta->title),
+                'body' => TextDiff::words($revision->body, $copypasta->body),
+            ])
+            ->all();
     }
 
     private function asDate(mixed $value): ?Carbon

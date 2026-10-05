@@ -47,6 +47,10 @@ return [
         'dismiss' => 'Descartar reportes',
         'dismiss_confirm' => 'Los reportes pendientes se marcarán como descartados.',
         'dismissed' => 'Reportes descartados',
+        'diff' => 'Ver diferencias',
+        'diff_heading' => 'Versión reportada frente a la actual',
+        'version_from' => 'Versión de :date',
+        'minors_priority' => 'Menores: prioridad',
     ],
 
     'log' => [
@@ -61,6 +65,7 @@ return [
         'created_at' => 'Enviado',
         'resolved_by' => 'Resuelto por',
         'resolved_at' => 'Resuelto',
+        'contact' => 'Contacto del aviso',
     ],
 
     'mail' => [
@@ -71,6 +76,7 @@ return [
             'reason' => 'Motivo',
             'footer' => 'Puedes revisarlo desde tu espacio de usuario.',
             'button' => 'Ir a mis copy-pastas',
+            'appeal' => 'Si crees que es un error, responde a este email o escribe a :email. Revisaremos el caso.',
         ],
         'minors' => [
             'subject' => 'Reporte urgente: contenido sexual con menores',

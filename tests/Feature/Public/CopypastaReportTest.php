@@ -16,7 +16,7 @@ test('un anónimo que reporta es redirigido al login', function (): void {
 test('un miembro envía un reporte y recibe confirmación', function (): void {
     $copypasta = Copypasta::factory()->create();
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(User::factory()->established()->create())
         ->postJson(route('copypastas.report', $copypasta), ['reason' => 'spam'])
         ->assertCreated()
         ->assertJsonStructure(['message']);
@@ -26,7 +26,7 @@ test('un miembro envía un reporte y recibe confirmación', function (): void {
 
 test('el reporte valida el motivo y el texto de "otro"', function (): void {
     $copypasta = Copypasta::factory()->create();
-    $member = User::factory()->create();
+    $member = User::factory()->established()->create();
 
     $this->actingAs($member)
         ->postJson(route('copypastas.report', $copypasta), ['reason' => 'inventado'])
@@ -40,7 +40,7 @@ test('el reporte valida el motivo y el texto de "otro"', function (): void {
 });
 
 test('no se puede reportar el propio copy-pasta', function (): void {
-    $author = User::factory()->create();
+    $author = User::factory()->established()->create();
     $copypasta = Copypasta::factory()->for($author, 'user')->create();
 
     $this->actingAs($author)
@@ -50,7 +50,7 @@ test('no se puede reportar el propio copy-pasta', function (): void {
 
 test('un segundo reporte pendiente del mismo copy-pasta se rechaza', function (): void {
     $copypasta = Copypasta::factory()->create();
-    $member = User::factory()->create();
+    $member = User::factory()->established()->create();
     Report::factory()->for($copypasta)->create(['reporter_id' => $member->id]);
 
     $this->actingAs($member)

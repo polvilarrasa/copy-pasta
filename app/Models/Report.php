@@ -25,11 +25,16 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $resolved_at
  * @property string|null $resolution_note
  */
-#[Fillable(['copypasta_id', 'reporter_id', 'reason', 'details', 'status'])]
+#[Fillable(['copypasta_id', 'copypasta_revision_id', 'reporter_id', 'contact_email', 'reason', 'weight', 'details', 'status'])]
 class Report extends Model
 {
-    /** Pending reports from distinct members that hide a copy-pasta automatically. */
+    /** Total weight of pending reports that hides a copy-pasta automatically. */
     public const AUTO_HIDE_THRESHOLD = 5;
+
+    /** Weight of a report by a trusted member. A report by any other member, or an anonymous notice, weighs 1. */
+    public const TRUSTED_WEIGHT = 3;
+
+    public const DEFAULT_WEIGHT = 1;
 
     /** @use HasFactory<ReportFactory> */
     use HasFactory;

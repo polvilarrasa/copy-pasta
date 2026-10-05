@@ -2,10 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Actions\ReportCopypasta;
+use App\Actions\SaveCopypastaRevision;
+use App\Actions\UpdateCopypasta;
+use App\Enums\ReportReason;
 use App\Enums\ReportStatus;
 use App\Filament\Admin\Pages\ModerationQueue;
 use App\Models\Copypasta;
 use App\Models\Report;
+use App\Models\Tag;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
@@ -31,6 +36,7 @@ test('la cola agrupa por copy-pasta y solo muestra los que tienen reportes pendi
 
     Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->test(ModerationQueue::class)
+        ->call('loadTable')
         ->assertCanSeeTableRecords([$reported])
         ->assertCanNotSeeTableRecords([$resolvedOnly]);
 });
@@ -43,6 +49,7 @@ test('los copy-pastas ocultos aparecen primero en la cola', function (): void {
 
     Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
         ->test(ModerationQueue::class)
+        ->call('loadTable')
         ->assertCanSeeTableRecords([$hidden, $visible], inOrder: true);
 });
 
@@ -53,6 +60,7 @@ test('el staff oculta desde la cola con motivo y los reportes quedan aceptados',
 
     Livewire::actingAs($moderator)
         ->test(ModerationQueue::class)
+        ->call('loadTable')
         ->callAction(TestAction::make('hide')->table($copypasta), data: ['reason' => 'Acoso reiterado'])
         ->assertHasNoActionErrors();
 
@@ -69,6 +77,7 @@ test('restaurar solo aparece en los copy-pastas ocultos', function (): void {
 
     Livewire::actingAs($moderator)
         ->test(ModerationQueue::class)
+        ->call('loadTable')
         ->assertTableActionVisible('restore', $hidden)
         ->assertTableActionHidden('restore', $visible)
         ->assertTableActionVisible('hide', $visible)
@@ -84,6 +93,7 @@ test('la resolución en bloque descarta los reportes de varios copy-pastas a la 
 
     Livewire::actingAs($moderator)
         ->test(ModerationQueue::class)
+        ->call('loadTable')
         ->selectTableRecords([$first, $second])
         ->callAction(TestAction::make('dismiss')->table()->bulk());
 
@@ -97,4 +107,39 @@ test('la navegación muestra el número de reportes pendientes', function (): vo
     Report::factory()->for($copypasta)->resolved()->create();
 
     expect(ModerationQueue::getNavigationBadge())->toBe('3');
+});
+
+test('el moderador ve el texto reportado aunque el autor lo haya editado después', function (): void {
+    $author = User::factory()->established()->create();
+    $copypasta = Copypasta::factory()->create(['user_id' => $author->getKey(), 'title' => 'Titulo', 'body' => 'Texto original reportado']);
+    app(SaveCopypastaRevision::class)->handle($copypasta);
+    app(ReportCopypasta::class)->handle(User::factory()->established()->create(), $copypasta, ReportReason::Spam, null);
+
+    app(UpdateCopypasta::class)->handle($author, $copypasta->refresh(), [
+        'title' => 'Titulo',
+        'body' => 'Texto editado para esconder el abuso',
+        'is_nsfw' => false,
+        'tag_ids' => [Tag::factory()->create()->getKey()],
+    ]);
+
+    $component = Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
+        ->test(ModerationQueue::class)
+        ->call('loadTable');
+
+    $body = collect($component->instance()->reportedDiffs($copypasta)[0]['body']);
+
+    expect($body->where('type', 'delete')->pluck('text')->implode(' '))->toBe('original reportado')
+        ->and($body->where('type', 'insert')->pluck('text')->implode(' '))->toBe('editado para esconder el abuso');
+});
+
+test('los reportes por menores aparecen antes que el resto de la cola', function (): void {
+    $spam = Copypasta::factory()->create();
+    Report::factory()->for($spam)->count(3)->create();
+    $minors = Copypasta::factory()->create();
+    Report::factory()->for($minors)->create(['reason' => ReportReason::SexualContentMinors]);
+
+    Livewire::actingAs(User::factory()->moderator()->withTwoFactor()->create())
+        ->test(ModerationQueue::class)
+        ->call('loadTable')
+        ->assertCanSeeTableRecords([$minors, $spam], inOrder: true);
 });

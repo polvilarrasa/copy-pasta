@@ -577,19 +577,36 @@ Aceptación: un admin no puede conocer la contraseña de otro usuario; los ajust
 
 #### 12.3 — Moderación
 
-- [ ] Nuevo rol `trusted` ("usuario de confianza") en el enum `Role`, entre `user` y `moderator`. No da acceso a `/admin`. Revisar las comparaciones de rol que asumen solo tres valores (C4).
-- [ ] Los admins asignan y retiran el rol desde la ficha de usuario, con registro en el log. El escritorio admin sugiere candidatos: al menos 10 reportes resueltos y un 80 % aceptados (C4).
-- [ ] Antigüedad mínima de 72 horas para reportar (C4).
-- [ ] Reportes ponderados: 1 punto un usuario normal, 3 un usuario de confianza. Auto-ocultación a los 5 puntos (C4).
-- [ ] El motivo "menores" solo auto-oculta si reporta un usuario de confianza o staff. En los demás casos, prioridad máxima en la cola y alerta inmediata a los admins (C4).
-- [ ] Pérdida temporal del derecho a reportar tras 3 reportes rechazados en 30 días (C4).
-- [ ] Test de descartar reportes sobre un auto-ocultado; si queda huérfano, restaurarlo en la misma Action (A3).
-- [ ] Tabla `copypasta_revisions`; cada reporte guarda la revisión vista; la cola muestra el diff (A5).
-- [ ] Edición libre con historial visible: "editado" en el detalle abre las versiones anteriores (A5).
-- [ ] Formulario de aviso para anónimos con email, que entra en la cola (A6).
-- [ ] Email de ocultación con motivo y vía de recurso (A6).
+- [x] Nuevo rol `trusted` ("usuario de confianza") en el enum `Role`, entre `user` y `moderator`. No da acceso a `/admin`. Revisar las comparaciones de rol que asumen solo tres valores (C4).
+- [x] Los admins asignan y retiran el rol desde la ficha de usuario, con registro en el log. El escritorio admin sugiere candidatos: al menos 10 reportes resueltos y un 80 % aceptados (C4).
+- [x] Antigüedad mínima de 72 horas para reportar (C4).
+- [x] Reportes ponderados: 1 punto un usuario normal, 3 un usuario de confianza. Auto-ocultación a los 5 puntos (C4).
+- [x] El motivo "menores" solo auto-oculta si reporta un usuario de confianza o staff. En los demás casos, prioridad máxima en la cola y alerta inmediata a los admins (C4).
+- [x] Pérdida temporal del derecho a reportar tras 3 reportes rechazados en 30 días (C4).
+- [x] Test de descartar reportes sobre un auto-ocultado; si queda huérfano, restaurarlo en la misma Action (A3).
+- [x] Tabla `copypasta_revisions`; cada reporte guarda la revisión vista; la cola muestra el diff (A5).
+- [x] Edición libre con historial visible: "editado" en el detalle abre las versiones anteriores (A5).
+- [x] Formulario de aviso para anónimos con email, que entra en la cola (A6).
+- [x] Email de ocultación con motivo y vía de recurso (A6).
 
 Aceptación: una cuenta de menos de 72 horas no puede reportar; un reporte por menores de un usuario que no es de confianza no oculta pero sí alerta; el moderador ve la versión reportada aunque el autor haya editado.
+
+**Desviaciones de la Fase 12.3:**
+
+- **Aviso anónimo dentro de `ReportCopypasta`, sin acción propia.** `handleAnonymous()` reutiliza el mismo umbral, la misma regla de menores y la misma alerta. Una acción aparte habría duplicado esa lógica.
+- **Staff exento de la antigüedad de 72 h.** Un moderador creado por un admin puede reportar desde el primer día. La regla pretende frenar cuentas nuevas de abuso, no a quien ya moderaba.
+- **Pesos fijados al crear el reporte.** El peso (1 o 3) se guarda en `reports.weight`. Cambiar el rol de un reportador después no altera reportes ya hechos.
+- **Pérdida temporal por rechazos recientes.** Tres reportes rechazados en 30 días bloquean; al caducar los rechazos vuelve el derecho. Sin bloqueo fijo, como se aprobó.
+- **Diff sin dependencia.** `App\Support\TextDiff` compara por palabras. El modal "Ver diferencias" muestra cada versión reportada frente a la actual. `reportedDiffs()` es público y solo lectura, porque el modal de Filament no expuso su contenido a los tests. Lo prueba la lógica directamente.
+- **Restauración de A3 solo para ocultados automáticos.** Se restaura al descartar cuando `hidden_by_id` es nulo y no quedan reportes pendientes. Un ocultado a mano por el staff no se toca.
+- **Versiones desde la migración.** La migración crea una versión inicial para cada copy-pasta existente, y los reportes ya hechos apuntan a su versión actual. Se guarda una versión nueva solo si cambian título o cuerpo, no al cambiar etiquetas o el aviso +18.
+- **`ReportFactory` con motivo fijo.** El motivo por defecto pasa de aleatorio a `spam`. Con un motivo aleatorio, un copy-pasta "visible" podía recibir un reporte por menores y alterar el orden de la cola: los tests eran intermitentes.
+- **Tests de la cola cargan la tabla.** Filament carga la tabla de forma diferida; los tests llaman a `loadTable` antes de comprobar filas u orden.
+- **`reporter_id` nullable.** Los avisos anónimos no tienen reportero. La migración de bajada no devuelve la columna a `NOT NULL`.
+- **Widget solo para admin.** Los candidatos a usuario de confianza son información de administración. Solo sugiere; la asignación sigue siendo la acción de rol de siempre, con su registro.
+- **Límite del aviso por IP.** `throttle:5,60` en la ruta POST; sin captcha, como se aprobó.
+
+
 
 #### 12.4 — Infraestructura y calidad
 

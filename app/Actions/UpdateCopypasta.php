@@ -13,7 +13,8 @@ use Illuminate\Support\Str;
 class UpdateCopypasta
 {
     /**
-     * Edits keep moderation state. Tags that were deactivated after publishing stay attached.
+     * Edits keep moderation state. Tags that were deactivated after publishing stay attached. A change of title or
+     * body is kept as a new version, so reports and the public history still show the text that was there.
      *
      * @param  array{title: string, body: string, is_nsfw: bool, tag_ids: array<int, int|string>}  $data
      */
@@ -24,6 +25,8 @@ class UpdateCopypasta
         $tagIds = app(ResolveCopypastaTags::class)->handle($data['tag_ids']);
 
         return DB::transaction(function () use ($copypasta, $data, $tagIds): Copypasta {
+            $textChanged = $copypasta->title !== $data['title'] || $copypasta->body !== $data['body'];
+
             $copypasta->forceFill([
                 'title' => $data['title'],
                 'slug' => Str::slug($data['title']),
@@ -35,6 +38,10 @@ class UpdateCopypasta
             $keptInactiveTagIds = $copypasta->tags()->where('is_active', false)->pluck('tags.id')->all();
 
             $copypasta->tags()->sync([...$tagIds, ...$keptInactiveTagIds]);
+
+            if ($textChanged) {
+                app(SaveCopypastaRevision::class)->handle($copypasta);
+            }
 
             return $copypasta;
         });

@@ -26,7 +26,7 @@ class CopypastaController extends Controller
 
         $copypasta = Copypasta::query()
             ->withViewerState($viewer instanceof User ? $viewer : null)
-            ->with(['user:id,username,anonymized_at', 'tags:id,name,slug,color'])
+            ->with(['user:id,username,anonymized_at', 'tags:id,name,slug,color', 'revisions'])
             ->findOrFail($copypasta->getKey());
 
         return response()->view('public.copypasta', ['copypasta' => $copypasta]);

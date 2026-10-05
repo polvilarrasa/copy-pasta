@@ -103,6 +103,16 @@ class Copypasta extends Model
     }
 
     /**
+     * Every published text, oldest first. The last one is the current text.
+     *
+     * @return HasMany<CopypastaRevision, $this>
+     */
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(CopypastaRevision::class)->orderBy('id');
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo

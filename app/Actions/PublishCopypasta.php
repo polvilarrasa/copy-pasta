@@ -40,6 +40,8 @@ class PublishCopypasta
 
             $copypasta->tags()->attach($tagIds);
 
+            app(SaveCopypastaRevision::class)->handle($copypasta);
+
             return $copypasta;
         });
     }

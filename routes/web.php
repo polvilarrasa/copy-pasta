@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Impersonation\LeaveImpersonationController;
+use App\Http\Controllers\Public\AnonymousNoticeController;
 use App\Http\Controllers\Public\CopypastaController;
 use App\Http\Controllers\Public\CopypastaCopyController;
 use App\Http\Controllers\Public\CopypastaFavoriteController;
@@ -45,6 +46,11 @@ Route::post('/c/{copypasta}/reporte', CopypastaReportController::class)
     ->name('copypastas.report');
 
 Route::post('/nsfw/confirmar', NsfwConfirmationController::class)->name('nsfw.confirm');
+
+Route::get('/aviso/{copypasta}', [AnonymousNoticeController::class, 'create'])->name('notice.create');
+Route::post('/aviso/{copypasta}', [AnonymousNoticeController::class, 'store'])
+    ->middleware('throttle:5,60')
+    ->name('notice.store');
 
 Route::view('/normas', 'public.normas')->name('normas');
 Route::view('/privacidad', 'public.privacidad')->name('privacy');

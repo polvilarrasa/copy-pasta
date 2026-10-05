@@ -39,9 +39,36 @@ class DismissCopypastaReports
                     'subject_type' => $copypasta::class,
                     'subject_id' => $copypasta->getKey(),
                 ]);
+
+                $this->restoreIfOrphaned($actor, $copypasta);
             }
 
             return $dismissed;
         });
+    }
+
+    /**
+     * An automatic hide exists only because of its reports. Once they are all rejected, nothing keeps the copy-pasta
+     * hidden and out of the queue, so it goes back up and the restore is logged.
+     */
+    private function restoreIfOrphaned(User $actor, Copypasta $copypasta): void
+    {
+        $copypasta->refresh();
+
+        $hiddenAutomatically = $copypasta->isHidden() && $copypasta->hidden_by_id === null;
+        $hasPendingReports = Report::query()->where('copypasta_id', $copypasta->getKey())->pending()->exists();
+
+        if (! $hiddenAutomatically || $hasPendingReports) {
+            return;
+        }
+
+        $copypasta->forceFill(['hidden_at' => null, 'hidden_by_id' => null, 'hidden_reason' => null])->save();
+
+        ModerationAction::query()->create([
+            'actor_id' => $actor->getKey(),
+            'action' => ModerationActionType::Restore,
+            'subject_type' => $copypasta::class,
+            'subject_id' => $copypasta->getKey(),
+        ]);
     }
 }
