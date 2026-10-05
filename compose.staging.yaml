@@ -6,30 +6,40 @@ services:
         build: .
         env_file: .env.staging
         environment:
-            RUN_MIGRATIONS: 'true'
             SERVER_NAME: ${SERVER_NAME:-:8080}
+            REDIS_HOST: redis
         ports:
             - '${APP_PORT:-8080}:8080'
         depends_on:
             pgsql:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
         restart: unless-stopped
 
     worker:
         image: ${APP_IMAGE:-copypastas:staging}
         env_file: .env.staging
+        environment:
+            REDIS_HOST: redis
         command: ['php', 'artisan', 'queue:work', '--tries=3', '--timeout=90', '--sleep=3', '--max-time=3600']
         depends_on:
             pgsql:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
         restart: unless-stopped
 
     scheduler:
         image: ${APP_IMAGE:-copypastas:staging}
         env_file: .env.staging
+        environment:
+            REDIS_HOST: redis
         command: ['sh', '-c', 'while true; do php artisan schedule:run --no-interaction; sleep 60; done']
         depends_on:
             pgsql:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
         restart: unless-stopped
 
@@ -43,6 +53,18 @@ services:
             - pgdata:/var/lib/postgresql/data
         healthcheck:
             test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME:-sail} -d ${DB_DATABASE:-copypastas}']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
+
+    redis:
+        image: redis:7-alpine
+        command: ['redis-server', '--appendonly', 'yes']
+        volumes:
+            - redisdata:/data
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
             interval: 10s
             timeout: 5s
             retries: 5
@@ -66,4 +88,5 @@ services:
 
 volumes:
     pgdata:
+    redisdata:
     backups:

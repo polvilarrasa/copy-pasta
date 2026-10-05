@@ -62,13 +62,14 @@ test('new ordena por fecha de publicación descendente', function (): void {
     expect($ids->all())->toBe([$newer->id, $older->id]);
 });
 
-test('el orden aleatorio es reproducible con la misma semilla', function (): void {
+test('el orden aleatorio sigue la clave aleatoria de menor a mayor', function (): void {
     Copypasta::factory()->count(10)->create();
 
-    $first = FeedQuery::make()->sort(FeedSort::Random, 'semilla-fija')->builder()->pluck('id')->all();
-    $second = FeedQuery::make()->sort(FeedSort::Random, 'semilla-fija')->builder()->pluck('id')->all();
+    $ids = FeedQuery::make()->sort(FeedSort::Random)->builder()->pluck('id')->all();
 
-    expect($first)->toBe($second)->toHaveCount(10);
+    expect($ids)->toBe(
+        Copypasta::query()->orderBy('random_key')->orderBy('id')->pluck('id')->all(),
+    )->toHaveCount(10);
 });
 
 test('el filtro de etiquetas exige que estén presentes todas las seleccionadas', function (): void {

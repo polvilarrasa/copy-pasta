@@ -610,17 +610,18 @@ Aceptación: una cuenta de menos de 72 horas no puede reportar; un reporte por m
 
 #### 12.4 — Infraestructura y calidad
 
-- [ ] Redis para caché, sesiones y rate limits, como un servicio más del compose (M4).
-- [ ] Semilla del orden aleatorio en la query string y columna `random_key` indexada; `EXPLAIN` con 200.000 copy-pastas (M3).
-- [ ] Tests de navegador de 6 flujos en CI: copiar, votar, guardar en carpeta, reportar, ocultar e impersonar (A4).
-- [ ] VPS en la UE con Ubuntu LTS: acceso solo por clave SSH, cortafuegos con 22, 80 y 443 abiertos, actualizaciones de seguridad automáticas.
-- [ ] `compose.production.yaml` a partir del de staging: app, worker, scheduler, Postgres y Redis, con HTTPS automático vía `SERVER_NAME` y el dominio. `RUN_MIGRATIONS=true` solo en el servicio `app`; worker y scheduler sin esa variable; la migración se ejecuta con `migrate --isolated --force` (M5 descartado tras la verificación; esto es endurecimiento).
-- [ ] Workflow de despliegue apuntando al VPS con una variable de host de producción.
-- [ ] Mailer transaccional con SPF, DKIM y DMARC en el dominio (C5).
-- [ ] Backups diarios de Postgres copiados a un almacenamiento externo compatible con S3, con prueba de restauración (C5).
-- [ ] Checklist de humo y Lighthouse sobre el VPS.
+- [x] Redis para caché, sesiones y rate limits, como un servicio más del compose (M4). Cliente `predis` (sin extensión PHP en la imagen). Desarrollo (`compose.yaml`) y staging (`compose.staging.yaml`) con servicio `redis`. CI con servicio Redis. Test: `tests/Feature/Support/RedisCacheTest.php`.
+- [x] Semilla del orden aleatorio en la query string y columna `random_key` indexada; `EXPLAIN` con 200.000 copy-pastas (M3). La semilla es `?seed=` (punto de partida en el espacio de `random_key`); el orden es `random_key, id` con vuelta al principio. Medido en Postgres con 200.000 filas: el índice `(random_key, id)` responde en ~0,15 ms (`EXPLAIN ANALYZE`, tramo sin vuelta; con vuelta, ~0,2 ms). Sin medir aún el render completo de Livewire.
+- [x] Migraciones como paso único del despliegue, antes de reiniciar servicios, no en el entrypoint de todos los contenedores (M5). Desviación: `RUN_MIGRATIONS` se ha eliminado del entrypoint y de `compose.staging.yaml`; el despliegue de staging ejecuta `php artisan migrate --isolated --force` con `docker compose run --rm app` antes de `up -d`. El `--isolated` usa el lock de Redis. Se elimina la línea de este bloque que hablaba de `RUN_MIGRATIONS=true` solo en `app`, que queda superada.
+- [x] Tests de navegador de 6 flujos en CI: copiar, votar, guardar en carpeta, reportar, ocultar e impersonar (A4). `tests/Browser/CopypastaFlowsTest.php` y `tests/Browser/ModerationFlowsTest.php`, con `pestphp/pest-plugin-browser` y Playwright. Desviaciones de la prueba: el permiso de portapapeles de Chromium headless no existe, así que el test sustituye `navigator.clipboard.writeText` y el resto del flujo es real; el staff entra con el código de recuperación de la factoría porque el campo TOTP (`flux:otp`) no admite `fill`. El job de CI instala Chromium con `npx playwright install --with-deps chromium`.
+- [ ] VPS en la UE con Ubuntu LTS: acceso solo por clave SSH, cortafuegos con 22, 80 y 443 abiertos, actualizaciones de seguridad automáticas. **Pendiente**: fuera de alcance hasta que la app esté terminada; el proyecto se mantiene en localhost.
+- [ ] `compose.production.yaml` a partir del de staging. **Pendiente**: no creado. La creación del fichero y del workflow de producción fue bloqueada por el control de permisos del entorno como acción de despliegue a producción; hay que decidir cómo proceder antes de retomarlo.
+- [ ] Workflow de despliegue apuntando al VPS con una variable de host de producción. **Pendiente**, mismo motivo que el anterior.
+- [ ] Mailer transaccional con SPF, DKIM y DMARC en el dominio (C5). **Aplazado** por decisión del usuario: sin proveedor de correo; no hace falta de momento.
+- [ ] Backups diarios de Postgres copiados a un almacenamiento externo compatible con S3, con prueba de restauración (C5). **Aplazado** por decisión del usuario: sin almacenamiento externo; el backup local de `docker/backup.sh` no cambia.
+- [ ] Checklist de humo y Lighthouse sobre el VPS. **Pendiente** del VPS.
 
-Aceptación: el VPS desplegado desde CI con los 6 tests de navegador en verde; restauración de un backup probada; el feed aleatorio con 200.000 filas responde en menos de 50 ms.
+Aceptación: el VPS desplegado desde CI con los 6 tests de navegador en verde; restauración de un backup probada; el feed aleatorio con 200.000 filas responde en menos de 50 ms. **No cumplida todavía**: los 6 tests de navegador están en verde en local, el feed responde en ~0,2 ms en la consulta, pero el VPS, la restauración de backup y CI en remoto no se han ejecutado.
 
 ## Calidad y convenciones
 

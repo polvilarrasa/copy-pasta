@@ -13,8 +13,8 @@ use App\Models\User;
 use App\Queries\FeedQuery;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -22,7 +22,8 @@ class Feed extends Component
 {
     public const PER_PAGE = 20;
 
-    private const RANDOM_SEED_KEY = 'feed.random_seed';
+    /** Largest key the random feed can hold: `random_key` is an integer in [0, MAX_SEED]. */
+    private const MAX_SEED = 2147483646;
 
     private const FILTER_PROPERTIES = ['sort', 'tags', 'search', 'nsfw'];
 
@@ -46,12 +47,25 @@ class Feed extends Component
     #[Url(as: 'nsfw')]
     public bool $nsfw = false;
 
+    /** Where the random feed starts walking over `random_key`; in the URL so pages stay stable on reload. */
+    #[Url(as: 'seed')]
+    public ?int $seed = null;
+
     public int $limit = self::PER_PAGE;
+
+    public function mount(): void
+    {
+        $this->ensureSeed();
+    }
 
     public function updated(string $property): void
     {
         if (in_array($property, self::FILTER_PROPERTIES, true)) {
             $this->limit = self::PER_PAGE;
+        }
+
+        if ($property === 'sort') {
+            $this->ensureSeed();
         }
     }
 
@@ -62,7 +76,7 @@ class Feed extends Component
 
     public function shuffle(): void
     {
-        session()->put(self::RANDOM_SEED_KEY, Str::random(16));
+        $this->seed = self::newSeed();
 
         $this->limit = self::PER_PAGE;
     }
@@ -77,7 +91,7 @@ class Feed extends Component
 
     public function render(): View
     {
-        $results = $this->feedQuery()->limit($this->limit + 1)->get();
+        $results = $this->feedPage($this->limit + 1);
 
         return view('livewire.feed', [
             'copypastas' => $results->take($this->limit),
@@ -99,13 +113,12 @@ class Feed extends Component
     private function feedQuery(): Builder
     {
         return FeedQuery::make()
-            ->sort($this->activeSort(), $this->randomSeed())
+            ->sort($this->activeSort())
             ->tags($this->activeTagSlugs())
             ->search($this->search)
             ->nsfw($this->includesNsfw())
             ->builder()
-            ->withViewerState($this->viewer())
-            ->with(['user:id,username,anonymized_at', 'tags:id,name,slug,color']);
+            ->withViewerState($this->viewer());
     }
 
     private function viewer(): ?User
@@ -170,17 +183,47 @@ class Feed extends Component
         return request()->cookie(NsfwConfirmationController::COOKIE) === '1';
     }
 
-    private function randomSeed(): string
+    /**
+     * The random order continues from the seed to the end of the key space and then wraps around to the start, so
+     * every copy-pasta appears once per seed and pages never overlap.
+     *
+     * @return EloquentCollection<int, Copypasta>
+     */
+    private function feedPage(int $size): EloquentCollection
     {
-        $seed = session()->get(self::RANDOM_SEED_KEY);
+        $page = $this->activeSort() === FeedSort::Random
+            ? $this->randomPage($size)
+            : $this->feedQuery()->limit($size)->get();
 
-        if (is_string($seed)) {
-            return $seed;
+        return $page->load(['user:id,username,anonymized_at', 'tags:id,name,slug,color']);
+    }
+
+    /**
+     * @return EloquentCollection<int, Copypasta>
+     */
+    private function randomPage(int $size): EloquentCollection
+    {
+        $seed = $this->seed ?? 0;
+        $page = $this->feedQuery()->randomKeyFrom($seed)->limit($size)->get();
+
+        if ($page->count() < $size) {
+            $page = $page->merge(
+                $this->feedQuery()->randomKeyBefore($seed)->limit($size - $page->count())->get(),
+            );
         }
 
-        $seed = Str::random(16);
-        session()->put(self::RANDOM_SEED_KEY, $seed);
+        return $page;
+    }
 
-        return $seed;
+    private function ensureSeed(): void
+    {
+        if ($this->seed === null && $this->activeSort() === FeedSort::Random) {
+            $this->seed = self::newSeed();
+        }
+    }
+
+    private static function newSeed(): int
+    {
+        return random_int(0, self::MAX_SEED);
     }
 }

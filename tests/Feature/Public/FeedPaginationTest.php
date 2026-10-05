@@ -45,10 +45,10 @@ test('barajar regenera la semilla y vuelve a la primera página', function (): v
     Copypasta::factory()->count(25)->create();
 
     $component = Livewire::test(Feed::class)->call('loadMore');
-    $seedBefore = session('feed.random_seed');
+    $seedBefore = $component->get('seed');
 
     $component->call('shuffle');
 
-    expect(session('feed.random_seed'))->not->toBe($seedBefore);
+    expect($component->get('seed'))->not->toBe($seedBefore);
     expect(idsOnCurrentPage($component))->toHaveCount(20);
 });

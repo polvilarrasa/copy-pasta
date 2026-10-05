@@ -28,7 +28,19 @@ jobs:
           --health-timeout=5s
           --health-retries=5
 
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     env:
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
       DB_CONNECTION: pgsql
       DB_HOST: 127.0.0.1
       DB_PORT: 5432
@@ -56,6 +68,9 @@ jobs:
 
       - name: Setup Application
         run: composer setup
+
+      - name: Install the browser for browser tests
+        run: npx playwright install --with-deps chromium
 
       - name: Create testing database
         run: PGPASSWORD=password psql -h 127.0.0.1 -U sail -d copypastas -c "CREATE DATABASE testing;"
