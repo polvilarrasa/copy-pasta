@@ -518,7 +518,7 @@ Aceptación: despliegue en staging desde CI con migraciones automáticas y check
 
 ### Fase 12 — Correcciones antes de producción
 
-Cubre los críticos y altos de la [auditoría del MVP](AUDITORIA.md), que tiene el detalle de cada hallazgo (C1–C5, A1–A6, M1–M10) y la verificación contra el código. Orden de ejecución: C1, 12.1, 12.2a, 12.2b, 12.3 y 12.4, con un commit por bloque. Ya incorpora las decisiones tomadas en esa auditoría.
+Cubre los críticos y altos de la [auditoría del MVP](AUDITORIA.md), que tiene el detalle de cada hallazgo (C1–C5, A1–A6, M1–M10) y la verificación contra el código. Orden de ejecución: C1, 12.1, 12.2a, 12.2b, 12.3, 12.5 y 12.4, con un commit por bloque. Ya incorpora las decisiones tomadas en esa auditoría.
 
 #### 12.1 — Proceso y datos
 
@@ -607,6 +607,32 @@ Aceptación: una cuenta de menos de 72 horas no puede reportar; un reporte por m
 - **Límite del aviso por IP.** `throttle:5,60` en la ruta POST; sin captcha, como se aprobó.
 
 
+
+#### 12.5 — Registro de eventos
+
+Corrige M8 de la [auditoría](AUDITORIA.md). Los agregados por copy-pasta no bastan para la V2 (feed personalizado, estadísticas por usuario y logros): hace falta un registro de hechos por usuario o visitante. Se ejecuta después de 12.3 y antes de 12.4.
+
+- [ ] Tabla `events` particionada por mes sobre `created_at`: `id` bigint, `type` (enum `EventType`: copy, share, detail_view, vote_up, vote_down, vote_removed, favorite_add, favorite_remove, folder_add, folder_remove, report, search), `user_id` nullable, `visitor_hash` nullable, `copypasta_id` nullable, `context` jsonb y `created_at`. La clave primaria es `(id, created_at)`, porque PostgreSQL exige que la clave de partición forme parte de ella. Índices `(user_id, created_at)` y `(copypasta_id, created_at)` declarados en la tabla padre. Una migración crea las particiones del mes en curso y del siguiente; un comando mensual crea las siguientes.
+- [ ] `visitor_hash` para anónimos: HMAC-SHA256 de IP y user agent con una sal diaria. La sal se deriva de `APP_KEY` y de la fecha, sin guardarla, así que el hash no se puede correlacionar entre días y no hace falta cookie. Los eventos de usuarios autenticados llevan `visitor_hash` nulo.
+- [ ] Servicio `RecordEvent`, usado por `CastVote`, `ToggleFavorite`, `AddToFolder`, `RemoveFromFolder`, `RecordCopypastaCopy` y `ReportCopypasta`, y por el controlador de detalle, el de compartir (nuevo endpoint, porque compartir ocurre en el navegador) y la búsqueda del feed. Escribe después del commit de la acción, no dentro de su transacción: un fallo de inserción aborta la transacción de PostgreSQL y rompería la acción principal. Si la escritura falla, captura la excepción, la registra en el log y la acción responde igual.
+- [ ] Contexto de cada evento: `source` (orden o feed de origen, p. ej. `random`, `top_week`), `position` (posición en la lista, solo en el feed) y `ref` (código de referencia del enlace compartido). El botón de compartir genera un código corto aleatorio, lo guarda en el evento de `share` y añade `?ref=` a la URL. Un `detail_view` con `ref` en la query guarda ese código. El código no contiene identificadores de usuario.
+- [ ] Impresiones del feed: un contador agregado por copy-pasta y día, nunca por usuario y sin evento por impresión. Se guarda en la columna `impressions` de `copypasta_daily_stats`, que no figuraba en la lista original y se añade aquí para tener dónde guardarla.
+- [ ] Tabla `copypasta_daily_stats` (`copypasta_id`, `date`, `views`, `copies`, `shares`, `upvotes`, `downvotes`, `favorites`, `impressions`), con clave `(copypasta_id, date)`. Definiciones para que el recuento directo coincida exactamente con el job: `views` = eventos `detail_view`; `copies` = `copy`; `shares` = `share`; `upvotes` = `vote_up`; `downvotes` = `vote_down`; `favorites` = `favorite_add` menos `favorite_remove` del día. Un job programado cada hora recalcula con upsert los días de hoy y de ayer desde `events`. `impressions` no sale de `events`, así que el job no la toca.
+- [ ] `DeleteOwnAccount` (12.1) pone a null `user_id` en los eventos del usuario. Los eventos se conservan como hechos anónimos.
+- [ ] Retención: comando `events:prune`, programado mensualmente, que separa y borra las particiones de más de 13 meses. Las particiones dentro del plazo no se tocan.
+- [ ] Actualiza la política de privacidad (borrador, `resources/views/public/privacidad.blade.php`): qué se registra (eventos de uso, hash de visitante sin cookies, término buscado si se guarda), para qué (feed, estadísticas y logros), plazo (13 meses por partición) y que los agregados no contienen datos personales.
+
+Decisiones pendientes de confirmar antes de ejecutar:
+- **Término de búsqueda.** Puede contener datos personales. Propuesta: guardarlo en `context.query` truncado a 100 caracteres, sin `user_id` si el usuario se borra (ya cubierto por la anonimización) y sin registrarlo para visitantes anónimos.
+- **Impresiones en `copypasta_daily_stats`.** Se aparta de la lista original, como se indica arriba.
+
+Aceptación:
+- Cada acción de la lista genera exactamente un evento, con su tipo y su contexto (un test por acción).
+- Un fallo al escribir el evento (inyectado en el test) no cambia el resultado de la acción principal.
+- El job de agregados produce los mismos totales que un recuento directo sobre `events` para cada columna definida arriba.
+- Borrar una cuenta deja sus eventos sin `user_id` y no borra ninguno.
+- `events:prune` borra las particiones de más de 13 meses y conserva las demás.
+- Una impresión del feed incrementa `impressions` sin crear ningún evento ni guardar usuario.
 
 #### 12.4 — Infraestructura y calidad
 
