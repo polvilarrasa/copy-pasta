@@ -622,9 +622,12 @@ Corrige M8 de la [auditoría](AUDITORIA.md). Los agregados por copy-pasta no bas
 - [x] Retención: comando `events:prune`, programado mensualmente, que separa y borra las particiones de más de 13 meses. Las particiones dentro del plazo no se tocan.
 - [x] Actualiza la política de privacidad (borrador, `resources/views/public/privacidad.blade.php`): qué se registra (eventos de uso, hash de visitante sin cookies, término buscado si se guarda), para qué (feed, estadísticas y logros), plazo (13 meses por partición) y que los agregados no contienen datos personales.
 
-Decisiones (tomadas por defecto al ejecutar, sin respuesta explícita; pendientes de revisión):
+Decisiones (tomadas por defecto al ejecutar y aprobadas después):
 - **Término de búsqueda.** Puede contener datos personales. Propuesta: guardarlo en `context.query` truncado a 100 caracteres, sin `user_id` si el usuario se borra (ya cubierto por la anonimización) y sin registrarlo para visitantes anónimos.
 - **Impresiones en `copypasta_daily_stats`.** Se aparta de la lista original, como se indica arriba.
+- **Referencia de compartir (revisada en la V2).** El código aleatorio por clic de este bloque se sustituye por `users.share_code` (decisión 7 de [PLAN-V2](PLAN-V2.md)). El código de `RecordCopypastaShare` cambia en la Fase 20 de la V2.
+- **Votos en agregados (revisada en la V2).** `copypasta_daily_stats.upvotes` y `downvotes` pasan a ser netos, con `previous` y `next` en el `context` de los eventos de voto (decisión 8 de [PLAN-V2](PLAN-V2.md)).
+- **Claves foráneas (revisada en la V2).** `events` conserva `ON DELETE SET NULL` como excepción documentada; `copypasta_daily_stats` pasa a `restrictOnDelete` (decisión 9 de [PLAN-V2](PLAN-V2.md)).
 
 Aceptación:
 - Cada acción de la lista genera exactamente un evento, con su tipo y su contexto (un test por acción).
@@ -643,7 +646,7 @@ Aceptación:
 - **Contexto en enlaces.** Las tarjetas enlazan al detalle con `?from=<orden>&pos=<posición>`; el botón de compartir copia el enlace canónico más `?ref=<código>`.
 - **Retención.** `events:prune` borra particiones cuyo mes es anterior al primer día del mes de hace 13 meses.
 - **Particiones.** La migración crea el mes en curso y el siguiente; `events:partitions` (diario) prepara los siguientes. Si falta una partición, el evento se pierde y se registra en el log; la acción no se ve afectada.
-- **Bots.** Las vistas de rastreadores cuentan como `detail_view`. No se filtran todavía.
+- **Bots.** Las vistas de rastreadores cuentan como `detail_view`. No se filtran todavía; el filtrado por user agent se hace en la Fase 13 de la V2.
 - **Pendiente en esta fase:** el texto de privacidad está en `lang/es/public.php` y sigue marcado como borrador pendiente de revisión legal.
 
 #### 12.4 — Infraestructura y calidad
