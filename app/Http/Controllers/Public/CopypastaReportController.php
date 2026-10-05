@@ -9,6 +9,7 @@ use App\Enums\ReportReason;
 use App\Http\Controllers\Controller;
 use App\Models\Copypasta;
 use App\Models\User;
+use App\Support\EventContext;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class CopypastaReportController extends Controller
             $copypasta,
             ReportReason::from($validated['reason']),
             $validated['details'] ?? null,
+            EventContext::fromRequest($request),
         );
 
         return response()->json(['message' => __('public.report.sent')], 201);

@@ -1,0 +1,98 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Actions\AggregateCopypastaDailyStats;
+use App\Enums\EventType;
+use App\Models\Copypasta;
+use App\Models\TrackedEvent;
+use Illuminate\Support\Facades\DB;
+
+beforeEach(fn () => prepareEventPartitions());
+
+/**
+ * Counts the events per copy-pasta and day directly from the events table, without the aggregation's SQL.
+ *
+ * @return array<string, array<string, int>>
+ */
+function directCounts(): array
+{
+    return TrackedEvent::query()
+        ->whereNotNull('copypasta_id')
+        ->get()
+        ->groupBy(fn (TrackedEvent $event): string => $event->copypasta_id.'|'.$event->created_at->toDateString())
+        ->map(fn ($events): array => [
+            'views' => $events->where('type', EventType::DetailView)->count(),
+            'copies' => $events->where('type', EventType::Copy)->count(),
+            'shares' => $events->where('type', EventType::Share)->count(),
+            'upvotes' => $events->where('type', EventType::VoteUp)->count(),
+            'downvotes' => $events->where('type', EventType::VoteDown)->count(),
+            'favorites' => $events->where('type', EventType::FavoriteAdd)->count()
+                - $events->where('type', EventType::FavoriteRemove)->count(),
+        ])
+        ->all();
+}
+
+/**
+ * The aggregated rows, keyed the same way as {@see directCounts()}.
+ *
+ * @return array<string, array<string, int>>
+ */
+function aggregatedCounts(): array
+{
+    return collect(DB::table('copypasta_daily_stats')->get())
+        ->keyBy(fn (object $row): string => $row->copypasta_id.'|'.$row->date)
+        ->map(fn (object $row): array => [
+            'views' => (int) $row->views,
+            'copies' => (int) $row->copies,
+            'shares' => (int) $row->shares,
+            'upvotes' => (int) $row->upvotes,
+            'downvotes' => (int) $row->downvotes,
+            'favorites' => (int) $row->favorites,
+        ])
+        ->all();
+}
+
+test('los agregados diarios coinciden con un recuento directo de los eventos', function (): void {
+    $first = Copypasta::factory()->create();
+    $second = Copypasta::factory()->create();
+
+    TrackedEvent::factory()->forCopypasta($first)->ofType(EventType::DetailView)->count(3)->at(now()->subDay()->setTime(12, 0))->create();
+    TrackedEvent::factory()->forCopypasta($first)->ofType(EventType::Copy)->at(now()->subDay()->setTime(13, 0))->create();
+    TrackedEvent::factory()->forCopypasta($first)->ofType(EventType::VoteUp)->count(2)->at(now()->subHours(2))->create();
+    TrackedEvent::factory()->forCopypasta($second)->ofType(EventType::VoteDown)->at(now()->subHours(2))->create();
+    TrackedEvent::factory()->forCopypasta($second)->ofType(EventType::Share)->at(now()->subHours(3))->create();
+    TrackedEvent::factory()->forCopypasta($second)->ofType(EventType::FavoriteAdd)->count(2)->at(now()->subHours(4))->create();
+    TrackedEvent::factory()->forCopypasta($second)->ofType(EventType::FavoriteRemove)->at(now()->subHours(4))->create();
+
+    app(AggregateCopypastaDailyStats::class)->handle(now()->subDays(2), now());
+
+    expect(aggregatedCounts())->toEqualCanonicalizing(directCounts());
+});
+
+test('volver a calcular los mismos días da los mismos totales', function (): void {
+    $copypasta = Copypasta::factory()->create();
+    TrackedEvent::factory()->forCopypasta($copypasta)->ofType(EventType::Copy)->count(4)->at(now()->subHour())->create();
+
+    $aggregate = app(AggregateCopypastaDailyStats::class);
+    $aggregate->handle(now()->subDay(), now());
+    $aggregate->handle(now()->subDay(), now());
+
+    expect(DB::table('copypasta_daily_stats')->sole()->copies)->toBe(4);
+});
+
+test('recalcular no toca las impresiones, que no salen de los eventos', function (): void {
+    $copypasta = Copypasta::factory()->create();
+    DB::table('copypasta_daily_stats')->insert([
+        'copypasta_id' => $copypasta->getKey(),
+        'date' => now()->toDateString(),
+        'impressions' => 12,
+    ]);
+    TrackedEvent::factory()->forCopypasta($copypasta)->ofType(EventType::DetailView)->at(now()->subHour())->create();
+
+    app(AggregateCopypastaDailyStats::class)->handle(now()->subDay(), now());
+
+    expect(DB::table('copypasta_daily_stats')->sole())
+        ->views->toBe(1)
+        ->impressions->toBe(12);
+});

@@ -1,0 +1,402 @@
+# Copy-pastas V2 — Plan de producto e implementación
+
+Oct 4, 2026 · @Pol
+
+La V2 convierte el MVP en un producto: identidad visual propia, un área de usuario de consumo fuera de Filament, motivos para volver (estadísticas, logros, notificaciones) y un feed personalizado. Sale a producción junto con el MVP, en 11 fases que continúan la numeración del plan original (13 a 23), y una fase final de lanzamiento (24).
+
+## Cómo usar este plan
+
+Este plan se ejecuta cuando la Fase 12 esté completa, incluido el bloque 12.5 de registro de eventos, del que dependen las estadísticas, los logros y el feed personalizado.
+
+- Guárdalo en el repo como `docs/PLAN-V2.md`. `docs/PLAN.md` sigue siendo la referencia del MVP y de la Fase 12.
+- La Fase 14 necesita el resultado de Claude Design en `docs/design/`: capturas de las pantallas y la lista de tokens. La sección "Brief para Claude Design" dice qué pedir.
+- El flujo es el mismo que en el MVP: una fase por vez, lista de ficheros antes de codificar, tests de aceptación, CI en verde, tareas marcadas en este fichero y un commit por fase.
+
+Reglas para Claude Code en toda la V2:
+
+- Filament queda solo para `/admin`. Toda la interfaz nueva para usuarios va en la web pública con Livewire y Blade.
+- Desde la Fase 14, solo se usan los componentes y tokens del sistema de diseño. Nada de colores ni tamaños sueltos en las vistas.
+- Las reglas del MVP siguen vigentes: lógica en Actions, autorización en Policies, textos en `lang/es`.
+- Toda acción nueva de usuario registra su evento con `RecordEvent`.
+- Cada flujo nuevo de interfaz tiene al menos un test de navegador.
+- Las rutas nuevas bajo `/c/{ulid}/...` se declaran antes de `/c/{copypasta}/{slug?}`, por el problema que apareció en la Fase 7.
+
+## Visión, alcance y decisiones
+
+El MVP funciona pero parece una herramienta interna: estética básica, área de usuario con aspecto de panel de administración, y un feed igual para todos. La V2 ataca esas tres cosas y añade razones para volver.
+
+**Dentro de la V2**
+
+- Sistema de diseño propio con modo claro y oscuro, aplicado a la web y al tema de `/admin`.
+- Área de usuario en la web pública: mis copy-pastas, publicar, carpetas con su contenido y ajustes.
+- Perfil público con logros y títulos, y estadísticas privadas.
+- Notificaciones dentro de la app.
+- Feed "Para ti", selección de etiquetas al registrarse, "no me interesa" y copy-pasta del día.
+- Imágenes Open Graph, compartir como imagen y carpetas públicas.
+- Plantillas con variables y variantes de un copy-pasta.
+- PWA instalable.
+- Endurecimiento básico de Unicode y, con prioridad baja, soporte avanzado de ASCII art.
+
+**Fuera de la V2:** comentarios, apelaciones, login social, API pública, multidioma, subida de avatares, seguir a usuarios y recomendaciones por embeddings. Ver Backlog.
+
+**Decisiones tomadas**
+
+1. El área de usuario sale de Filament. El panel `/app` desaparece y sus URLs redirigen a las nuevas.
+2. Tras el login, el staff va a `/admin` y el resto a la página que pedía o al feed.
+3. La señal más fuerte de interés es copiar, por delante de votar.
+4. Los logros son reconocimiento: ningún logro da permisos.
+5. Los avatares se generan (iniciales y color); no hay subida de imágenes, que requeriría moderar imágenes.
+6. El soporte avanzado de Unicode y ASCII art es lo último de la V2.
+7. **Enlaces compartidos.** El `?ref=` usa `users.share_code`, un código estable por usuario. Sustituye al código aleatorio por clic de la Fase 12.5 (`RecordCopypastaShare`). Los anónimos no tienen código, así que sus visitas no se atribuyen.
+8. **Upvotes netos.** Las estadísticas y `copypasta_daily_stats.upvotes` cuentan votos netos. Los eventos de voto guardan `previous` y `next` en `context`, y la agregación suma deltas. Es la primera tarea de la Fase 16. Sin producción no hace falta recalcular eventos antiguos: se resiembra.
+9. **Claves foráneas.** `events.user_id` y `events.copypasta_id` con `ON DELETE SET NULL` son excepción documentada: un evento es un hecho que sobrevive a la cuenta o al copy-pasta. `copypasta_daily_stats.copypasta_id` pasa a `restrictOnDelete` en una migración nueva.
+10. **Afinidad "guardar".** Solo suma +3 el botón de Favoritos (`favorite_add`). Meter un copy-pasta en una carpeta propia (`folder_add`) no suma afinidad.
+11. **Sin Flux.** Se elimina la librería Flux. El sistema de diseño se construye con componentes Blade propios y Alpine (con el plugin oficial `@alpinejs/focus` para modales y desplegables). Motivos: el diseño será propio y Flux tiene un estilo difícil de adaptar; varios componentes necesarios son de Flux Pro; y las pantallas que lo usan ya se rediseñan en la Fase 14. El gráfico de estadísticas es un SVG generado en el servidor, sin librería de gráficos.
+
+## Especificación funcional
+
+Cada bloque describe el comportamiento esperado; las fases lo convierten en tareas y tests.
+
+### Área de usuario
+
+- Todo vive en la web pública con el mismo layout que el feed. El menú de usuario lleva a cada sección y, para el staff, a `/admin`. `/admin` tiene un enlace visible de vuelta a la web.
+- **Mis copy-pastas:** lista con estado (visible u oculto con su motivo) y métricas por fila (score, copias, guardados). Acciones: ver, editar, borrar.
+- **Publicar y editar:** formulario Livewire con título, cuerpo con contador, de 1 a 5 etiquetas activas, NSFW y, desde la Fase 21, plantilla. Vista previa de la tarjeta en vivo y aviso de duplicado como en el MVP.
+- **Carpetas:** rejilla con nombre, número de copy-pastas y vista previa del primero. Crear, renombrar, reordenar y borrar; Favoritos sigue protegida.
+- **Detalle de carpeta:** un feed con las tarjetas normales (copiar, votar) más "quitar de la carpeta". Los ocultos y borrados se ven como "Contenido retirado".
+- **Ajustes:** los unificados en `/settings` en el bloque 12.2b, con el diseño nuevo.
+
+### Perfil público
+
+- `/u/{username}` muestra avatar generado, título elegido, fecha de alta, contadores públicos (publicados, copias recibidas, upvotes recibidos), logros, sus copy-pastas (top y nuevos) y sus carpetas públicas.
+- Los copy-pastas de cuentas borradas muestran "usuario eliminado", sin enlace.
+- El username se puede cambiar una vez cada 30 días. El anterior redirige al nuevo durante 90 días y nadie más puede usarlo en ese tiempo.
+
+### Estadísticas privadas
+
+- Totales: publicados, copias recibidas, guardados por otros, visitas, score, upvotes y downvotes.
+- Gráfico de 30 días con copias, votos y visitas por día, desde `copypasta_daily_stats`.
+- Mejor copy-pasta, el que más ha crecido en 7 días y las 3 etiquetas con más copias.
+- Fiabilidad como reportador y progreso hacia usuario de confianza.
+
+### Notificaciones
+
+- Notificaciones de base de datos de Laravel. Campana con contador en la cabecera y página `/notificaciones` con marcar como leídas.
+- Tipos: logro desbloqueado; hitos de un copy-pasta (10, 100 y 1.000 copias o upvotes); copy-pasta oculto o restaurado; reporte aceptado; alguien publicó una variante de tu copy-pasta; ascenso a usuario de confianza.
+- Varios hitos del mismo copy-pasta en una hora se agrupan en una notificación.
+- Preferencias por tipo en ajustes. Las de moderación no se pueden desactivar.
+- Sin emails nuevos en la V2; siguen los de moderación del MVP.
+
+### Logros y títulos
+
+- Definidos en código, con una tabla `user_achievements`. Se evalúan en cola a partir de los eventos de dominio, de forma idempotente.
+- **Rareza:** porcentaje de usuarios que tiene cada logro, recalculado una vez al día.
+- **Título:** el usuario elige uno de sus logros con título y se muestra junto a su nombre en tarjetas y perfil.
+- **Secretos:** aparecen como "???" hasta conseguirlos.
+- **Antitrampas:** los upvotes y visitas recibidos solo cuentan si vienen de cuentas verificadas de más de 72 horas o, en visitas, de visitantes distintos que no son el propio usuario. Solo cuentan los reportes aceptados.
+- **Revocación:** no son automáticas. Un admin puede revocar un logro con motivo, y queda en el log.
+- **Retroactividad:** el comando `app:backfill-achievements` calcula los logros con los datos existentes al lanzar.
+
+| Familia | Logro | Condición | Título |
+| --- | --- | --- | --- |
+| Creador | Primera pegada | Publicar 1 copy-pasta | Recién pegado |
+| Creador | Pegador habitual | Publicar 10 | Pegador habitual |
+| Creador | Fábrica de pastas | Publicar 100 | Maestro del Ctrl+V |
+| Popularidad | Primer aplauso | 1 upvote recibido | — |
+| Popularidad | Bien recibido | 10 upvotes recibidos | Aplaudido |
+| Popularidad | Favorito del público | 100 upvotes recibidos | Favorito del público |
+| Popularidad | Leyenda | 1.000 upvotes recibidos | Leyenda del foro |
+| Copias | Copiado | 10 copias recibidas | — |
+| Copias | Viral | 100 copias recibidas | Viral |
+| Copias | Patrimonio de internet | 1.000 copias recibidas | Patrimonio de internet |
+| Tendencia | En tendencia | Un copy-pasta en el top 10 semanal | En tendencia |
+| Coleccionista | Primera carpeta | Crear una carpeta | — |
+| Coleccionista | Coleccionista | Guardar 50 copy-pastas | Coleccionista |
+| Guardián | Vigilante | 1 reporte aceptado | — |
+| Guardián | Guardián | 10 reportes aceptados | Guardián |
+| Guardián | Centinela | 50 reportes aceptados | Centinela |
+| Difusión | Mensajero | 1 visita por tus enlaces compartidos | — |
+| Difusión | Altavoz | 100 visitas | Altavoz |
+| Difusión | Megáfono | 1.000 visitas | Megáfono |
+| Votante | Crítico | Votar 100 veces | — |
+| Variantes | Remezclador | Publicar una variante | Remezclador |
+| Variantes | Discípulo aventajado | Una variante tuya supera en score al original | Discípulo aventajado |
+| Plantillas | Plantillero | Una plantilla tuya copiada 10 veces | Plantillero |
+| Veterano | Veterano | 1 año de cuenta | Veterano |
+| Secreto | Noctámbulo | Publicar entre las 3:00 y las 4:00 | Noctámbulo |
+| Secreto | Dinamita | 100 copias de un copy-pasta en 24 horas | Dinamita |
+
+### Feed "Para ti"
+
+- **Afinidad por etiqueta:** copiar +3, guardar +3, upvote +1, downvote −2, "no me interesa" −3, etiqueta elegida al registrarse +5. Las puntuaciones se reducen a la mitad cada 30 días.
+- **Mezcla por página:** 70 % de las 5 etiquetas más afines, 20 % de exploración en el resto y 10 % de publicados en las últimas 48 horas con pocos votos.
+- **Orden dentro de cada grupo:** calidad y frescura. Score más el doble de copias, dividido por la edad en horas más 2, elevada a 1,5.
+- **Exclusiones:** lo que ya votaste, copiaste o marcaste como "no me interesa", y lo mostrado en los últimos 500 resultados (en Redis).
+- **Explicación** bajo cada tarjeta: "Porque te gusta #etiqueta" o "Para que descubras algo nuevo".
+- **Mecánica:** lista de 200 candidatos por usuario, cacheada 30 minutos y paginada sobre ella.
+- Es la pestaña por defecto para usuarios con al menos 5 señales o con etiquetas elegidas. Los anónimos no la ven.
+- **Al registrarse**, y la primera vez que entra un usuario existente tras el lanzamiento, se piden al menos 3 etiquetas favoritas. Se puede saltar.
+- **No me interesa:** opción en el menú "..." de la tarjeta. La oculta del feed del usuario y resta afinidad a sus etiquetas.
+
+### Copy-pasta del día
+
+- Cada día a las 00:00 un job elige el de mejor puntuación de calidad y frescura de las últimas 48 horas, sin NSFW y que no haya sido elegido antes.
+- El staff puede sustituirlo desde `/admin`. Se muestra destacado arriba de la home.
+
+### Difusión
+
+- **Enlaces compartidos:** el botón de compartir añade `?ref=` con el código público del usuario (`share_code`). Una visita cuenta una vez por visitante y día, y nunca la del propio usuario.
+- **Imágenes Open Graph:** 1200 × 630 con título, primeras líneas y marca. Genérica para NSFW. Se genera al publicar o editar y se guarda en disco. Antes de elegir tecnología hay que hacer una prueba con emojis y acentos; evitar meter un navegador completo en la imagen Docker.
+- **Compartir como imagen:** se genera en el navegador con la misma plantilla y se comparte con la Web Share API o se descarga. Para NSFW pide confirmación.
+- **Carpetas públicas:** interruptor "pública" con URL `/col/{public_id}`, nombre y descripción opcional de hasta 280 caracteres. Aparecen en el perfil. Los copy-pastas ocultos no se muestran a otros. El staff puede volver privada una carpeta, con registro en el log.
+
+### Plantillas y variantes
+
+- **Plantillas:** casilla "Es plantilla" al publicar. Las variables usan `{{nombre}}`, con letras, números y guion bajo, hasta 10 distintas. Si se marca la casilla sin variables, error de validación.
+- Al copiar una plantilla se abre un modal con un campo por variable y vista previa; se copia el resultado. El evento de copia lleva `template: true` en el contexto. La tarjeta muestra el distintivo "Plantilla".
+- **Variantes:** botón "Crear variante" en el detalle, que abre el formulario prellenado y guarda `parent_id`. El detalle muestra "Variante de…" y la lista de variantes por score. Si el original está oculto o borrado, se muestra "Contenido retirado".
+
+### PWA
+
+- Manifest, iconos, color de tema y service worker con página sin conexión. No se cachea contenido dinámico.
+
+### Unicode
+
+- **Básico (Fase 13):** quitar de los títulos los caracteres de control de dirección (U+202A a U+202E, U+2066 a U+2069) y los de ancho cero (U+200B a U+200D, U+FEFF). Aislar la dirección del cuerpo con `unicode-bidi: isolate`. Recortar con CSS el desbordamiento vertical del zalgo en las tarjetas. Si el slug queda vacío, usar el ULID.
+- **Avanzado (Fase 23):** tipo de contenido ASCII art con monoespaciada, sin saltos y con scroll horizontal; longitud contada en grafemas; normalización NFC antes de calcular `body_hash`; batería de tests con textos extremos.
+
+## Modelo de datos
+
+Seis tablas nuevas y columnas nuevas en tres existentes. Las FK siguen la regla de la Fase 12: `restrictOnDelete` hacia `users` y `copypastas`, para que ningún borrado físico se salte las Actions.
+
+| Tabla | Cambio | Campos | Índices y restricciones |
+| --- | --- | --- | --- |
+| `users` | Columnas nuevas | title\_key nullable, username\_changed\_at, share\_code (8 caracteres), onboarded\_at, notification\_prefs jsonb, theme (`system`/`light`/`dark`) | unique(share\_code) |
+| `username_history` | Nueva | user\_id, username, changed\_at | index(username, changed\_at) |
+| `user_achievements` | Nueva | user\_id, achievement\_key, unlocked\_at, revoked\_at nullable, revoked\_by\_id nullable, revoke\_reason | unique(user\_id, achievement\_key) |
+| `notifications` | Nueva (estándar de Laravel) | id uuid, type, notifiable, data jsonb, read\_at, timestamps | la de Laravel |
+| `user_tag_affinities` | Nueva | user\_id, tag\_id, score float, updated\_at | PK(user\_id, tag\_id) |
+| `copypasta_dismissals` | Nueva | user\_id, copypasta\_id, created\_at | PK(user\_id, copypasta\_id) |
+| `featured_copypastas` | Nueva | date, copypasta\_id, picked\_by\_id nullable | PK(date); unique(copypasta\_id) |
+| `folders` | Columnas nuevas | is\_public bool, public\_id ULID nullable, description (máximo 280) | unique(public\_id) |
+| `copypastas` | Columnas nuevas | is\_template bool, parent\_id nullable (nullOnDelete), og\_image\_path nullable; en la Fase 23, kind (`text`/`ascii`) | index(parent\_id) |
+
+Notas:
+
+- La puntuación de afinidad se guarda sin aplicar el paso del tiempo. Al leerla o actualizarla se aplica `score × 0,5^(días desde updated_at / 30)`.
+- `achievement_key` referencia una definición en código. La rareza se calcula a diario y se guarda en caché, sin tabla.
+- `parent_id` es la única FK de `copypastas` con `nullOnDelete`: si un original desaparece físicamente, la variante sobrevive sin enlace.
+
+## Rutas y pantallas
+
+15 pantallas nuevas o rehechas en la web pública y 3 añadidos en `/admin`. Todas las de la web usan el sistema de diseño de la Fase 14.
+
+| Ruta | Pantalla | Acceso | Fase |
+| --- | --- | --- | --- |
+| `/` | Feed con pestañas: Para ti, aleatorio, top semanal, top mensual, top histórico, nuevos; copy-pasta del día arriba | Todos; Para ti solo con sesión | 14, 19 |
+| `/c/{ulid}/{slug}` | Detalle rediseñado, con variantes y compartir como imagen | Todos | 14, 20, 21 |
+| `/publicar` | Publicar con vista previa en vivo | Usuario verificado | 15 |
+| `/c/{ulid}/editar` | Editar | Autor | 15 |
+| `/c/{ulid}/variante` | Crear variante con el formulario prellenado | Usuario verificado | 21 |
+| `/mis-copypastas` | Mis copy-pastas con estado y métricas | Usuario | 15 |
+| `/carpetas` | Mis carpetas | Usuario | 15 |
+| `/carpetas/{id}` | Detalle de carpeta como feed | Dueño | 15 |
+| `/col/{public_id}` | Carpeta pública | Todos | 20 |
+| `/u/{username}` | Perfil público con logros | Todos | 16, 18 |
+| `/estadisticas` | Estadísticas privadas | Usuario | 16 |
+| `/notificaciones` | Lista de notificaciones | Usuario | 17 |
+| `/bienvenida` | Elegir etiquetas favoritas | Usuario sin `onboarded_at` | 19 |
+| `/settings/*` | Ajustes con el diseño nuevo, más título, tema y preferencias de notificaciones | Usuario | 14, 17, 18 |
+| `/_componentes` | Catálogo del sistema de diseño | Solo entorno local | 14 |
+| `/admin` → Copy-pasta del día | Ver el elegido y sustituirlo | Staff | 19 |
+| `/admin` → Usuarios → Logros | Ver y revocar logros con motivo | Admin | 18 |
+| `/admin` → Carpetas públicas | Listado y acción "hacer privada" | Staff | 20 |
+
+El panel `/app` se elimina en la Fase 15: `/app/copypastas` redirige con 301 a `/mis-copypastas`, `/app/folders` a `/carpetas` y `/app` a `/estadisticas`.
+
+## Fases de implementación
+
+Once fases, de la 13 a la 23, y la 24 de lanzamiento. Las 13 a 15 cambian la base (diseño y área de usuario); las 16 a 18 dan motivos para volver; las 19 a 22 son descubrimiento, difusión y contenido; la 23 es la de menor prioridad.
+
+### Fase 13 — Base de la V2
+
+- [ ] Redirección tras el login: staff a `/admin`, resto a la página pedida o al feed. Enlaces cruzados entre web y `/admin`.
+- [ ] Endurecimiento básico de Unicode según la especificación.
+- [ ] Columnas `username_changed_at` y `share_code` en `users`; tabla `username_history`; límite de un cambio cada 30 días y redirección del username antiguo durante 90 días.
+- [ ] Componente de avatar generado (iniciales y color derivado del id).
+- [ ] Comprobar que el bloque 12.5 registra eventos de todas las acciones existentes; completar lo que falte.
+- [ ] Filtrado de bots por user agent: rastreadores y generadores de vista previa (WhatsApp, Telegram, Discord, Slack, X, Facebook, Google, etc.). Un bot no genera `detail_view`, no suma `views` y no atribuye `ref`.
+- [ ] Migración de `copypasta_daily_stats.copypasta_id` a `restrictOnDelete` (decisión 9).
+
+Aceptación: tests de redirección por rol; un título con U+202E se guarda sin él; un segundo cambio de username en 30 días falla; el username antiguo redirige al nuevo; test con user agents reales de cada plataforma (los de bots no generan `detail_view` ni suman `views`); borrar un copy-pasta con estadísticas falla por la FK.
+
+### Fase 14 — Sistema de diseño
+
+- [ ] Leer `docs/design/`. Si no existe o está incompleto, parar y avisar.
+- [ ] Tokens en Tailwind (colores, tipografía, radios, sombras, espaciado) para modo claro y oscuro. El modo sigue al sistema por defecto, con selector guardado en `users.theme` y en cookie para anónimos.
+- [ ] Fuentes autoalojadas, porque la CSP solo permite `'self'`.
+- [ ] Componentes Blade: botón, tarjeta de copy-pasta, pestañas, chip de etiqueta, modal, toast, estado vacío, skeleton de carga, avatar, menú de usuario.
+- [ ] Rediseño con esos componentes de feed, detalle, login, registro, recuperación, ajustes y páginas legales.
+- [ ] Tema propio de Filament para `/admin` con los mismos tokens.
+- [ ] Página `/_componentes`, solo en local, con todos los componentes en los dos modos.
+- [ ] Componentes propios: botón, input, textarea, select, checkbox, switch, campo de código de 6 dígitos (2FA), modal, desplegable, pestañas, toast, chip de etiqueta, avatar, skeleton y estado vacío. Todos aparecen en `/_componentes`.
+- [ ] Alpine con el plugin oficial `@alpinejs/focus` para modales y desplegables.
+- [ ] Migrar todas las vistas que usan `<flux:*>` (login, registro, recuperación, ajustes, 2FA, passkeys, menús) a los componentes propios.
+- [ ] Eliminar `livewire/flux` de `composer.json` y sus assets (estilos en `resources/css/app.css` y vistas en `resources/views/flux`).
+- [ ] Tests de navegador: el staff entra con un código TOTP real en el campo nuevo, no con el código de recuperación.
+
+Aceptación: ninguna vista usa colores o tamaños arbitrarios de Tailwind (comprobación automática en CI); ningún `<flux:*>` en `resources/views` (comprobación en CI); modal, desplegable y pestañas usables solo con teclado (Tab, Escape, flechas), con foco atrapado en el modal y atributos ARIA correctos, cubierto con tests de navegador; accesibilidad de Lighthouse de 95 o más en claro y oscuro; los tests de navegador de la Fase 12 siguen en verde.
+
+### Fase 15 — Área de usuario fuera de Filament
+
+- [ ] Páginas Livewire: mis copy-pastas, publicar con vista previa, editar, carpetas y detalle de carpeta.
+- [ ] Reutilizar las Actions y Policies existentes; ninguna lógica de negocio en los componentes.
+- [ ] Eliminar el panel `/app` y redirigir sus URLs con 301.
+- [ ] Menú de usuario con todas las secciones.
+- [ ] Tests de navegador: publicar, editar, crear carpeta, añadir y quitar de una carpeta, copiar desde una carpeta.
+
+Aceptación: `/app` responde 301; todo lo que un usuario hacía en el MVP funciona sin Filament; el detalle de carpeta muestra tarjetas con copiar y quitar.
+
+### Fase 16 — Perfil público y estadísticas
+
+- [ ] Primera tarea: votos netos (decisión 8). `previous` y `next` en el `context` de los eventos de voto, y agregación por deltas. Sin producción no hace falta recalcular eventos antiguos: se resiembra.
+- [ ] Gráfico de 30 días como componente Blade que genera SVG en el servidor, sin librería de gráficos. Accesible: título y descripción en el SVG, y los mismos datos en una tabla oculta para lectores de pantalla.
+- [ ] Página `/u/{username}` con contadores públicos, copy-pastas y carpetas públicas (estas últimas se activan en la Fase 20).
+- [ ] Enlaces al perfil desde el autor de cada tarjeta y del detalle; "usuario eliminado" sin enlace.
+- [ ] Página `/estadisticas` con totales, gráfico de 30 días, mejor copy-pasta, el que más crece, etiquetas fuertes y fiabilidad de reportes.
+- [ ] Consultas de estadísticas solo sobre `copypasta_daily_stats` y contadores; nunca sobre `events` en bruto.
+
+Aceptación: los totales coinciden con un recuento directo en un test con datos sembrados; la página de estadísticas hace 6 consultas como máximo; el perfil de una cuenta borrada responde 404; el gráfico tiene título, descripción y tabla equivalente.
+
+### Fase 17 — Notificaciones
+
+- [ ] Tabla de notificaciones de Laravel y una clase por tipo.
+- [ ] Campana con contador en la cabecera, actualizada al navegar y cada 60 segundos.
+- [ ] Página `/notificaciones` con marcar una o todas como leídas.
+- [ ] Hitos de copias y upvotes (10, 100, 1.000) detectados al actualizar contadores.
+- [ ] Agrupación de hitos del mismo copy-pasta en una hora.
+- [ ] Preferencias por tipo en ajustes; las de moderación son obligatorias.
+
+Aceptación: cada tipo se genera en su caso y solo una vez; un tipo desactivado no se genera; la agrupación funciona con dos hitos seguidos.
+
+### Fase 18 — Logros y títulos
+
+- [ ] Definiciones en código con el catálogo de la especificación y tabla `user_achievements`.
+- [ ] Evaluación en cola a partir de los eventos de dominio, idempotente, con las reglas antitrampa.
+- [ ] Notificación al desbloquear (Fase 17).
+- [ ] Sección de logros en el perfil: conseguidos, pendientes con progreso, secretos como "???" y porcentaje de usuarios.
+- [ ] Selector de título en ajustes y título visible junto al nombre.
+- [ ] Revocación por admin con motivo y log.
+- [ ] Comando `app:backfill-achievements`.
+
+Aceptación: un test por familia, incluido uno que demuestre que los upvotes de cuentas de menos de 72 horas no cuentan; ejecutar el backfill dos veces no duplica nada; un logro revocado no muestra su título.
+
+### Fase 19 — Descubrimiento
+
+- [ ] Tabla `user_tag_affinities` actualizada desde los eventos, con el decaimiento de 30 días.
+- [ ] Pantalla `/bienvenida` al registrarse y en la primera visita de usuarios existentes, saltable.
+- [ ] Pestaña "Para ti" con la mezcla 70/20/10, exclusiones, explicación por tarjeta y lista de candidatos cacheada.
+- [ ] "No me interesa" en el menú de la tarjeta, con `copypasta_dismissals`.
+- [ ] Copy-pasta del día: job a las 00:00, destacado en la home y sustitución desde `/admin`.
+
+Aceptación: con afinidades sembradas, al menos el 60 % de una página de Para ti pertenece a las etiquetas afines y al menos el 10 % a otras; nada descartado ni votado aparece; dos páginas seguidas no repiten elementos; un usuario sin señales ve el top semanal hasta elegir etiquetas.
+
+### Fase 20 — Difusión
+
+- [ ] `share_code` en los enlaces del botón de compartir y atribución de visitas con las reglas antitrampa.
+- [ ] Prueba técnica de generación de imágenes Open Graph con emojis y acentos; elegir la opción más ligera que pase la prueba.
+- [ ] Imágenes Open Graph generadas al publicar o editar, genérica para NSFW.
+- [ ] "Compartir como imagen" en el navegador, con confirmación en NSFW.
+- [ ] Carpetas públicas con `/col/{public_id}`, descripción y presencia en el perfil; acción del staff para hacerlas privadas.
+
+Aceptación: la imagen de un copy-pasta con emojis se genera sin cuadros vacíos; una visita del propio usuario no cuenta; una carpeta pública nunca muestra copy-pastas ocultos a otros.
+
+### Fase 21 — Plantillas y variantes
+
+- [ ] Casilla "Es plantilla", validación de variables y distintivo en la tarjeta.
+- [ ] Modal de copia con un campo por variable y vista previa.
+- [ ] Crear variante desde el detalle, "Variante de…" y lista de variantes.
+- [ ] Notificación al autor del original (Fase 17) y logros de variantes y plantillas (Fase 18).
+
+Aceptación: copiar una plantilla devuelve el texto con las variables sustituidas; una plantilla sin variables no se puede publicar; borrar el original deja la variante visible con "Contenido retirado".
+
+### Fase 22 — PWA y pulido
+
+- [ ] Manifest, iconos, color de tema, service worker con página sin conexión.
+- [ ] Revisión de estados vacíos, cargas y errores en todas las pantallas nuevas.
+- [ ] Lighthouse sobre producción: rendimiento y accesibilidad de 90 o más.
+
+Aceptación: la app se puede instalar en Android y en escritorio; sin conexión aparece la página offline; Lighthouse cumple los umbrales.
+
+### Fase 23 — Unicode avanzado (prioridad baja)
+
+- [ ] Tipo de contenido ASCII art con monoespaciada, sin saltos y con scroll horizontal.
+- [ ] Longitud contada en grafemas.
+- [ ] Normalización NFC antes de calcular `body_hash`.
+- [ ] Batería de tests con emojis compuestos, zalgo, texto de derecha a izquierda y ASCII art.
+
+Aceptación: un ASCII art de 120 columnas se muestra sin romperse; un emoji de familia cuenta como 1 carácter; dos textos visualmente iguales en NFC y NFD se detectan como duplicados.
+
+### Fase 24 — Lanzamiento
+
+Pendiente de la Fase 12.4. El despliegue a producción lo ejecuta el propietario del proyecto: Claude Code prepara los ficheros y los tests, pero no despliega.
+
+- [ ] VPS en la UE con Ubuntu LTS: acceso solo por clave SSH, cortafuegos con 22, 80 y 443 abiertos, actualizaciones de seguridad automáticas.
+- [ ] `compose.production.yaml` a partir del de staging.
+- [ ] Workflow de despliegue apuntando al VPS con una variable de host de producción.
+- [ ] Mailer transaccional con SPF, DKIM y DMARC en el dominio.
+- [ ] Backups diarios de Postgres copiados a almacenamiento externo compatible con S3, con prueba de restauración.
+- [ ] Ejecutar `app:recalculate-counters` en cada entorno con datos.
+- [ ] Checklist de humo y Lighthouse sobre el VPS.
+
+Aceptación: el despliegue de producción se ejecuta desde CI con los tests de navegador en verde; una restauración de backup probada; checklist de humo completo y Lighthouse con los umbrales de la Fase 22.
+
+## Brief para Claude Design
+
+Este bloque se pega tal cual en Claude Design. El resultado elegido se guarda en `docs/design/` antes de la Fase 14.
+
+**Producto.** Copy-pastas es un foro web en español para descubrir, copiar y compartir copy-pastas: textos virales de internet que la gente pega en chats y redes. La acción principal es copiar. Votar, guardar en carpetas y compartir van detrás.
+
+**Público.** Gente joven y muy de internet, que llega sobre todo desde el móvil a través de enlaces compartidos en WhatsApp, Discord o X.
+
+**Personalidad.** Divertida y con cultura de internet, pero limpia y cuidada. Tiene que parecer un producto, no un foro antiguo ni un panel de administración. El contenido es el protagonista: mucho texto, así que la tipografía y la lectura importan más que la decoración.
+
+**Restricciones técnicas.**
+
+- Se implementa con Tailwind CSS. Entrega los tokens como valores concretos: colores en hex, familias tipográficas, escala de tamaños, radios, sombras y espaciado.
+- Fuentes que se puedan autoalojar (por ejemplo, de Google Fonts). Una para interfaz y otra monoespaciada para ASCII art.
+- Modo claro y modo oscuro, los dos igual de cuidados.
+- Diseño pensado primero para móvil, de unos 380 px, y que escale a escritorio.
+- Los mismos tokens se aplicarán al panel de administración, hecho con Filament, así que la paleta tiene que funcionar también en tablas y formularios densos.
+
+**La tarjeta de copy-pasta es la pieza clave.** Lleva título, las primeras 6 líneas del cuerpo, etiquetas de colores, autor con avatar generado y título de logro, score, y acciones: copiar, votar arriba y abajo, guardar, compartir y menú "...". El botón de copiar debe ser el más visible. Variantes que hay que resolver: NSFW difuminado hasta hacer clic, distintivo de "Plantilla" y la explicación "Porque te gusta #etiqueta" en el feed Para ti.
+
+**Pantallas a diseñar**, en móvil y escritorio:
+
+1. Feed: pestañas (Para ti, aleatorio, top semanal, top mensual, top histórico, nuevos), filtros de etiquetas, buscador y copy-pasta del día destacado arriba.
+2. Detalle de copy-pasta, con variantes y compartir como imagen.
+3. Publicar, con vista previa de la tarjeta en vivo.
+4. Perfil público con contadores y logros: conseguidos, pendientes con progreso y secretos.
+5. Estadísticas privadas con un gráfico de 30 días.
+6. Detalle de carpeta.
+7. Desplegable de notificaciones.
+8. Bienvenida para elegir etiquetas favoritas.
+9. Estados vacíos: feed sin resultados, carpeta vacía, sin notificaciones.
+
+**Qué entregar.** Primero dos o tres direcciones visuales distintas aplicadas al feed y a la tarjeta. Tras elegir una, todas las pantallas en esa dirección y la lista final de tokens.
+
+## Backlog fuera de la V2
+
+Ideas aparcadas, ordenadas por valor estimado.
+
+| Idea | Motivo para aplazarla |
+| --- | --- |
+| Similares y recomendaciones por embeddings del texto | Necesita datos reales para comparar con el modelo por etiquetas de la Fase 19 |
+| Apelación de ocultaciones | Las microempresas no están obligadas por la DSA a un sistema interno; confirmar con el abogado |
+| Seguir a usuarios y feed de seguidos | Tiene sentido cuando haya autores con volumen |
+| Login social (Google, GitHub, Discord) | Menos fricción en el registro, pero no cambia la experiencia |
+| Comentarios | Multiplican la moderación y no aportan al uso principal |
+| Subida de avatares | Obliga a moderar imágenes |
+| Resúmenes por email | Las notificaciones dentro de la app cubren lo básico |
+| API pública de lectura | Para bots de Discord o Telegram, cuando haya demanda |
+| Multidioma (catalán, inglés) | Los textos ya están en ficheros de idioma |

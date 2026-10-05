@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
+use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\User;
@@ -15,16 +16,20 @@ class AddToFolder
 {
     use LimitsFolderChanges;
 
+    public function __construct(private RecordEvent $recordEvent) {}
+
     /**
      * Adds the copy-pasta to the folder. Entries in the default folder are favorites, so they also move the counter.
      * Returns false when the copy-pasta was already in the folder.
+     *
+     * @param  array<string, mixed>  $context
      */
-    public function handle(User $user, Folder $folder, Copypasta $copypasta): bool
+    public function handle(User $user, Folder $folder, Copypasta $copypasta, array $context = []): bool
     {
         Gate::forUser($user)->authorize('addCopypasta', [$folder, $copypasta]);
         $this->ensureFolderChangeIsAllowed($user);
 
-        return DB::transaction(function () use ($folder, $copypasta): bool {
+        $added = DB::transaction(function () use ($folder, $copypasta): bool {
             $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
 
             if ($folder->copypastas()->whereKey($locked->getKey())->exists()) {
@@ -39,5 +44,16 @@ class AddToFolder
 
             return true;
         });
+
+        if ($added) {
+            $this->recordEvent->handle(
+                $folder->is_default ? EventType::FavoriteAdd : EventType::FolderAdd,
+                $user,
+                $copypasta,
+                $context,
+            );
+        }
+
+        return $added;
     }
 }

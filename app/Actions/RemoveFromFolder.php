@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
+use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\User;
@@ -15,16 +16,20 @@ class RemoveFromFolder
 {
     use LimitsFolderChanges;
 
+    public function __construct(private RecordEvent $recordEvent) {}
+
     /**
      * Removes the copy-pasta from the folder, lowering the favorites counter when the folder is the default one.
      * Returns false when the copy-pasta was not in the folder.
+     *
+     * @param  array<string, mixed>  $context
      */
-    public function handle(User $user, Folder $folder, Copypasta $copypasta): bool
+    public function handle(User $user, Folder $folder, Copypasta $copypasta, array $context = []): bool
     {
         Gate::forUser($user)->authorize('removeCopypasta', $folder);
         $this->ensureFolderChangeIsAllowed($user);
 
-        return DB::transaction(function () use ($folder, $copypasta): bool {
+        $removed = DB::transaction(function () use ($folder, $copypasta): bool {
             $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
 
             if (! $folder->copypastas()->whereKey($locked->getKey())->exists()) {
@@ -39,5 +44,16 @@ class RemoveFromFolder
 
             return true;
         });
+
+        if ($removed) {
+            $this->recordEvent->handle(
+                $folder->is_default ? EventType::FavoriteRemove : EventType::FolderRemove,
+                $user,
+                $copypasta,
+                $context,
+            );
+        }
+
+        return $removed;
     }
 }

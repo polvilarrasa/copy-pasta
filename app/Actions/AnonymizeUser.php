@@ -9,6 +9,7 @@ use App\Enums\Role;
 use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\ModerationAction;
+use App\Models\TrackedEvent;
 use App\Models\User;
 use App\Models\Vote;
 use Illuminate\Support\Facades\DB;
@@ -20,13 +21,15 @@ class AnonymizeUser
      * Retires the member's votes and favorites from other people's counters, deletes their folders, and frees the
      * username and email by replacing them. Credentials and two-factor data are cleared and the account is
      * soft-deleted, so it cannot sign in. Copy-pastas and reports stay in place, attributed to the anonymized account.
-     * The actor is null for the automatic purge.
+     * Events stay too, without their user. The actor is null for the automatic purge.
      */
     public function handle(User $user, ?User $actor): void
     {
         DB::transaction(function () use ($user, $actor): void {
             $this->retireVotes($user);
             $this->retireFavorites($user);
+
+            TrackedEvent::query()->where('user_id', $user->getKey())->update(['user_id' => null]);
 
             $user->folders()->delete();
             $user->passkeys()->delete();

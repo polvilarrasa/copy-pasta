@@ -12,7 +12,7 @@
             saved: @js(__('public.folders.saved')),
         },
     })"
-    x-on:folders-open.window="$event.detail.copypasta === copypastaId && open()"
+    x-on:folders-open.window="$event.detail.copypasta === copypastaId && open($event.detail.context)"
     x-show="visible"
     x-cloak
     x-on:keydown.escape.window="close()"

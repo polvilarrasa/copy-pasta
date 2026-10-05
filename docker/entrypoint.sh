@@ -1,6 +1,6 @@
 #!/bin/sh
-# Waits for Postgres, applies migrations when this container is the migrator, caches the framework
-# and then hands over to the command (FrankenPHP for the web app, a worker or the scheduler otherwise).
+# Waits for Postgres, caches the framework and then hands over to the command (FrankenPHP for the web app,
+# a worker or the scheduler otherwise). Migrations are a separate deploy step, never run from here.
 set -e
 
 attempts=0
@@ -15,10 +15,6 @@ until php -r '
     fi
     sleep 2
 done
-
-if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
-    php artisan migrate --force --no-interaction
-fi
 
 php artisan optimize --no-interaction
 

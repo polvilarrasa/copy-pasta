@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Public;
 
+use App\Actions\RecordEvent;
+use App\Enums\EventType;
 use App\Http\Controllers\Controller;
 use App\Models\Copypasta;
 use App\Models\User;
+use App\Support\EventContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -14,7 +17,7 @@ use Illuminate\Support\Facades\Gate;
 
 class CopypastaController extends Controller
 {
-    public function show(Request $request, Copypasta $copypasta, ?string $slug = null): RedirectResponse|Response
+    public function show(Request $request, Copypasta $copypasta, RecordEvent $recordEvent, ?string $slug = null): RedirectResponse|Response
     {
         abort_unless(Gate::allows('view', $copypasta), 404);
 
@@ -29,6 +32,15 @@ class CopypastaController extends Controller
             ->with(['user:id,username,anonymized_at', 'tags:id,name,slug,color', 'revisions'])
             ->findOrFail($copypasta->getKey());
 
-        return response()->view('public.copypasta', ['copypasta' => $copypasta]);
+        $context = EventContext::fromRequest($request);
+
+        $recordEvent->handle(
+            EventType::DetailView,
+            $viewer instanceof User ? $viewer : null,
+            $copypasta,
+            $context,
+        );
+
+        return response()->view('public.copypasta', ['copypasta' => $copypasta, 'context' => $context]);
     }
 }

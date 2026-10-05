@@ -8,6 +8,7 @@ use App\Http\Controllers\Public\CopypastaCopyController;
 use App\Http\Controllers\Public\CopypastaFavoriteController;
 use App\Http\Controllers\Public\CopypastaFolderController;
 use App\Http\Controllers\Public\CopypastaReportController;
+use App\Http\Controllers\Public\CopypastaShareController;
 use App\Http\Controllers\Public\CopypastaVoteController;
 use App\Http\Controllers\Public\FeedController;
 use App\Http\Controllers\Public\NsfwConfirmationController;
@@ -33,6 +34,10 @@ Route::get('/c/{copypasta}/{slug?}', [CopypastaController::class, 'show'])->name
 Route::post('/c/{copypasta}/copia', CopypastaCopyController::class)
     ->middleware('throttle:120,1')
     ->name('copypastas.copy');
+
+Route::post('/c/{copypasta}/comparte', CopypastaShareController::class)
+    ->middleware('throttle:120,1')
+    ->name('copypastas.share');
 
 Route::post('/c/{copypasta}/voto', CopypastaVoteController::class)
     ->middleware(['auth', 'throttle:votes'])

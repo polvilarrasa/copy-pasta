@@ -518,7 +518,7 @@ Aceptación: despliegue en staging desde CI con migraciones automáticas y check
 
 ### Fase 12 — Correcciones antes de producción
 
-Cubre los críticos y altos de la [auditoría del MVP](AUDITORIA.md), que tiene el detalle de cada hallazgo (C1–C5, A1–A6, M1–M10) y la verificación contra el código. Orden de ejecución: C1, 12.1, 12.2a, 12.2b, 12.3 y 12.4, con un commit por bloque. Ya incorpora las decisiones tomadas en esa auditoría.
+Cubre los críticos y altos de la [auditoría del MVP](AUDITORIA.md), que tiene el detalle de cada hallazgo (C1–C5, A1–A6, M1–M10) y la verificación contra el código. Orden de ejecución: C1, 12.1, 12.2a, 12.2b, 12.3, 12.5 y 12.4, con un commit por bloque. Ya incorpora las decisiones tomadas en esa auditoría.
 
 #### 12.1 — Proceso y datos
 
@@ -608,19 +608,61 @@ Aceptación: una cuenta de menos de 72 horas no puede reportar; un reporte por m
 
 
 
+#### 12.5 — Registro de eventos
+
+Corrige M8 de la [auditoría](AUDITORIA.md). Los agregados por copy-pasta no bastan para la V2 (feed personalizado, estadísticas por usuario y logros): hace falta un registro de hechos por usuario o visitante. Se ejecuta después de 12.3 y antes de 12.4.
+
+- [x] Tabla `events` particionada por mes sobre `created_at`: `id` bigint, `type` (enum `EventType`: copy, share, detail_view, vote_up, vote_down, vote_removed, favorite_add, favorite_remove, folder_add, folder_remove, report, search), `user_id` nullable, `visitor_hash` nullable, `copypasta_id` nullable, `context` jsonb y `created_at`. La clave primaria es `(id, created_at)`, porque PostgreSQL exige que la clave de partición forme parte de ella. Índices `(user_id, created_at)` y `(copypasta_id, created_at)` declarados en la tabla padre. Una migración crea las particiones del mes en curso y del siguiente; un comando mensual crea las siguientes.
+- [x] `visitor_hash` para anónimos: HMAC-SHA256 de IP y user agent con una sal diaria. La sal se deriva de `APP_KEY` y de la fecha, sin guardarla, así que el hash no se puede correlacionar entre días y no hace falta cookie. Los eventos de usuarios autenticados llevan `visitor_hash` nulo.
+- [x] Servicio `RecordEvent`, usado por `CastVote`, `ToggleFavorite`, `AddToFolder`, `RemoveFromFolder`, `RecordCopypastaCopy` y `ReportCopypasta`, y por el controlador de detalle, el de compartir (nuevo endpoint, porque compartir ocurre en el navegador) y la búsqueda del feed. Escribe después del commit de la acción, no dentro de su transacción: un fallo de inserción aborta la transacción de PostgreSQL y rompería la acción principal. Si la escritura falla, captura la excepción, la registra en el log y la acción responde igual.
+- [x] Contexto de cada evento: `source` (orden o feed de origen, p. ej. `random`, `top_week`), `position` (posición en la lista, solo en el feed) y `ref` (código de referencia del enlace compartido). El botón de compartir genera un código corto aleatorio, lo guarda en el evento de `share` y añade `?ref=` a la URL. Un `detail_view` con `ref` en la query guarda ese código. El código no contiene identificadores de usuario.
+- [x] Impresiones del feed: un contador agregado por copy-pasta y día, nunca por usuario y sin evento por impresión. Se guarda en la columna `impressions` de `copypasta_daily_stats`, que no figuraba en la lista original y se añade aquí para tener dónde guardarla.
+- [x] Tabla `copypasta_daily_stats` (`copypasta_id`, `date`, `views`, `copies`, `shares`, `upvotes`, `downvotes`, `favorites`, `impressions`), con clave `(copypasta_id, date)`. Definiciones para que el recuento directo coincida exactamente con el job: `views` = eventos `detail_view`; `copies` = `copy`; `shares` = `share`; `upvotes` = `vote_up`; `downvotes` = `vote_down`; `favorites` = `favorite_add` menos `favorite_remove` del día. Un job programado cada hora recalcula con upsert los días de hoy y de ayer desde `events`. `impressions` no sale de `events`, así que el job no la toca.
+- [x] `DeleteOwnAccount` (12.1) pone a null `user_id` en los eventos del usuario. Los eventos se conservan como hechos anónimos.
+- [x] Retención: comando `events:prune`, programado mensualmente, que separa y borra las particiones de más de 13 meses. Las particiones dentro del plazo no se tocan.
+- [x] Actualiza la política de privacidad (borrador, `resources/views/public/privacidad.blade.php`): qué se registra (eventos de uso, hash de visitante sin cookies, término buscado si se guarda), para qué (feed, estadísticas y logros), plazo (13 meses por partición) y que los agregados no contienen datos personales.
+
+Decisiones (tomadas por defecto al ejecutar y aprobadas después):
+- **Término de búsqueda.** Puede contener datos personales. Propuesta: guardarlo en `context.query` truncado a 100 caracteres, sin `user_id` si el usuario se borra (ya cubierto por la anonimización) y sin registrarlo para visitantes anónimos.
+- **Impresiones en `copypasta_daily_stats`.** Se aparta de la lista original, como se indica arriba.
+- **Referencia de compartir (revisada en la V2).** El código aleatorio por clic de este bloque se sustituye por `users.share_code` (decisión 7 de [PLAN-V2](PLAN-V2.md)). El código de `RecordCopypastaShare` cambia en la Fase 20 de la V2.
+- **Votos en agregados (revisada en la V2).** `copypasta_daily_stats.upvotes` y `downvotes` pasan a ser netos, con `previous` y `next` en el `context` de los eventos de voto (decisión 8 de [PLAN-V2](PLAN-V2.md)).
+- **Claves foráneas (revisada en la V2).** `events` conserva `ON DELETE SET NULL` como excepción documentada; `copypasta_daily_stats` pasa a `restrictOnDelete` (decisión 9 de [PLAN-V2](PLAN-V2.md)).
+
+Aceptación:
+- Cada acción de la lista genera exactamente un evento, con su tipo y su contexto (un test por acción).
+- Un fallo al escribir el evento (inyectado en el test) no cambia el resultado de la acción principal.
+- El job de agregados produce los mismos totales que un recuento directo sobre `events` para cada columna definida arriba.
+- Borrar una cuenta deja sus eventos sin `user_id` y no borra ninguno.
+- `events:prune` borra las particiones de más de 13 meses y conserva las demás.
+- Una impresión del feed incrementa `impressions` sin crear ningún evento ni guardar usuario.
+
+**Desviaciones de la Fase 12.5:**
+- **Copia.** Solo se registra evento `copy` cuando el contador sube (dedupe por visitante y hora). Así `copies` de los agregados coincide con `copies_count`; no se registran los clics repetidos de la misma hora.
+- **Búsqueda.** Un evento por cambio del término (el campo espera 400 ms), no por tecla. El término solo se guarda para miembros, truncado a 100 caracteres.
+- **Impresiones.** Se escriben al terminar la respuesta (`app()->terminating`), para que el render no espere. El test de consultas del feed excluye esa escritura del presupuesto de 5 y lo documenta.
+- **Escritura de eventos.** Se escribe dentro de un savepoint (`DB::transaction` anidada), no después del commit: si la inserción falla, el savepoint se revierte y la transacción exterior sigue viva.
+- **Anonimización.** Se implementa en `AnonymizeUser`, así cubre el borrado propio (`DeleteOwnAccount`) y la purga automática de cuentas de admin.
+- **Contexto en enlaces.** Las tarjetas enlazan al detalle con `?from=<orden>&pos=<posición>`; el botón de compartir copia el enlace canónico más `?ref=<código>`.
+- **Retención.** `events:prune` borra particiones cuyo mes es anterior al primer día del mes de hace 13 meses.
+- **Particiones.** La migración crea el mes en curso y el siguiente; `events:partitions` (diario) prepara los siguientes. Si falta una partición, el evento se pierde y se registra en el log; la acción no se ve afectada.
+- **Bots.** Las vistas de rastreadores cuentan como `detail_view`. No se filtran todavía; el filtrado por user agent se hace en la Fase 13 de la V2.
+- **Pendiente en esta fase:** el texto de privacidad está en `lang/es/public.php` y sigue marcado como borrador pendiente de revisión legal.
+
 #### 12.4 — Infraestructura y calidad
 
-- [ ] Redis para caché, sesiones y rate limits, como un servicio más del compose (M4).
-- [ ] Semilla del orden aleatorio en la query string y columna `random_key` indexada; `EXPLAIN` con 200.000 copy-pastas (M3).
-- [ ] Tests de navegador de 6 flujos en CI: copiar, votar, guardar en carpeta, reportar, ocultar e impersonar (A4).
-- [ ] VPS en la UE con Ubuntu LTS: acceso solo por clave SSH, cortafuegos con 22, 80 y 443 abiertos, actualizaciones de seguridad automáticas.
-- [ ] `compose.production.yaml` a partir del de staging: app, worker, scheduler, Postgres y Redis, con HTTPS automático vía `SERVER_NAME` y el dominio. `RUN_MIGRATIONS=true` solo en el servicio `app`; worker y scheduler sin esa variable; la migración se ejecuta con `migrate --isolated --force` (M5 descartado tras la verificación; esto es endurecimiento).
-- [ ] Workflow de despliegue apuntando al VPS con una variable de host de producción.
-- [ ] Mailer transaccional con SPF, DKIM y DMARC en el dominio (C5).
-- [ ] Backups diarios de Postgres copiados a un almacenamiento externo compatible con S3, con prueba de restauración (C5).
-- [ ] Checklist de humo y Lighthouse sobre el VPS.
+- [x] Redis para caché, sesiones y rate limits, como un servicio más del compose (M4). Cliente `predis` (sin extensión PHP en la imagen). Desarrollo (`compose.yaml`) y staging (`compose.staging.yaml`) con servicio `redis`. CI con servicio Redis. Test: `tests/Feature/Support/RedisCacheTest.php`.
+- [x] Semilla del orden aleatorio en la query string y columna `random_key` indexada; `EXPLAIN` con 200.000 copy-pastas (M3). La semilla es `?seed=` (punto de partida en el espacio de `random_key`); el orden es `random_key, id` con vuelta al principio. Medido en Postgres con 200.000 filas: el índice `(random_key, id)` responde en ~0,15 ms (`EXPLAIN ANALYZE`, tramo sin vuelta; con vuelta, ~0,2 ms). Sin medir aún el render completo de Livewire.
+- [x] Migraciones como paso único del despliegue, antes de reiniciar servicios, no en el entrypoint de todos los contenedores (M5). Desviación: `RUN_MIGRATIONS` se ha eliminado del entrypoint y de `compose.staging.yaml`; el despliegue de staging ejecuta `php artisan migrate --isolated --force` con `docker compose run --rm app` antes de `up -d`. El `--isolated` usa el lock de Redis. Se elimina la línea de este bloque que hablaba de `RUN_MIGRATIONS=true` solo en `app`, que queda superada.
+- [x] Tests de navegador de 6 flujos en CI: copiar, votar, guardar en carpeta, reportar, ocultar e impersonar (A4). `tests/Browser/CopypastaFlowsTest.php` y `tests/Browser/ModerationFlowsTest.php`, con `pestphp/pest-plugin-browser` y Playwright. Desviaciones de la prueba: el permiso de portapapeles de Chromium headless no existe, así que el test sustituye `navigator.clipboard.writeText` y el resto del flujo es real; el staff entra con el código de recuperación de la factoría porque el campo TOTP (`flux:otp`) no admite `fill`. El job de CI instala Chromium con `npx playwright install --with-deps chromium`.
+- [ ] VPS en la UE con Ubuntu LTS: acceso solo por clave SSH, cortafuegos con 22, 80 y 443 abiertos, actualizaciones de seguridad automáticas. **Pendiente**: fuera de alcance hasta que la app esté terminada; el proyecto se mantiene en localhost.
+- [ ] `compose.production.yaml` a partir del de staging. **Pendiente**: no creado. La creación del fichero y del workflow de producción fue bloqueada por el control de permisos del entorno como acción de despliegue a producción; hay que decidir cómo proceder antes de retomarlo.
+- [ ] Workflow de despliegue apuntando al VPS con una variable de host de producción. **Pendiente**, mismo motivo que el anterior.
+- [ ] Mailer transaccional con SPF, DKIM y DMARC en el dominio (C5). **Aplazado** por decisión del usuario: sin proveedor de correo; no hace falta de momento.
+- [ ] Backups diarios de Postgres copiados a un almacenamiento externo compatible con S3, con prueba de restauración (C5). **Aplazado** por decisión del usuario: sin almacenamiento externo; el backup local de `docker/backup.sh` no cambia.
+- [ ] Checklist de humo y Lighthouse sobre el VPS. **Pendiente** del VPS.
 
-Aceptación: el VPS desplegado desde CI con los 6 tests de navegador en verde; restauración de un backup probada; el feed aleatorio con 200.000 filas responde en menos de 50 ms.
+Aceptación: el VPS desplegado desde CI con los 6 tests de navegador en verde; restauración de un backup probada; el feed aleatorio con 200.000 filas responde en menos de 50 ms. **No cumplida todavía**: los 6 tests de navegador están en verde en local, el feed responde en ~0,2 ms en la consulta, pero el VPS, la restauración de backup y CI en remoto no se han ejecutado.
 
 ## Calidad y convenciones
 

@@ -8,6 +8,7 @@ use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\ModerationAction;
 use App\Models\Report;
+use App\Models\TrackedEvent;
 use App\Models\User;
 use App\Models\Vote;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -106,3 +107,18 @@ test('no permite anonimizar de nuevo una cuenta ya anonimizada', function (): vo
 
     app(DeleteOwnAccount::class)->handle($member->refresh());
 })->throws(AuthorizationException::class);
+
+test('borrar la cuenta deja sus eventos sin usuario y no borra ninguno', function (): void {
+    prepareEventPartitions();
+    $member = User::factory()->create();
+    $other = User::factory()->create();
+
+    TrackedEvent::factory()->byUser($member)->count(2)->create();
+    TrackedEvent::factory()->byUser($other)->create();
+
+    app(DeleteOwnAccount::class)->handle($member);
+
+    expect(TrackedEvent::query()->count())->toBe(3)
+        ->and(TrackedEvent::query()->whereNull('user_id')->count())->toBe(2)
+        ->and(TrackedEvent::query()->where('user_id', $other->getKey())->exists())->toBeTrue();
+});

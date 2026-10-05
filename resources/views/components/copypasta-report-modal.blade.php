@@ -16,7 +16,7 @@
             rateLimited: @js(__('public.report.rate_limited')),
         },
     })"
-    x-on:report-open.window="$event.detail.copypasta === copypastaId && open()"
+    x-on:report-open.window="$event.detail.copypasta === copypastaId && open($event.detail.context)"
     x-show="visible"
     x-cloak
     x-on:keydown.escape.window="close()"

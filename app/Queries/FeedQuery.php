@@ -23,9 +23,9 @@ final class FeedQuery
         return new self;
     }
 
-    public function sort(FeedSort $sort, ?string $randomSeed = null): self
+    public function sort(FeedSort $sort): self
     {
-        $this->query->sort($sort, $randomSeed);
+        $this->query->sort($sort);
 
         return $this;
     }

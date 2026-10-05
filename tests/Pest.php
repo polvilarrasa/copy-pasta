@@ -1,5 +1,7 @@
 <?php
 
+use App\Actions\PrepareEventPartition;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +18,7 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Browser');
 
 /*
 |--------------------------------------------------------------------------
@@ -47,4 +49,34 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Signs in through the login form in the browser, answering the two-factor challenge when the account has it.
+ */
+function signInInBrowser(User $user): void
+{
+    $page = visit('/login')
+        ->fill('email', $user->email)
+        ->fill('password', 'password')
+        ->press('Log in');
+
+    if ($user->hasEnabledTwoFactorAuthentication()) {
+        $page->assertPathIs('/two-factor-challenge')
+            ->click(__('login using a recovery code'))
+            ->fill('recovery_code', 'recovery-code-1')
+            ->press(__('Continue'));
+    }
+
+    $page->assertPathIsNot('/login')->assertPathIsNot('/two-factor-challenge');
+}
+
+/**
+ * Creates the monthly `events` partitions around today, so tests can write events on any date near now.
+ */
+function prepareEventPartitions(): void
+{
+    foreach (range(-2, 1) as $offset) {
+        app(PrepareEventPartition::class)->handle(now()->startOfMonth()->addMonths($offset));
+    }
 }

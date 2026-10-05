@@ -254,12 +254,14 @@ class Copypasta extends Model
     }
 
     /**
+     * The random feed is a walk over `random_key` starting at a seed; see {@see scopeRandomKeyFrom()}.
+     *
      * @param  Builder<Copypasta>  $query
      */
-    public function scopeSort(Builder $query, FeedSort $sort, ?string $randomSeed = null): void
+    public function scopeSort(Builder $query, FeedSort $sort): void
     {
         match ($sort) {
-            FeedSort::Random => $query->orderByRaw('md5(id || ?)', [$randomSeed ?? Str::random(16)]),
+            FeedSort::Random => $query->orderBy('random_key')->orderBy('id'),
             FeedSort::TopWeek => $query->where('published_at', '>=', now()->subDays(7))
                 ->orderByDesc('score')
                 ->orderByDesc('published_at')
@@ -271,5 +273,21 @@ class Copypasta extends Model
             FeedSort::TopAll => $query->orderByDesc('score')->orderByDesc('published_at')->orderByDesc('id'),
             FeedSort::Newest => $query->orderByDesc('published_at')->orderByDesc('id'),
         };
+    }
+
+    /**
+     * @param  Builder<Copypasta>  $query
+     */
+    public function scopeRandomKeyFrom(Builder $query, int $seed): void
+    {
+        $query->where('random_key', '>=', $seed);
+    }
+
+    /**
+     * @param  Builder<Copypasta>  $query
+     */
+    public function scopeRandomKeyBefore(Builder $query, int $seed): void
+    {
+        $query->where('random_key', '<', $seed);
     }
 }

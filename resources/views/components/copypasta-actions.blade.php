@@ -33,7 +33,7 @@
 
 <button
     type="button"
-    x-on:click="authenticated ? $dispatch('folders-open', { copypasta: '{{ $copypasta->getKey() }}' }) : requireLogin(loginRequiredFolderMessage)"
+    x-on:click="authenticated ? $dispatch('folders-open', { copypasta: '{{ $copypasta->getKey() }}', context }) : requireLogin(loginRequiredFolderMessage)"
     class="rounded-md px-2 py-1 font-medium text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
 >{{ __('public.folders.button') }}</button>
 
@@ -41,7 +41,7 @@
     @if (auth()->id() !== $copypasta->user_id)
         <button
             type="button"
-            x-on:click="$dispatch('report-open', { copypasta: '{{ $copypasta->getKey() }}' })"
+            x-on:click="$dispatch('report-open', { copypasta: '{{ $copypasta->getKey() }}', context })"
             class="rounded-md px-2 py-1 font-medium text-zinc-500 ring-1 ring-zinc-200 hover:bg-zinc-50"
         >{{ __('public.report.button') }}</button>
     @endif

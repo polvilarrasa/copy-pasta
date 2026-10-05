@@ -158,9 +158,10 @@ return [
         'title' => 'Política de privacidad',
         'sections' => [
             ['heading' => 'Responsable', 'body' => 'El responsable del tratamiento es el titular del sitio, con los datos de contacto que se publicarán antes del lanzamiento.'],
-            ['heading' => 'Datos que tratamos', 'body' => 'Email, nombre de usuario, contraseña cifrada, los copy-pastas y votos que publicas, tus carpetas y tus reportes, además de los registros de moderación.'],
-            ['heading' => 'Finalidad y base', 'body' => 'Prestar el servicio de la cuenta, mostrar tu contenido, moderar la comunidad y atender reportes. La base es la ejecución del servicio y, para los emails, la verificación de tu cuenta.'],
-            ['heading' => 'Conservación', 'body' => 'Mientras mantengas la cuenta. Los registros de moderación se conservan para garantizar la trazabilidad de las decisiones.'],
+            ['heading' => 'Datos que tratamos', 'body' => 'Email, nombre de usuario, contraseña cifrada, los copy-pastas y votos que publicas, tus carpetas y tus reportes, además de los registros de moderación y los eventos de uso descritos más abajo.'],
+            ['heading' => 'Finalidad y base', 'body' => 'Prestar el servicio de la cuenta, mostrar tu contenido, moderar la comunidad y atender reportes. La base es la ejecución del servicio y, para los emails, la verificación de tu cuenta. Las estadísticas de uso se basan en el interés legítimo de mejorar el servicio.'],
+            ['heading' => 'Registro de uso', 'body' => 'Registramos qué acciones haces en el sitio: ver un copy-pasta, copiarlo, compartirlo, votarlo, guardarlo en una carpeta, reportarlo y buscar, junto con la lista de la que venías. Sirve para ordenar el feed, calcular estadísticas y, más adelante, mostrar logros. Si no tienes cuenta, no guardamos tu IP ni usamos cookies: solo un identificador que cambia cada día y que no permite seguirte de un día a otro. Si buscas con una cuenta, guardamos el texto buscado, truncado a 100 caracteres.'],
+            ['heading' => 'Conservación', 'body' => 'Mientras mantengas la cuenta. Los eventos de uso se borran a los 13 meses. Al borrar tu cuenta, tus eventos se conservan sin vincularlos a ti. Las estadísticas por copy-pasta y día no contienen datos personales. Los registros de moderación se conservan para garantizar la trazabilidad de las decisiones.'],
             ['heading' => 'Tus derechos', 'body' => 'Puedes acceder, rectificar y suprimir tus datos, y solicitar su portabilidad u oponerte a su tratamiento escribiendo al contacto del sitio.'],
         ],
     ],

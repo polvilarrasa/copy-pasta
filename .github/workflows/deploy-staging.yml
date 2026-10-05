@@ -56,9 +56,9 @@ jobs:
           ssh-keyscan -H "${{ vars.STAGING_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Pull the image and restart the stack
-        # Migrations run inside the app container on start (RUN_MIGRATIONS=true in the staging compose file).
+        # Migrations run once, before the services restart. --isolated takes a cache lock in Redis so two deploys never migrate at the same time.
         env:
           IMAGE: ${{ needs.image.outputs.image }}
         run: |
           ssh -i ~/.ssh/deploy_key "${{ vars.STAGING_USER }}@${{ vars.STAGING_HOST }}" \
-            "cd ${{ vars.STAGING_PATH }} && export APP_IMAGE='$IMAGE' && docker compose -f compose.staging.yaml pull app && docker compose -f compose.staging.yaml up -d && docker image prune -f"
+            "cd ${{ vars.STAGING_PATH }} && export APP_IMAGE='$IMAGE' && docker compose -f compose.staging.yaml pull app && docker compose -f compose.staging.yaml run --rm app php artisan migrate --isolated --force && docker compose -f compose.staging.yaml up -d && docker image prune -f"
