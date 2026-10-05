@@ -14,3 +14,9 @@ Schedule::command('queue:prune-failed --hours=168')->daily()->onOneServer();
 
 // Accounts an admin deleted are anonymized once the 30-day retention window closes.
 Schedule::command('users:anonymize-expired')->daily()->onOneServer();
+
+// Event analytics: yesterday and today are rebuilt hourly so late events are counted, partitions are prepared daily,
+// and partitions past the 13-month retention window are dropped monthly.
+Schedule::command('events:aggregate')->hourly()->onOneServer();
+Schedule::command('events:partitions')->daily()->onOneServer();
+Schedule::command('events:prune')->monthlyOn(1, '03:30')->onOneServer();

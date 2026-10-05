@@ -84,7 +84,12 @@
 
     <div class="space-y-4">
         @forelse ($copypastas as $copypasta)
-            <x-copypasta-card :copypasta="$copypasta" wire:key="{{ $copypasta->id }}" />
+            <x-copypasta-card
+                :copypasta="$copypasta"
+                :source="$activeSort->value"
+                :position="$loop->index"
+                wire:key="{{ $copypasta->id }}"
+            />
         @empty
             <p class="rounded-xl bg-white p-6 text-center text-sm text-zinc-500 ring-1 ring-zinc-200">
                 {{ __('public.feed.empty') }}

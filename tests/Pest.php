@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\PrepareEventPartition;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -68,4 +69,14 @@ function signInInBrowser(User $user): void
     }
 
     $page->assertPathIsNot('/login')->assertPathIsNot('/two-factor-challenge');
+}
+
+/**
+ * Creates the monthly `events` partitions around today, so tests can write events on any date near now.
+ */
+function prepareEventPartitions(): void
+{
+    foreach (range(-2, 1) as $offset) {
+        app(PrepareEventPartition::class)->handle(now()->startOfMonth()->addMonths($offset));
+    }
 }

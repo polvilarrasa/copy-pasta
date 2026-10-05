@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\EventType;
 use App\Enums\ReportReason;
 use App\Enums\ReportStatus;
 use App\Mail\ReportedMinorAlertMail;
@@ -29,14 +30,17 @@ class ReportCopypasta
     public function __construct(
         private ConcealCopypasta $concealCopypasta,
         private SaveCopypastaRevision $saveCopypastaRevision,
+        private RecordEvent $recordEvent,
     ) {}
 
     /**
      * Records a member's report. Its weight depends on the reporter, and the copy-pasta is hidden automatically when
      * the pending weight reaches the threshold. A report about minors hides the copy-pasta on its own only when a
      * trusted member or staff makes it. Otherwise it goes to the top of the queue and alerts the admins.
+     *
+     * @param  array<string, mixed>  $context
      */
-    public function handle(User $reporter, Copypasta $copypasta, ReportReason $reason, ?string $details): Report
+    public function handle(User $reporter, Copypasta $copypasta, ReportReason $reason, ?string $details, array $context = []): Report
     {
         Gate::forUser($reporter)->authorize('create', [Report::class, $copypasta]);
 
@@ -62,6 +66,8 @@ class ReportCopypasta
             $this->alertAdmins($report);
         }
 
+        $this->recordEvent->handle(EventType::Report, $reporter, $copypasta, [...$context, 'reason' => $reason->value]);
+
         return $report;
     }
 
@@ -85,6 +91,8 @@ class ReportCopypasta
         if ($report->reason === ReportReason::SexualContentMinors) {
             $this->alertAdmins($report);
         }
+
+        $this->recordEvent->handle(EventType::Report, null, $copypasta, ['reason' => $reason->value]);
 
         return $report;
     }

@@ -8,6 +8,7 @@ use App\Actions\ToggleFavorite;
 use App\Http\Controllers\Controller;
 use App\Models\Copypasta;
 use App\Models\User;
+use App\Support\EventContext;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class CopypastaFavoriteController extends Controller
 
         throw_unless($user instanceof User, AuthenticationException::class);
 
-        $favorited = $toggleFavorite->handle($user, $copypasta);
+        $favorited = $toggleFavorite->handle($user, $copypasta, EventContext::fromRequest($request));
 
         $copypasta->refresh();
 

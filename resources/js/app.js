@@ -42,10 +42,12 @@ document.addEventListener('alpine:init', () => {
         reason: '',
         details: '',
         error: '',
+        context: {},
 
-        open() {
+        open(context = {}) {
             this.visible = true;
             this.error = '';
+            this.context = context;
         },
 
         close() {
@@ -56,7 +58,7 @@ document.addEventListener('alpine:init', () => {
             this.sending = true;
             this.error = '';
 
-            const response = await sendJson(url, 'POST', { reason: this.reason, details: this.details });
+            const response = await sendJson(url, 'POST', { reason: this.reason, details: this.details, ...this.context });
 
             this.sending = false;
 
@@ -87,11 +89,13 @@ document.addEventListener('alpine:init', () => {
         selected: [],
         newName: '',
         error: '',
+        context: {},
 
-        async open() {
+        async open(context = {}) {
             this.visible = true;
             this.error = '';
             this.loading = true;
+            this.context = context;
 
             const response = await sendJson(indexUrl, 'GET');
 
@@ -111,7 +115,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         async save() {
-            const response = await sendJson(syncUrl, 'PUT', { folder_ids: this.selected.map(Number) });
+            const response = await sendJson(syncUrl, 'PUT', { folder_ids: this.selected.map(Number), ...this.context });
 
             if (! response.ok) {
                 this.error = response.data.errors?.folder_ids?.[0] ?? messages.failed;
@@ -130,7 +134,7 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            const response = await sendJson(storeUrl, 'POST', { name });
+            const response = await sendJson(storeUrl, 'POST', { name, ...this.context });
 
             if (! response.ok) {
                 this.error = response.data.errors?.name?.[0] ?? messages.failed;
@@ -155,7 +159,9 @@ document.addEventListener('alpine:init', () => {
         voteUrl,
         favoriteUrl,
         shareUrl,
+        shareEventUrl,
         shareTitle,
+        context = {},
         authenticated,
         score,
         myVote,
@@ -170,6 +176,7 @@ document.addEventListener('alpine:init', () => {
     }) => ({
         revealed: false,
         authenticated,
+        context,
         loginRequiredFolderMessage,
         score,
         myVote,
@@ -191,10 +198,22 @@ document.addEventListener('alpine:init', () => {
             this.toast(copiedMessage);
         },
 
+        /**
+         * Records the share on the server and returns the link with its reference code. When the server cannot record
+         * it, the plain link is shared, so sharing never depends on analytics.
+         */
+        async trackedShareUrl() {
+            const response = await postJson(shareEventUrl, context);
+
+            return response?.ref ? `${shareUrl}?ref=${response.ref}` : shareUrl;
+        },
+
         async share() {
+            const url = await this.trackedShareUrl();
+
             if (navigator.share) {
                 try {
-                    await navigator.share({ title: shareTitle, url: shareUrl });
+                    await navigator.share({ title: shareTitle, url });
                 } catch (error) {
                     // The visitor dismissed the share sheet; nothing to report.
                 }
@@ -202,7 +221,7 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            await navigator.clipboard.writeText(shareUrl);
+            await navigator.clipboard.writeText(url);
             this.toast(linkCopiedMessage);
         },
 
@@ -210,9 +229,11 @@ document.addEventListener('alpine:init', () => {
             fetch(copyUrl, {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
                     Accept: 'application/json',
                 },
+                body: JSON.stringify(context),
             }).catch(() => {});
         },
 
@@ -231,7 +252,7 @@ document.addEventListener('alpine:init', () => {
             this.score = previous.score + contribution(next) - contribution(previous.myVote);
             this.myVote = next;
 
-            const response = await postJson(voteUrl, { value });
+            const response = await postJson(voteUrl, { value, ...context });
 
             if (response === null) {
                 Object.assign(this, previous);
@@ -252,7 +273,7 @@ document.addEventListener('alpine:init', () => {
             this.isFavorite = ! this.isFavorite;
             this.favoritesCount = previous.favoritesCount + (this.isFavorite ? 1 : -1);
 
-            const response = await postJson(favoriteUrl);
+            const response = await postJson(favoriteUrl, context);
 
             if (response === null) {
                 Object.assign(this, previous);

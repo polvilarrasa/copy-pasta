@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\User;
@@ -12,14 +13,18 @@ use Illuminate\Support\Facades\Gate;
 
 class ToggleFavorite
 {
+    public function __construct(private RecordEvent $recordEvent) {}
+
     /**
      * Adds or removes the copy-pasta from the user's default folder. Returns whether it is now a favorite.
+     *
+     * @param  array<string, mixed>  $context
      */
-    public function handle(User $user, Copypasta $copypasta): bool
+    public function handle(User $user, Copypasta $copypasta, array $context = []): bool
     {
         Gate::forUser($user)->authorize('favorite', $copypasta);
 
-        return DB::transaction(function () use ($user, $copypasta): bool {
+        $isNowFavorite = DB::transaction(function () use ($user, $copypasta): bool {
             $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
 
             $favorites = Folder::ensureDefaultFor($user);
@@ -36,5 +41,14 @@ class ToggleFavorite
 
             return ! $isFavorite;
         });
+
+        $this->recordEvent->handle(
+            $isNowFavorite ? EventType::FavoriteAdd : EventType::FavoriteRemove,
+            $user,
+            $copypasta,
+            $context,
+        );
+
+        return $isNowFavorite;
     }
 }

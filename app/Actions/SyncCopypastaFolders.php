@@ -21,8 +21,9 @@ class SyncCopypastaFolders
      * member does not own are ignored, so one request cannot touch someone else's collections.
      *
      * @param  array<int, int|string>  $folderIds
+     * @param  array<string, mixed>  $context
      */
-    public function handle(User $user, Copypasta $copypasta, array $folderIds): void
+    public function handle(User $user, Copypasta $copypasta, array $folderIds, array $context = []): void
     {
         $targetIds = Folder::query()
             ->where('user_id', $user->getKey())
@@ -38,16 +39,16 @@ class SyncCopypastaFolders
             ->map(fn (mixed $id): int => (int) $id)
             ->all();
 
-        DB::transaction(function () use ($user, $copypasta, $targetIds, $currentIds): void {
+        DB::transaction(function () use ($user, $copypasta, $targetIds, $currentIds, $context): void {
             $toAdd = array_diff($targetIds, $currentIds);
             $toRemove = array_diff($currentIds, $targetIds);
 
             foreach (Folder::query()->whereKey($toAdd)->get() as $folder) {
-                $this->addToFolder->handle($user, $folder, $copypasta);
+                $this->addToFolder->handle($user, $folder, $copypasta, $context);
             }
 
             foreach (Folder::query()->whereKey($toRemove)->get() as $folder) {
-                $this->removeFromFolder->handle($user, $folder, $copypasta);
+                $this->removeFromFolder->handle($user, $folder, $copypasta, $context);
             }
         });
     }

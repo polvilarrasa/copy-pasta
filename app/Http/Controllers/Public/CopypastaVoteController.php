@@ -8,6 +8,7 @@ use App\Actions\CastVote;
 use App\Http\Controllers\Controller;
 use App\Models\Copypasta;
 use App\Models\User;
+use App\Support\EventContext;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class CopypastaVoteController extends Controller
 
         throw_unless($user instanceof User, AuthenticationException::class);
 
-        $myVote = $castVote->handle($user, $copypasta, (int) $validated['value']);
+        $myVote = $castVote->handle($user, $copypasta, (int) $validated['value'], EventContext::fromRequest($request));
 
         $copypasta->refresh();
 

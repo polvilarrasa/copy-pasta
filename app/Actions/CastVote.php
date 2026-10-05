@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\User;
 use App\Models\Vote;
@@ -13,17 +14,21 @@ use InvalidArgumentException;
 
 class CastVote
 {
+    public function __construct(private RecordEvent $recordEvent) {}
+
     /**
      * The vote the visitor pressed decides the outcome: the same value removes the vote,
      * the opposite value replaces it. Returns the resulting vote, or null when removed.
+     *
+     * @param  array<string, mixed>  $context
      */
-    public function handle(User $voter, Copypasta $copypasta, int $value): ?int
+    public function handle(User $voter, Copypasta $copypasta, int $value, array $context = []): ?int
     {
         Gate::forUser($voter)->authorize('vote', $copypasta);
 
         throw_unless(in_array($value, [1, -1], true), InvalidArgumentException::class);
 
-        return DB::transaction(function () use ($voter, $copypasta, $value): ?int {
+        $result = DB::transaction(function () use ($voter, $copypasta, $value): ?int {
             $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
 
             $existing = Vote::query()
@@ -56,6 +61,14 @@ class CastVote
 
             return $next;
         });
+
+        $this->recordEvent->handle(match ($result) {
+            1 => EventType::VoteUp,
+            -1 => EventType::VoteDown,
+            null => EventType::VoteRemoved,
+        }, $voter, $copypasta, $context);
+
+        return $result;
     }
 
     private function upvoteDelta(?int $previous, ?int $next): int

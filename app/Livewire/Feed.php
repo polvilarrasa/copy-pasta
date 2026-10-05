@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use App\Actions\ListActiveTags;
+use App\Actions\RecordEvent;
+use App\Actions\RecordFeedImpressions;
+use App\Enums\EventType;
 use App\Enums\FeedSort;
 use App\Http\Controllers\Public\NsfwConfirmationController;
 use App\Models\Copypasta;
@@ -15,6 +18,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -53,24 +57,39 @@ class Feed extends Component
 
     public int $limit = self::PER_PAGE;
 
+    /**
+     * Index of the first copy-pasta this request shows for the first time, or null when the request shows nothing new.
+     * Only set while handling an action, so it never survives into the next request.
+     */
+    private ?int $impressionsFrom = null;
+
     public function mount(): void
     {
         $this->ensureSeed();
+        $this->recordSearch();
+
+        $this->impressionsFrom = 0;
     }
 
     public function updated(string $property): void
     {
         if (in_array($property, self::FILTER_PROPERTIES, true)) {
             $this->limit = self::PER_PAGE;
+            $this->impressionsFrom = 0;
         }
 
         if ($property === 'sort') {
             $this->ensureSeed();
         }
+
+        if ($property === 'search') {
+            $this->recordSearch();
+        }
     }
 
     public function loadMore(): void
     {
+        $this->impressionsFrom = $this->limit;
         $this->limit += self::PER_PAGE;
     }
 
@@ -79,6 +98,7 @@ class Feed extends Component
         $this->seed = self::newSeed();
 
         $this->limit = self::PER_PAGE;
+        $this->impressionsFrom = 0;
     }
 
     public function toggleTag(string $slug): void
@@ -87,14 +107,22 @@ class Feed extends Component
 
         $this->tags = ($selected->contains($slug) ? $selected->reject($slug) : $selected->push($slug))
             ->implode(',');
+
+        $this->impressionsFrom = 0;
     }
 
     public function render(): View
     {
         $results = $this->feedPage($this->limit + 1);
+        $copypastas = $results->take($this->limit);
+
+        if ($this->impressionsFrom !== null) {
+            $this->countImpressions($copypastas->slice($this->impressionsFrom)->pluck('id'));
+            $this->impressionsFrom = null;
+        }
 
         return view('livewire.feed', [
-            'copypastas' => $results->take($this->limit),
+            'copypastas' => $copypastas,
             'hasMore' => $results->count() > $this->limit,
             'sortOptions' => $this->fixedSort === null ? FeedSort::cases() : [],
             'activeSort' => $this->activeSort(),
@@ -119,6 +147,44 @@ class Feed extends Component
             ->nsfw($this->includesNsfw())
             ->builder()
             ->withViewerState($this->viewer());
+    }
+
+    /**
+     * The term is stored only for members. Anonymous searches are recorded without it.
+     */
+    private function recordSearch(): void
+    {
+        if (! filled($this->search)) {
+            return;
+        }
+
+        $viewer = $this->viewer();
+
+        app(RecordEvent::class)->handle(EventType::Search, $viewer, null, [
+            'sort' => $this->activeSort()->value,
+            ...($viewer === null ? [] : ['query' => Str::limit($this->search, 100, '')]),
+        ]);
+    }
+
+    /**
+     * Counted after the response is sent, so rendering the feed does not wait for the write. Terminating callbacks
+     * run again on every later terminate() call, so this one is guarded to count its page only once.
+     *
+     * @param  Collection<int, string>  $copypastaIds
+     */
+    private function countImpressions(Collection $copypastaIds): void
+    {
+        $counted = false;
+
+        app()->terminating(function () use ($copypastaIds, &$counted): void {
+            if ($counted) {
+                return;
+            }
+
+            $counted = true;
+
+            app(RecordFeedImpressions::class)->handle($copypastaIds);
+        });
     }
 
     private function viewer(): ?User

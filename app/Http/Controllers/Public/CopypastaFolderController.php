@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\User;
+use App\Support\EventContext;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -54,7 +55,7 @@ class CopypastaFolderController extends Controller
             'folder_ids.*' => ['integer', Rule::exists(Folder::class, 'id')->where('user_id', $member->getKey())],
         ]);
 
-        $syncCopypastaFolders->handle($member, $copypasta, $validated['folder_ids']);
+        $syncCopypastaFolders->handle($member, $copypasta, $validated['folder_ids'], EventContext::fromRequest($request));
 
         return response()->json($this->favoriteState($member, $copypasta));
     }
@@ -70,10 +71,10 @@ class CopypastaFolderController extends Controller
             'name' => ['required', 'string', 'max:50'],
         ]);
 
-        $folder = DB::transaction(function () use ($member, $copypasta, $validated, $createFolder, $addToFolder): Folder {
+        $folder = DB::transaction(function () use ($member, $copypasta, $validated, $createFolder, $addToFolder, $request): Folder {
             $folder = $createFolder->handle($member, $validated['name']);
 
-            $addToFolder->handle($member, $folder, $copypasta);
+            $addToFolder->handle($member, $folder, $copypasta, EventContext::fromRequest($request));
 
             return $folder;
         });

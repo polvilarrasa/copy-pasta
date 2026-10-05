@@ -1,7 +1,10 @@
-@props(['copypasta'])
+@props(['copypasta', 'source' => null, 'position' => null])
 
 @php
-    $detailUrl = route('copypastas.show', [$copypasta, $copypasta->slug]);
+    $shareUrl = route('copypastas.show', [$copypasta, $copypasta->slug]);
+    // The list the copy-pasta was shown in travels with the link, so the detail view can record where it came from.
+    $listContext = array_filter(['source' => $source, 'position' => $position], fn (mixed $value): bool => $value !== null);
+    $detailUrl = $listContext === [] ? $shareUrl : $shareUrl.'?'.http_build_query(['from' => $source, 'pos' => $position]);
     $previewLines = explode("\n", $copypasta->body);
     $isTruncated = count($previewLines) > 6;
     $preview = implode("\n", array_slice($previewLines, 0, 6));
@@ -13,8 +16,10 @@
         copyUrl: @js(route('copypastas.copy', $copypasta)),
         voteUrl: @js(route('copypastas.vote', $copypasta)),
         favoriteUrl: @js(route('copypastas.favorite', $copypasta)),
-        shareUrl: @js($detailUrl),
+        shareEventUrl: @js(route('copypastas.share', $copypasta)),
+        shareUrl: @js($shareUrl),
         shareTitle: @js($copypasta->title),
+        context: @js($listContext),
         authenticated: @js(auth()->check()),
         score: @js($copypasta->score),
         myVote: @js($copypasta->my_vote),
