@@ -7,7 +7,7 @@
         default => route('verification.notice'),
     };
 @endphp
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @themeAttributes>
 <head>
     @include('partials.head', ['title' => $title ?? null])
     <meta name="csrf-token" content="{{ csrf_token() }}">

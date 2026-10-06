@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Feed escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+input::placeholder{color:var(--muted);opacity:1}
+button{font-family:inherit}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="min-height:2300px;box-sizing:border-box;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;{{themeVars}}">
+
+<header style="border-bottom:1px solid var(--border);background:var(--bg)">
+<div style="max-width:1216px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:10px;flex:0 0 200px">
+<span aria-hidden="true" style="width:32px;height:32px;border-radius:10px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15"/></svg></span>
+<span style="font-size:22px;font-weight:800;letter-spacing:-0.03em">copy-pastas</span>
+</div>
+<div style="flex:1 1 320px;max-width:560px">
+<label for="q" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Buscar copy-pastas</label>
+<div style="display:flex;align-items:center;gap:10px;height:46px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:0 18px;color:var(--muted)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>
+<input id="q" type="search" placeholder="Busca textos, etiquetas o autores" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font-family:inherit;font-size:15px;color:var(--ink)">
+</div>
+</div>
+<div style="flex:1"></div>
+<button type="button" style="height:46px;padding:0 20px;border:0;border-radius:999px;background:var(--accent);color:var(--on-accent);font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Publicar</button>
+<button type="button" aria-label="Notificaciones, 3 nuevas" style="position:relative;width:46px;height:46px;border-radius:50%;border:0;background:var(--surface2);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/></svg><span style="position:absolute;top:9px;right:10px;width:10px;height:10px;border-radius:50%;background:var(--pink);border:2px solid var(--surface2)"></span></button>
+<button type="button" aria-label="Tu perfil" style="width:46px;height:46px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0"><span style="width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 70% 25%, #FFF3B0 0 16%, transparent 17%), linear-gradient(140deg, #FF5CA8, #7F5BFF)"></span></button>
+</div>
+</header>
+
+<div style="max-width:1216px;margin:0 auto;padding:24px 32px 48px 32px;display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start;box-sizing:border-box">
+
+<nav aria-label="Principal" style="flex:0 0 200px;display:flex;flex-direction:column;gap:4px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="5">
+<a href="#" style="display:flex;align-items:center;gap:12px;height:46px;padding:0 14px;border-radius:14px;font-size:16px;font-weight:700;{{n.style}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"/></svg>{{n.label}}</a>
+</sc-for>
+</nav>
+
+<main style="flex:999 1 520px;max-width:640px;min-width:0;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+<button type="button" onClick="{{t.pick}}" style="height:44px;padding:0 18px;border-radius:999px;border:0;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="8">
+<button type="button" onClick="{{f.pick}}" style="height:36px;padding:0 14px;border-radius:999px;border:0;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;{{f.style}}">{{f.label}}</button>
+</sc-for>
+</div>
+<sc-for list="{{items}}" as="c" hint-placeholder-count="4">
+<dc-import name="Card" item="{{c}}" dark="{{dark}}" hint-size="100%,540px"></dc-import>
+</sc-for>
+</main>
+
+<aside style="flex:1 1 260px;max-width:300px;display:flex;flex-direction:column;gap:16px">
+<section style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<h2 style="margin:0;font-size:16px;font-weight:800">Tus etiquetas</h2>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{favTags}}" as="t" hint-placeholder-count="5">
+<span style="font-size:13px;font-weight:700;padding:5px 11px;border-radius:999px;{{t.style}}">{{t.text}}</span>
+</sc-for>
+</div>
+<a href="#" style="font-size:14px;font-weight:700;color:var(--vote);height:32px;display:flex;align-items:center">Editar favoritas</a>
+</section>
+<section style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:4px">
+<h2 style="margin:0 0 8px 0;font-size:16px;font-weight:800">Tus carpetas</h2>
+<sc-for list="{{folders}}" as="f" hint-placeholder-count="3">
+<a href="#" style="display:flex;align-items:center;gap:12px;height:46px;padding:0 8px;border-radius:12px;font-size:15px;font-weight:600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--muted)"><path d="M3.5 7a1.5 1.5 0 0 1 1.5-1.5h4l2 2.5h8a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18z"/></svg>
+<span style="flex:1">{{f.name}}</span><span style="color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums">{{f.count}}</span></a>
+</sc-for>
+</section>
+</aside>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true}}'>
+const PAL = {
+  light: {bg:'#F3F2FF', surface:'#FFFFFF', surface2:'#EAE8FB', ink:'#15132B', muted:'#55527C', border:'#DAD7F3', accent:'#1B1740', 'on-accent':'#C6F432', vote:'#5B2EFF', pink:'#E5338B',
+    t1bg:'#CFF5E3', t1fg:'#0B5A3C', t2bg:'#FFE0C9', t2fg:'#8A3A07', t3bg:'#E0D9FF', t3fg:'#40259E', t4bg:'#FAF0B5', t4fg:'#5E4D00', t5bg:'#FFD9EA', t5fg:'#99245F'},
+  dark: {bg:'#0E0D1A', surface:'#17162A', surface2:'#211F3A', ink:'#F1F0FF', muted:'#A5A2D0', border:'#2A2847', accent:'#C6F432', 'on-accent':'#0E0D1A', vote:'#C6F432', pink:'#FF5CA8',
+    t1bg:'#12392F', t1fg:'#6DF0B8', t2bg:'#4A2410', t2fg:'#FFB070', t3bg:'#2B2263', t3fg:'#B9A8FF', t4bg:'#433A0A', t4fg:'#F5E26B', t5bg:'#4A1634', t5fg:'#FF9CCB'}
+};
+const SLOT = {humor:'t2', oficina:'t4', chat:'t1', tecnología:'t3', plantillas:'t5', cringe:'t3', nsfw:'t5', wholesome:'t1', gaming:'t3', anime:'t5', clásicos:'t4'};
+const tagStyle = (k) => { const s = SLOT[k] || 't3'; return 'background:var(--' + s + 'bg);color:var(--' + s + 'fg)'; };
+const ITEMS = [
+  {featured:true, title:'Aviso urgente sobre el táper de la nevera', author:'paco_nocturno', hue:20, ach:'Maestro del Ctrl+V', score:4210, tags:['humor','oficina'],
+   body:'Buenas tardes, equipo.\nDesde hace tres semanas hay un táper en la nevera que ya tiene vida propia. Ha empezado a pagar la luz y todo.\nSi es tuyo, por favor reclámalo antes de que nos pida un contrato indefinido.\nSi no es tuyo, tampoco lo toques: ya forma parte de la plantilla.\nAtentamente,\nLa persona que solo quería guardar su yogur'},
+  {reason:'humor', title:'Carta de amor a mi router', author:'lola.exe', hue:200, ach:'Primera de la clase', score:1800, tags:['humor','tecnología'],
+   body:'Querido router:\nSé que no hablamos mucho, pero siempre estás ahí, parpadeando.\nHoy me has dejado sin wifi justo cuando iba a ganar la partida.\nNo te guardo rencor. Bueno, un poco sí.\nTengo tu cable en una mano y el manual en la otra.\nDame una señal.\nCualquiera.\nAtentamente, tu usuario más paciente'},
+  {reason:'plantillas', template:true, title:'Carta de baja de un grupo de WhatsApp', author:'wifi_de_vecino', hue:290, ach:'Rey del copy', score:962, tags:['chat','plantillas'],
+   body:'Estimado grupo «[NOMBRE DEL GRUPO]»:\nTras [NÚMERO] meses de silencio, 3.412 audios de cuatro minutos y un meme que nadie entendió, comunico mi salida.\nNo es por ti, es por las notificaciones.\nSi alguien me necesita, estaré mirando el móvil igualmente.\nUn abrazo,\n[TU NOMBRE]'},
+  {nsfw:true, title:'Reseña dramática de una primera cita', author:'dr_cringe', hue:260, ach:'Veterano de foros', score:731, tags:['nsfw','cringe'],
+   body:'Reseña: una estrella.\nEl restaurante estaba bien, la conversación no tanto.\nMe preguntó mi signo y le respondí con un PDF.\nNo hubo segunda cita pero sí segunda cuenta de la cuenta.\nLa camarera nos miró con lástima.\nVolvería. Solo por el postre.'}
+];
+const NAV = [
+  ['Inicio','M4 11l8-7 8 7v8.5a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z'],
+  ['Carpetas','M3.5 7a1.5 1.5 0 0 1 1.5-1.5h4l2 2.5h8a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18z'],
+  ['Estadísticas','M5 20V11M12 20V4M19 20v-6'],
+  ['Mi perfil','M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0'],
+  ['Ajustes','M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2l.4 2.6h4l.4-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z']
+];
+class Component extends DCLogic {
+  state = {tab:'Para ti', tag:'Todas'};
+  renderVals() {
+    const dark = this.props.dark ?? true;
+    const v = dark ? PAL.dark : PAL.light;
+    const themeVars = Object.keys(v).map((k) => '--' + k + ':' + v[k]).join(';');
+    const tabs = ['Para ti','Aleatorio','Top semanal','Top mensual','Top histórico','Nuevos'].map((l) => ({
+      label:l, pick:() => this.setState({tab:l}),
+      style: this.state.tab === l ? 'background:var(--accent);color:var(--on-accent)' : 'background:var(--surface2);color:var(--ink)'
+    }));
+    const fl = ['Todas','humor','gaming','anime','clásicos','wholesome','cringe','plantillas'];
+    const filters = fl.map((l) => ({
+      label: l === 'Todas' ? l : '#' + l, pick:() => this.setState({tag:l}),
+      style: (l === 'Todas' ? 'background:var(--surface2);color:var(--ink)' : tagStyle(l)) + (this.state.tag === l ? ';box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--vote)' : '')
+    }));
+    const nav = NAV.map((n, i) => ({label:n[0], icon:n[1], style: i === 0 ? 'background:var(--surface2);color:var(--ink)' : 'color:var(--muted)'}));
+    const favTags = ['humor','plantillas','oficina','wholesome','chat'].map((k) => ({text:'#' + k, style:tagStyle(k)}));
+    const folders = [{name:'Para el grupo', count:12},{name:'Respuestas rápidas', count:8},{name:'Clásicos', count:23}];
+    return {themeVars, dark, tabs, filters, items:ITEMS, nav, favTags, folders};
+  }
+}
+</script>
+</body>
+</html>

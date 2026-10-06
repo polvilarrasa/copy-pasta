@@ -24,4 +24,5 @@ enum EventType: string
     case FolderRename = 'folder_rename';
     case FolderDelete = 'folder_delete';
     case UsernameChange = 'username_change';
+    case ThemeChange = 'theme_change';
 }

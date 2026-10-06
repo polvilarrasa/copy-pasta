@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Role;
+use App\Enums\Theme;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
@@ -31,6 +32,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $email
  * @property Role $role
  * @property bool $show_nsfw
+ * @property Theme $theme
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $banned_at
  * @property string|null $ban_reason
@@ -67,6 +69,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'is_owner' => 'boolean',
             'password' => 'hashed',
             'username_changed_at' => 'datetime',
+            'theme' => Theme::class,
         ];
     }
 

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tokens Medianoche</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="min-height:1900px;box-sizing:border-box;background:#F3F2FF;color:#15132B;font-family:'Bricolage Grotesque',system-ui,sans-serif">
+<div style="max-width:1216px;margin:0 auto;padding:48px 32px 72px 32px;box-sizing:border-box;display:flex;flex-direction:column;gap:48px">
+
+<header style="display:flex;flex-direction:column;gap:8px">
+<h1 style="margin:0;font-size:52px;line-height:1.02;font-weight:800;letter-spacing:-0.04em">Tokens · Medianoche</h1>
+<p style="margin:0;font-size:17px;line-height:1.5;color:#55527C;max-width:720px">Mismos valores para Tailwind (sitio público) y Filament (administración). Cada color tiene versión clara y oscura; los pares texto/fondo cumplen contraste AA (4,5:1 o más).</p>
+</header>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:24px;font-weight:800;letter-spacing:-0.02em">Color</h2>
+<div style="border:1px solid #DAD7F3;border-radius:20px;overflow:hidden;background:#FFFFFF">
+<div style="display:grid;grid-template-columns:minmax(140px,1.1fr) minmax(0,2fr) 150px 150px;gap:12px;padding:12px 20px;background:#EAE8FB;font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#55527C">
+<span>Token</span><span>Uso</span><span>Claro</span><span>Oscuro</span>
+</div>
+<sc-for list="{{colors}}" as="c" hint-placeholder-count="20">
+<div style="display:grid;grid-template-columns:minmax(140px,1.1fr) minmax(0,2fr) 150px 150px;gap:12px;align-items:center;padding:10px 20px;border-top:1px solid #DAD7F3;font-size:14px">
+<span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;font-weight:500">{{c.name}}</span>
+<span style="color:#55527C">{{c.use}}</span>
+<span style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:8px;border:1px solid #DAD7F3;background:{{c.l}}"></span><span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px">{{c.l}}</span></span>
+<span style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:8px;border:1px solid #DAD7F3;background:{{c.d}}"></span><span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px">{{c.d}}</span></span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:24px;font-weight:800;letter-spacing:-0.02em">Etiquetas y estados</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(520px,100%),1fr));gap:16px">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+<div style="border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px;{{m.box}}">
+<span style="font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;{{m.dim}}">{{m.label}}</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{m.tags}}" as="t" hint-placeholder-count="5">
+<span style="font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px;background:{{t.bg}};color:{{t.fg}}">{{t.label}}</span>
+</sc-for>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{m.sem}}" as="t" hint-placeholder-count="4">
+<span style="font-size:13px;font-weight:700;padding:5px 12px;border-radius:8px;background:{{t.bg}};color:{{t.fg}}">{{t.label}}</span>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:24px;font-weight:800;letter-spacing:-0.02em">Tipografía</h2>
+<div style="display:flex;flex-wrap:wrap;gap:16px">
+<div style="flex:1 1 360px;background:#FFFFFF;border:1px solid #DAD7F3;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:6px">
+<span style="font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#55527C">Interfaz · font-sans</span>
+<span style="font-size:44px;line-height:1.05;font-weight:800;letter-spacing:-0.035em">Bricolage Grotesque</span>
+<span style="font-size:15px;line-height:1.5;color:#55527C">Pesos 400, 500, 600, 700 y 800. Google Fonts, autoalojable. Variable con eje opsz 12–96.</span>
+</div>
+<div style="flex:1 1 360px;background:#FFFFFF;border:1px solid #DAD7F3;border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:6px">
+<span style="font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#55527C">ASCII art · font-mono</span>
+<pre style="margin:0;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:20px;line-height:1.25">  /\_/\
+ ( o.o )
+  > ^ <</pre>
+<span style="font-size:15px;line-height:1.5;color:#55527C">JetBrains Mono, pesos 400 y 500. Siempre white-space: pre.</span>
+</div>
+</div>
+<div style="border:1px solid #DAD7F3;border-radius:20px;overflow:hidden;background:#FFFFFF">
+<sc-for list="{{scale}}" as="s" hint-placeholder-count="10">
+<div style="display:grid;grid-template-columns:90px 130px minmax(0,1fr) minmax(0,1.2fr);gap:12px;align-items:center;padding:12px 20px;border-top:1px solid #DAD7F3">
+<span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;font-weight:500">{{s.name}}</span>
+<span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;color:#55527C">{{s.spec}}</span>
+<span style="font-size:{{s.size}};line-height:{{s.lh}};font-weight:{{s.weight}};letter-spacing:{{s.ls}};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Carta de amor a mi router</span>
+<span style="font-size:13.5px;color:#55527C">{{s.use}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+
+<div style="flex:1 1 320px;display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:24px;font-weight:800;letter-spacing:-0.02em">Radios</h2>
+<div style="display:flex;flex-wrap:wrap;gap:14px">
+<sc-for list="{{radii}}" as="r" hint-placeholder-count="7">
+<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+<span style="width:72px;height:72px;background:#FFFFFF;border:1.5px solid #5B2EFF;border-radius:{{r.px}}"></span>
+<span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;font-weight:500">{{r.name}} · {{r.label}}</span>
+<span style="font-size:12.5px;color:#55527C;max-width:100px;line-height:1.35">{{r.use}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:1 1 380px;display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:24px;font-weight:800;letter-spacing:-0.02em">Sombras y foco</h2>
+<div style="display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{shadows}}" as="s" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:16px">
+<span style="flex:none;width:72px;height:56px;border-radius:14px;{{s.sample}}"></span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;font-weight:500">{{s.name}}</span>
+<span style="font-size:12.5px;color:#55527C;line-height:1.4">{{s.use}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+</section>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:24px;font-weight:800;letter-spacing:-0.02em">Espaciado</h2>
+<div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:18px">
+<sc-for list="{{spacing}}" as="s" hint-placeholder-count="10">
+<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+<span style="height:28px;width:{{s.px}};background:#5B2EFF;border-radius:4px"></span>
+<span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;font-weight:500">{{s.name}} · {{s.label}}</span>
+</div>
+</sc-for>
+</div>
+<p style="margin:0;font-size:14.5px;line-height:1.6;color:#55527C;max-width:760px">Objetivo táctil mínimo: 44 px. Margen de página: 16 px en móvil, 32 px en escritorio. Contenedor máximo: 1216 px de contenido. Relleno de tarjeta: 14 px. Separación entre tarjetas: 14 px. Puntos de ruptura: base 390, md 768, lg 1024, xl 1280.</p>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:24px;font-weight:800;letter-spacing:-0.02em">Contraste verificado</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:10px">
+<sc-for list="{{ratios}}" as="r" hint-placeholder-count="8">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#FFFFFF;border:1px solid #DAD7F3;border-radius:14px;padding:12px 16px;font-size:14px">
+<span>{{r.pair}}</span><span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:500;font-size:13px;white-space:nowrap">{{r.light}} · {{r.dark}}</span>
+</div>
+</sc-for>
+</div>
+<p style="margin:0;font-size:13px;color:#55527C">Cada celda: claro · oscuro. Mínimo AA (4,5:1) para texto.</p>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{}'>
+const COLORS = [
+  ['bg','Fondo de página','#F3F2FF','#0E0D1A'],
+  ['surface','Tarjetas, paneles, inputs','#FFFFFF','#17162A'],
+  ['surface-2','Botones secundarios, chips inactivos, bloques ASCII','#EAE8FB','#211F3A'],
+  ['border','Bordes de 1 px, separadores','#DAD7F3','#2A2847'],
+  ['ink','Texto principal','#15132B','#F1F0FF'],
+  ['muted','Texto secundario, iconos inactivos','#55527C','#A5A2D0'],
+  ['accent','Botón Copiar, Publicar, pestaña activa','#1B1740','#C6F432'],
+  ['on-accent','Texto sobre accent','#C6F432','#0E0D1A'],
+  ['vote','Voto activo, enlaces, foco, barras del gráfico','#5B2EFF','#C6F432'],
+  ['on-vote','Texto sobre vote','#FFFFFF','#0E0D1A'],
+  ['ach','Título de logro del autor','#5B2EFF','#FF8EC4'],
+  ['pink','Punto de notificación nueva','#E5338B','#FF5CA8'],
+  ['ok','Texto y icono de éxito','#0B5A3C','#6DF0B8'],
+  ['ok-bg','Fondo de éxito','#CFF5E3','#12392F'],
+  ['warn','Texto de aviso','#5E4D00','#F5E26B'],
+  ['warn-bg','Fondo de aviso','#FAF0B5','#433A0A'],
+  ['bad','Texto de error o descenso','#A3202B','#FF8A8A'],
+  ['bad-bg','Fondo de error','#FFD9DC','#4D1A22'],
+  ['info','Texto informativo','#40259E','#B9A8FF'],
+  ['info-bg','Fondo informativo','#E0D9FF','#2B2263'],
+  ['unread','Fila de notificación sin leer','rgba(91,46,255,0.07)','rgba(198,244,50,0.06)'],
+  ['scrim','Velo tras desplegables','rgba(21,19,43,0.35)','rgba(5,4,14,0.6)']
+].map((c) => ({name:c[0], use:c[1], l:c[2], d:c[3]}));
+const TAGS = {
+  light: [['#humor','#FFE0C9','#8A3A07'],['#oficina','#FAF0B5','#5E4D00'],['#gaming','#E0D9FF','#40259E'],['#wholesome','#CFF5E3','#0B5A3C'],['#plantillas','#FFD9EA','#99245F']],
+  dark: [['#humor','#4A2410','#FFB070'],['#oficina','#433A0A','#F5E26B'],['#gaming','#2B2263','#B9A8FF'],['#wholesome','#12392F','#6DF0B8'],['#plantillas','#4A1634','#FF9CCB']]
+};
+const SEM = {
+  light: [['Éxito','#CFF5E3','#0B5A3C'],['Aviso','#FAF0B5','#5E4D00'],['Error','#FFD9DC','#A3202B'],['Info','#E0D9FF','#40259E']],
+  dark: [['Éxito','#12392F','#6DF0B8'],['Aviso','#433A0A','#F5E26B'],['Error','#4D1A22','#FF8A8A'],['Info','#2B2263','#B9A8FF']]
+};
+const mapT = (a) => a.map((t) => ({label:t[0], bg:t[1], fg:t[2]}));
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      colors:COLORS,
+      modes:[
+        {label:'Claro', box:'background:#F3F2FF;border:1px solid #DAD7F3', dim:'color:#55527C', tags:mapT(TAGS.light), sem:mapT(SEM.light)},
+        {label:'Oscuro', box:'background:#0E0D1A;border:1px solid #2A2847', dim:'color:#A5A2D0', tags:mapT(TAGS.dark), sem:mapT(SEM.dark)}
+      ],
+      scale:[
+        {name:'xs', spec:'12 / 16 · 600', size:'12px', lh:'16px', weight:'600', ls:'0', use:'Chips de logro, tiempos, pie de gráfico'},
+        {name:'sm', spec:'14 / 20 · 600', size:'14px', lh:'20px', weight:'600', ls:'0', use:'Guardar, Compartir, metadatos, tablas densas'},
+        {name:'base', spec:'15 / 23 · 400', size:'15px', lh:'23px', weight:'400', ls:'0', use:'Cuerpo de la copy-pasta'},
+        {name:'md', spec:'16 / 24 · 700', size:'16px', lh:'24px', weight:'700', ls:'0', use:'Inputs (16 evita el zoom de iOS), botones'},
+        {name:'lg', spec:'19 / 24 · 700', size:'19px', lh:'24px', weight:'700', ls:'-0.015em', use:'Título de tarjeta'},
+        {name:'xl', spec:'22 / 28 · 800', size:'22px', lh:'28px', weight:'800', ls:'-0.03em', use:'Wordmark, títulos de sección'},
+        {name:'2xl', spec:'28 / 34 · 800', size:'28px', lh:'34px', weight:'800', ls:'-0.025em', use:'Cifras de estadísticas, títulos de pantalla'},
+        {name:'3xl', spec:'36 / 40 · 800', size:'36px', lh:'40px', weight:'800', ls:'-0.035em', use:'Nombre de perfil, bienvenida (móvil)'},
+        {name:'4xl', spec:'52 / 54 · 800', size:'52px', lh:'54px', weight:'800', ls:'-0.04em', use:'Bienvenida (escritorio)'}
+      ],
+      radii:[
+        {name:'sm', label:'8', px:'8px', use:'Distintivo Plantilla'},
+        {name:'md', label:'12', px:'12px', use:'Botones de icono, filas'},
+        {name:'lg', label:'14', px:'14px', use:'Copiar, inputs, rail'},
+        {name:'xl', label:'16', px:'16px', use:'Paneles pequeños'},
+        {name:'2xl', label:'20', px:'20px', use:'Tarjeta'},
+        {name:'3xl', label:'24', px:'24px', use:'Paneles de escritorio'},
+        {name:'full', label:'999', px:'999px', use:'Chips, pestañas, buscador'}
+      ],
+      shadows:[
+        {name:'shadow-card', use:'Ninguna: la tarjeta se define con borde de 1 px.', sample:'background:#FFFFFF;border:1px solid #DAD7F3'},
+        {name:'shadow-day', use:'0 10px 36px · violeta 16 % (claro) / lima 16 % (oscuro). Solo la copy-pasta del día.', sample:'background:#FFFFFF;border:1.5px solid #5B2EFF;box-shadow:0 10px 36px rgba(91,46,255,0.16)'},
+        {name:'shadow-pop', use:'0 16px 48px · negro 45 % (oscuro) / tinta 18 % (claro). Desplegables.', sample:'background:#FFFFFF;box-shadow:0 16px 48px rgba(21,19,43,0.18)'},
+        {name:'ring-focus', use:'0 0 0 2px bg, 0 0 0 4px vote. Foco de teclado y selección.', sample:'background:#FFFFFF;box-shadow:0 0 0 2px #F3F2FF,0 0 0 4px #5B2EFF'}
+      ],
+      spacing:[[1,4],[2,8],[3,12],[4,16],[5,20],[6,24],[8,32],[10,40],[11,44],[12,48]].map((s) => ({name:String(s[0]), label:s[1] + ' px', px:s[1] + 'px'})),
+      ratios:[
+        {pair:'ink sobre bg', light:'16,3', dark:'17,1'},
+        {pair:'muted sobre surface', light:'7,3', dark:'7,3'},
+        {pair:'muted sobre surface-2', light:'6,0', dark:'6,6'},
+        {pair:'on-accent sobre accent', light:'13,2', dark:'15,0'},
+        {pair:'on-vote sobre vote', light:'6,4', dark:'15,0'},
+        {pair:'vote sobre surface', light:'6,4', dark:'13,8'},
+        {pair:'ach sobre surface-2', light:'5,3', dark:'7,5'},
+        {pair:'Etiquetas (peor caso)', light:'5,9', dark:'6,7'},
+        {pair:'Estados (peor caso)', light:'5,8', dark:'6,2'}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

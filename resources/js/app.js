@@ -1,3 +1,5 @@
+import focus from '@alpinejs/focus';
+
 /**
  * Contribution of one vote to the score: +1, -1 or nothing.
  */
@@ -35,6 +37,8 @@ async function sendJson(url, method, body = null) {
 }
 
 document.addEventListener('alpine:init', () => {
+    Alpine.plugin(focus);
+
     Alpine.data('copypastaReport', ({ copypastaId, url, messages }) => ({
         copypastaId,
         visible: false,

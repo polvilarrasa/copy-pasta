@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -38,6 +39,16 @@ class AppServiceProvider extends ServiceProvider
         $this->configureGates();
         $this->configureListeners();
         $this->configureRateLimiting();
+        $this->configureBlade();
+    }
+
+    /**
+     * Named Blade directives. The theme directive writes the stored preference onto the <html> element, so pages
+     * paint in the right mode without a script.
+     */
+    protected function configureBlade(): void
+    {
+        Blade::directive('themeAttributes', fn (): string => '<?php echo app(\App\Support\ThemePreference::class)->htmlAttributes(); ?>');
     }
 
     /**

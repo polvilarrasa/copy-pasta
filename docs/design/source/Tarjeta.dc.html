@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tarjeta variantes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:780px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))">
+<sc-for list="{{cols}}" as="col" hint-placeholder-count="2">
+<section style="box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:14px;{{col.bg}}">
+<sc-for list="{{items}}" as="c" hint-placeholder-count="4">
+<dc-import name="Card" item="{{c}}" dark="{{col.dark}}" hint-size="100%,540px"></dc-import>
+</sc-for>
+</section>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{}'>
+const ITEMS = [
+  {vote:1, ascii:true, title:'El gato que te mira mientras copias', author:'paco_nocturno', hue:20, ach:'Maestro del Ctrl+V', score:4210, tags:['ascii','wholesome'],
+   body:' /\\_/\\\n( o.o )\n > ^ <\n /   \\\n(__ __)'},
+  {reason:'humor', title:'Carta de amor a mi router', author:'lola.exe', hue:200, ach:'Primera de la clase', score:1800, tags:['humor','tecnología'],
+   body:'Querido router:\nSé que no hablamos mucho, pero siempre estás ahí, parpadeando.\nHoy me has dejado sin wifi justo cuando iba a ganar la partida.\nNo te guardo rencor. Bueno, un poco sí.\nTengo tu cable en una mano y el manual en la otra.\nDame una señal.\nCualquiera.\nAtentamente, tu usuario más paciente'},
+  {reason:'plantillas', template:true, saved:true, title:'Carta de baja de un grupo de WhatsApp', author:'wifi_de_vecino', hue:290, ach:'Rey del copy', score:962, tags:['chat','plantillas'],
+   body:'Estimado grupo «[NOMBRE DEL GRUPO]»:\nTras [NÚMERO] meses de silencio, 3.412 audios de cuatro minutos y un meme que nadie entendió, comunico mi salida.\nNo es por ti, es por las notificaciones.\nSi alguien me necesita, estaré mirando el móvil igualmente.\nUn abrazo,\n[TU NOMBRE]'},
+  {nsfw:true, title:'Reseña dramática de una primera cita', author:'dr_cringe', hue:260, ach:'Veterano de foros', score:731, tags:['nsfw','cringe'],
+   body:'Reseña: una estrella.\nEl restaurante estaba bien, la conversación no tanto.\nMe preguntó mi signo y le respondí con un PDF.\nNo hubo segunda cita pero sí segunda cuenta de la cuenta.\nLa camarera nos miró con lástima.\nVolvería. Solo por el postre.'}
+];
+class Component extends DCLogic {
+  renderVals() {
+    return {items:ITEMS, cols:[{dark:true, bg:'background:#0E0D1A'},{dark:false, bg:'background:#F3F2FF'}]};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tarjeta de copy-pasta</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<article style="width:100%;box-sizing:border-box;background:var(--surface);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;{{themeVars}};{{frame}}">
+
+<sc-if value="{{featured}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase">
+<span style="display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>Copy-pasta del día</span>
+<span>5 oct</span>
+</div>
+</sc-if>
+
+<div style="padding:14px 14px 14px 14px;display:flex;flex-direction:column;gap:12px">
+
+<div style="display:flex;gap:12px">
+
+<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:none;width:44px">
+<button type="button" onClick="{{onUp}}" aria-label="Voto positivo" aria-pressed="{{upOn}}" style="width:44px;height:44px;border:0;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;{{upStyle}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V6"/><path d="m6 11 6-6 6 6"/></svg></button>
+<span style="font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;padding:4px 0;{{scoreStyle}}">{{scoreText}}</span>
+<button type="button" onClick="{{onDown}}" aria-label="Voto negativo" aria-pressed="{{downOn}}" style="width:44px;height:44px;border:0;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;{{downStyle}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v13"/><path d="m6 13 6 6 6-6"/></svg></button>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">
+
+<sc-if value="{{reason}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);flex-wrap:wrap">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>
+<span>Porque te gusta</span><span style="font-weight:700;padding:2px 9px;border-radius:999px;{{reasonStyle}}">{{reason}}</span>
+</div>
+</sc-if>
+
+<div style="display:flex;align-items:center;gap:8px;min-height:30px">
+<span aria-hidden="true" style="width:28px;height:28px;border-radius:50%;flex:none;background:{{avatar}}"></span>
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:13.5px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{author}}</span>
+<span style="font-size:12px;font-weight:600;color:var(--ach);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ach}}</span>
+</div>
+<sc-if value="{{template}}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:8px;background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:800;flex:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg>Plantilla</span>
+</sc-if>
+</div>
+
+<div style="position:relative">
+<div style="display:flex;flex-direction:column;gap:6px;{{blurStyle}}">
+<h3 style="margin:0;font-size:19px;line-height:1.2;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">{{title}}</h3>
+<p style="margin:0;font-size:15px;line-height:1.5;color:var(--ink);{{bodyStyle}}">{{body}}</p>
+</div>
+<sc-if value="{{hidden}}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center">
+<button type="button" onClick="{{onReveal}}" style="display:flex;flex-direction:column;align-items:center;gap:6px;min-height:48px;padding:12px 16px;border-radius:16px;border:0;background:var(--surface2);color:var(--ink);font-size:14px;font-weight:700;cursor:pointer;text-align:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 6.2A9.8 9.8 0 0 1 12 6c5 0 8.5 4.3 9.5 6a12 12 0 0 1-2.4 3"/><path d="M6.6 7.6A12 12 0 0 0 2.5 12C3.5 13.7 7 18 12 18c1.3 0 2.5-.3 3.6-.8"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>Contenido sensible<span style="font-weight:500;color:var(--muted)">Toca para ver</span></button>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{template}}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;color:var(--muted)">Rellena los [CAMPOS] antes de pegar.</p>
+</sc-if>
+
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{tags}}" as="t" hint-placeholder-count="2">
+<span style="font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;{{t.style}}">{{t.text}}</span>
+</sc-for>
+</div>
+
+</div>
+</div>
+
+<button type="button" onClick="{{onCopy}}" style="width:100%;height:52px;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer">
+<sc-if value="{{copied}}" hint-placeholder-val="{{ false }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></sc-if>
+<sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15"/></svg></sc-if>
+{{copyLabel}}</button>
+
+<div style="display:flex;align-items:center;gap:2px;margin:0 -6px">
+<button type="button" onClick="{{onSave}}" aria-pressed="{{saved}}" style="height:44px;padding:0 10px;border:0;background:transparent;border-radius:12px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer;{{saveStyle}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="{{saveFill}}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4h11a1 1 0 0 1 1 1v15l-6.5-4.5L5.5 20V5a1 1 0 0 1 1-1z"/></svg>{{saveLabel}}</button>
+<button type="button" style="height:44px;padding:0 10px;border:0;background:transparent;color:var(--ink);border-radius:12px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></svg>Compartir</button>
+<span style="flex:1"></span>
+<button type="button" aria-label="Más opciones" style="width:44px;height:44px;border:0;background:transparent;color:var(--muted);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+</div>
+
+</div>
+</article>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"item":{"editor":null},"dark":{"editor":"boolean","default":true},"full":{"editor":"boolean","default":false},"$preview":{"width":358,"height":560}}'>
+const PAL = {
+  light: {bg:'#F3F2FF', surface:'#FFFFFF', surface2:'#EAE8FB', ink:'#15132B', muted:'#55527C', border:'#DAD7F3', accent:'#1B1740', 'on-accent':'#C6F432', vote:'#5B2EFF', 'on-vote':'#FFFFFF', ach:'#5B2EFF', glow:'rgba(91,46,255,0.16)',
+    t1bg:'#CFF5E3', t1fg:'#0B5A3C', t2bg:'#FFE0C9', t2fg:'#8A3A07', t3bg:'#E0D9FF', t3fg:'#40259E', t4bg:'#FAF0B5', t4fg:'#5E4D00', t5bg:'#FFD9EA', t5fg:'#99245F'},
+  dark: {bg:'#0E0D1A', surface:'#17162A', surface2:'#211F3A', ink:'#F1F0FF', muted:'#A5A2D0', border:'#2A2847', accent:'#C6F432', 'on-accent':'#0E0D1A', vote:'#C6F432', 'on-vote':'#0E0D1A', ach:'#FF8EC4', glow:'rgba(198,244,50,0.16)',
+    t1bg:'#12392F', t1fg:'#6DF0B8', t2bg:'#4A2410', t2fg:'#FFB070', t3bg:'#2B2263', t3fg:'#B9A8FF', t4bg:'#433A0A', t4fg:'#F5E26B', t5bg:'#4A1634', t5fg:'#FF9CCB'}
+};
+const SLOT = {humor:'t2', oficina:'t4', chat:'t1', tecnología:'t3', plantillas:'t5', cringe:'t3', nsfw:'t5', wholesome:'t1', ascii:'t4', gaming:'t3', anime:'t5', clásicos:'t4', memes:'t2', música:'t5', terror:'t3'};
+const tagStyle = (k) => { const s = SLOT[k] || 't3'; return 'background:var(--' + s + 'bg);color:var(--' + s + 'fg)'; };
+const fmt = (n) => n >= 1000 ? (n / 1000).toFixed(1).replace('.', ',') + 'k' : String(n);
+const SAMPLE = {title:'Carta de amor a mi router', author:'lola.exe', hue:200, ach:'Primera de la clase', score:1800, tags:['humor','tecnología'], reason:'humor',
+  body:'Querido router:\nSé que no hablamos mucho, pero siempre estás ahí, parpadeando.\nHoy me has dejado sin wifi justo cuando iba a ganar la partida.\nNo te guardo rencor. Bueno, un poco sí.\nTengo tu cable en una mano y el manual en la otra.\nDame una señal.\nCualquiera.\nAtentamente, tu usuario más paciente'};
+class Component extends DCLogic {
+  state = {vote:null, copied:false, saved:null, revealed:false};
+  renderVals() {
+    const it = this.props.item || SAMPLE;
+    const dark = this.props.dark ?? true;
+    const full = this.props.full ?? false;
+    const v = dark ? PAL.dark : PAL.light;
+    const themeVars = Object.keys(v).map((k) => '--' + k + ':' + v[k]).join(';');
+    const vote = this.state.vote === null ? (it.vote || 0) : this.state.vote;
+    const base = it.score - (it.vote || 0);
+    const hidden = !!it.nsfw && !this.state.revealed;
+    const saved = this.state.saved === null ? !!it.saved : this.state.saved;
+    const hue = it.hue || 250;
+    const avatar = 'radial-gradient(circle at 70% 28%, rgba(255,255,255,0.85) 0 14%, transparent 15%), linear-gradient(140deg, hsl(' + hue + ',85%,62%), hsl(' + ((hue + 60) % 360) + ',80%,56%))';
+    const clamp = full ? '' : 'display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;';
+    const mono = it.ascii ? "font-family:'JetBrains Mono',ui-monospace,monospace;white-space:pre;line-height:1.3;background:var(--surface2);padding:12px 14px;border-radius:12px;" : 'white-space:pre-line;';
+    return {
+      themeVars, featured:!!it.featured, template:!!it.template, title:it.title, body:it.body, author:it.author, ach:it.ach, avatar,
+      reason: it.reason ? '#' + it.reason : '', reasonStyle: it.reason ? tagStyle(it.reason) : '',
+      frame: it.featured ? 'border:1.5px solid var(--vote);box-shadow:0 10px 36px var(--glow)' : 'border:1px solid var(--border)',
+      tags: (it.tags || []).map((k) => ({text:'#' + k, style:tagStyle(k)})),
+      hidden, blurStyle: hidden ? 'filter:blur(9px);user-select:none;pointer-events:none' : '',
+      bodyStyle: clamp + mono,
+      scoreText: fmt(base + vote),
+      upOn: vote === 1, downOn: vote === -1,
+      upStyle: vote === 1 ? 'background:var(--vote);color:var(--on-vote)' : 'background:var(--surface2);color:var(--muted)',
+      downStyle: vote === -1 ? 'background:var(--ach);color:var(--surface)' : 'background:transparent;color:var(--muted)',
+      scoreStyle: vote === 1 ? 'color:var(--vote)' : 'color:var(--ink)',
+      onUp:() => this.setState({vote: vote === 1 ? 0 : 1}),
+      onDown:() => this.setState({vote: vote === -1 ? 0 : -1}),
+      copied:this.state.copied, notCopied:!this.state.copied,
+      copyLabel: this.state.copied ? '¡Copiado!' : 'Copiar',
+      onCopy:() => { try { navigator.clipboard.writeText(it.body); } catch (e) {} this.setState({copied:true}); },
+      saved, saveFill: saved ? 'currentColor' : 'none', saveLabel: saved ? 'Guardada' : 'Guardar',
+      saveStyle: saved ? 'color:var(--vote)' : 'color:var(--ink)',
+      onSave:() => this.setState({saved:!saved}),
+      onReveal:() => this.setState({revealed:true})
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -15,6 +15,7 @@ use App\Http\Controllers\Public\NsfwConfirmationController;
 use App\Http\Controllers\Public\ProfileController;
 use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SitemapController;
+use App\Http\Controllers\Public\ThemeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [FeedController::class, 'home'])->name('home');
@@ -52,6 +53,14 @@ Route::post('/c/{copypasta}/reporte', CopypastaReportController::class)
     ->name('copypastas.report');
 
 Route::post('/nsfw/confirmar', NsfwConfirmationController::class)->name('nsfw.confirm');
+
+Route::post('/tema', ThemeController::class)
+    ->middleware('throttle:60,1')
+    ->name('theme.update');
+
+if (app()->environment(['local', 'testing'])) {
+    Route::view('/_componentes', 'public.componentes')->name('components.showcase');
+}
 
 Route::get('/aviso/{copypasta}', [AnonymousNoticeController::class, 'create'])->name('notice.create');
 Route::post('/aviso/{copypasta}', [AnonymousNoticeController::class, 'store'])

@@ -245,20 +245,36 @@ Aceptación: tests de redirección por rol; un título con U+202E se guarda sin 
 
 ### Fase 14 — Sistema de diseño
 
-- [ ] Leer `docs/design/`. Si no existe o está incompleto, parar y avisar.
-- [ ] Tokens en Tailwind (colores, tipografía, radios, sombras, espaciado) para modo claro y oscuro. El modo sigue al sistema por defecto, con selector guardado en `users.theme` y en cookie para anónimos.
-- [ ] Fuentes autoalojadas, porque la CSP solo permite `'self'`.
-- [ ] Componentes Blade: botón, tarjeta de copy-pasta, pestañas, chip de etiqueta, modal, toast, estado vacío, skeleton de carga, avatar, menú de usuario.
+- [x] Leer `docs/design/`. Si no existe o está incompleto, parar y avisar.
+- [x] Tokens en Tailwind (colores, tipografía, radios, sombras, espaciado) para modo claro y oscuro. El modo sigue al sistema por defecto, con selector guardado en `users.theme` y en cookie para anónimos.
+- [x] Fuentes autoalojadas, porque la CSP solo permite `'self'`.
+- [x] Componentes Blade: botón, tarjeta de copy-pasta, pestañas, chip de etiqueta, modal, toast, estado vacío, skeleton de carga, avatar, menú de usuario.
 - [ ] Rediseño con esos componentes de feed, detalle, login, registro, recuperación, ajustes y páginas legales.
 - [ ] Tema propio de Filament para `/admin` con los mismos tokens.
-- [ ] Página `/_componentes`, solo en local, con todos los componentes en los dos modos.
-- [ ] Componentes propios: botón, input, textarea, select, checkbox, switch, campo de código de 6 dígitos (2FA), modal, desplegable, pestañas, toast, chip de etiqueta, avatar, skeleton y estado vacío. Todos aparecen en `/_componentes`.
-- [ ] Alpine con el plugin oficial `@alpinejs/focus` para modales y desplegables.
+- [x] Página `/_componentes`, solo en local, con todos los componentes en los dos modos.
+- [x] Componentes propios: botón, input, textarea, select, checkbox, switch, campo de código de 6 dígitos (2FA), modal, desplegable, pestañas, toast, chip de etiqueta, avatar, skeleton y estado vacío. Todos aparecen en `/_componentes`.
+- [x] Alpine con el plugin oficial `@alpinejs/focus` para modales y desplegables.
 - [ ] Migrar todas las vistas que usan `<flux:*>` (login, registro, recuperación, ajustes, 2FA, passkeys, menús) a los componentes propios.
 - [ ] Eliminar `livewire/flux` de `composer.json` y sus assets (estilos en `resources/css/app.css` y vistas en `resources/views/flux`).
 - [ ] Tests de navegador: el staff entra con un código TOTP real en el campo nuevo, no con el código de recuperación.
 
 Aceptación: ninguna vista usa colores o tamaños arbitrarios de Tailwind (comprobación automática en CI); ningún `<flux:*>` en `resources/views` (comprobación en CI); modal, desplegable y pestañas usables solo con teclado (Tab, Escape, flechas), con foco atrapado en el modal y atributos ARIA correctos, cubierto con tests de navegador; accesibilidad de Lighthouse de 95 o más en claro y oscuro; los tests de navegador de la Fase 12 siguen en verde.
+
+**Desviaciones de la Fase 14a** (la 14b y la 14c quedan sin marcar):
+
+- **Ruta de `/_componentes`.** Se registra en los entornos `local` y `testing`, no solo en `local`: el entorno de los tests es `testing` y `isLocal()` no lo cubriría. Producción nunca ejecuta tests, y la ruta no existe fuera de desarrollo.
+- **Sin `class="dark"` desde el servidor.** `@fluxAppearance` gestiona la clase `.dark` desde su propio localStorage y chocaría con ella. Los tokens nuevos dependen solo de `data-theme` y de la media query, así que no necesitan la clase. Los layouts de Flux conservan su `class="dark"` fijo hasta la 14b.
+- **Preferencia de tema sin middleware.** La directiva `@themeAttributes` (en `AppServiceProvider`) escribe el atributo en el `<html>` de los seis layouts. La resuelve `App\Support\ThemePreference`: usuario primero, cookie `theme` después, `system` por defecto.
+- **Evento `theme_change`.** Lo registran también los anónimos (con hash de visitante), porque la regla de V2 pide evento para toda acción nueva de usuario.
+- **Validación inline en el controlador de tema.** No hay `FormRequest` porque el resto de controladores públicos validan con `$request->validate()`.
+- **Tokens añadidos al diseño.** `--color-avatar-ink` (tinta de las iniciales, igual en los dos modos) y la utilidad `bidi-isolate` (Tailwind 4 no tiene una para `unicode-bidi`, así que evitamos el valor arbitrario de la Fase 13).
+- **Escala tipográfica y radios sobrescriben los valores por defecto de Tailwind.** `text-lg`, `rounded-lg`, etc. ya significan lo del diseño. Las vistas sin migrar cambian de tamaño hasta la 14b. La paleta `zinc` se conserva para esas vistas.
+- **Tarjeta con pequeñas diferencias.** El borde destacado es de 1 px (1,5 px requeriría valor arbitrario); el desenfoque NSFW usa `blur-md` (12 px frente a 9 px del diseño); las etiquetas usan `text-xs` (12 px) en vez de 12,5 px. Las acciones (votar, copiar, guardar, compartir) son presentacionales: se conectan a sus acciones en la 14b.
+- **Excepciones de valores arbitrarios.** `tests/Feature/Design/ArbitraryTailwindValuesTest.php` falla con cualquier clase `[...]` nueva. Las excepciones de vistas que la 14b migra son temporales y se borran en esa fase.
+- **Showcase con textos en `lang/es`.** Los textos de interfaz de `/_componentes` salen de `lang/es/ui.php`; los títulos de las tarjetas de muestra son contenido de ejemplo.
+- **Fuentes y dependencias.** `@fontsource-variable/bricolage-grotesque` y `@fontsource/jetbrains-mono` (CSS), `@alpinejs/focus` (registrado en `resources/js/app.js`) y `mallardduck/blade-lucide-icons` 2.x (sobre `blade-ui-kit/blade-icons`).
+- **Factory y modelo.** `UserFactory` define `theme` como `Theme::System`, igual que el default de la base de datos. Sin ello, un usuario creado en memoria con `actingAs()` no tenía el valor. `User` declara `@property Theme $theme` para que PHPStan vea el tipo.
+- **Test de navegador.** Solo el del modal del showcase (abre y queda visible). Los tests de teclado (Tab, Escape, flechas, foco atrapado) son de la 14c, como dice la aceptación.
 
 ### Fase 15 — Área de usuario fuera de Filament
 
