@@ -48,6 +48,9 @@
     --cp-scrim: rgba(21, 19, 43, 0.35);
     --cp-shadow-day: 0 10px 36px rgba(91, 46, 255, 0.16);
     --cp-shadow-pop: 0 16px 48px rgba(21, 19, 43, 0.18);
+
+    /* The 2FA QR code is plain black-on-white; invert it so it stays legible on a dark surface. */
+    --cp-qr-invert: none;
 }
 
 [data-theme='dark'] {
@@ -88,6 +91,8 @@
     --cp-scrim: rgba(5, 4, 14, 0.6);
     --cp-shadow-day: 0 10px 36px rgba(198, 244, 50, 0.16);
     --cp-shadow-pop: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+    --cp-qr-invert: invert(1) brightness(1.5);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -129,6 +134,8 @@
         --cp-scrim: rgba(5, 4, 14, 0.6);
         --cp-shadow-day: 0 10px 36px rgba(198, 244, 50, 0.16);
         --cp-shadow-pop: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+        --cp-qr-invert: invert(1) brightness(1.5);
     }
 }
 

@@ -5,30 +5,26 @@
         <form method="POST" action="{{ request()->fullUrl() }}" class="flex flex-col gap-6">
             @csrf
 
-            <flux:input
+            <x-ui.password-input
                 name="password"
                 :label="__('auth.invitation.password')"
-                type="password"
                 required
                 autocomplete="new-password"
                 passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
-                viewable
             />
 
-            <flux:input
+            <x-ui.password-input
                 name="password_confirmation"
                 :label="__('auth.invitation.password_confirmation')"
-                type="password"
                 required
                 autocomplete="new-password"
                 passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
-                viewable
             />
 
             <div class="flex items-center justify-end">
-                <flux:button type="submit" variant="primary" class="w-full" data-test="accept-invitation-button">
+                <x-ui.button type="submit" variant="primary" class="w-full" data-test="accept-invitation-button">
                     {{ __('auth.invitation.submit') }}
-                </flux:button>
+                </x-ui.button>
             </div>
         </form>
     </div>

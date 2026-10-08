@@ -49,22 +49,21 @@
                 <div class="space-y-5 text-center">
                     <div x-show="!showRecoveryInput">
                         <div class="flex items-center justify-center my-5" x-ref="otp">
-                            <flux:otp
+                            <x-ui.otp
                                 x-model="code"
-                                length="6"
                                 name="code"
-                                label="OTP Code"
-                                label:sr-only
-                                class="mx-auto"
+                                :label="__('ui.otp.label')"
+                                class="mx-auto max-w-40"
                              />
                         </div>
                     </div>
 
                     <div x-show="showRecoveryInput">
                         <div class="my-5">
-                            <flux:input
+                            <x-ui.input
                                 type="text"
                                 name="recovery_code"
+                                label="{{ __('Recovery code') }}"
                                 x-ref="recovery_code"
                                 x-bind:required="showRecoveryInput"
                                 autocomplete="one-time-code"
@@ -73,19 +72,19 @@
                         </div>
 
                         @error('recovery_code')
-                            <flux:text color="red">
+                            <p class="text-sm font-semibold text-bad">
                                 {{ $message }}
-                            </flux:text>
+                            </p>
                         @enderror
                     </div>
 
-                    <flux:button
+                    <x-ui.button
                         variant="primary"
                         type="submit"
                         class="w-full"
                     >
                         {{ __('Continue') }}
-                    </flux:button>
+                    </x-ui.button>
                 </div>
 
                 <div class="mt-5 space-x-0.5 text-sm leading-5 text-center">

@@ -30,15 +30,6 @@ const ARBITRARY_VALUE_EXCEPTIONS = [
     'resources/views/layouts/app/header.blade.php' => [
         '[&>div>svg]:size-5' => 'Flux header layout, removed in 14b.',
     ],
-    'resources/views/layouts/auth/split.blade.php' => [
-        'sm:w-[350px]' => 'Flux auth layout, removed in 14b.',
-    ],
-    'resources/views/pages/settings/layout.blade.php' => [
-        'md:w-[220px]' => 'Settings sidebar width, removed in 14b.',
-    ],
-    'resources/views/pages/settings/⚡two-factor-setup-modal.blade.php' => [
-        '[&>div]:flex-1' => 'Flux modal content, removed in 14b.',
-    ],
 ];
 
 /**

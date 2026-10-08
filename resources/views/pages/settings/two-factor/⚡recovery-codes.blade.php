@@ -53,55 +53,53 @@ new class extends Component {
 }; ?>
 
 <div
-    class="py-6 space-y-6 border shadow-sm rounded-xl border-zinc-200 dark:border-white/10"
+    class="py-6 space-y-6 rounded-xl border border-border shadow-day"
     wire:cloak
     x-data="{ showRecoveryCodes: false }"
 >
     <div class="px-6 space-y-2">
         <div class="flex items-center gap-2">
-            <flux:icon.lock-closed variant="outline" class="size-4"/>
-            <flux:heading size="lg" level="3">{{ __('2FA recovery codes') }}</flux:heading>
+            <x-lucide-lock class="size-4 text-ink" aria-hidden="true" />
+            <h3 class="text-lg text-ink">{{ __('2FA recovery codes') }}</h3>
         </div>
-        <flux:text variant="subtle">
+        <p class="text-base text-muted">
             {{ __('Recovery codes let you regain access if you lose your 2FA device. Store them in a secure password manager.') }}
-        </flux:text>
+        </p>
     </div>
 
     <div class="px-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <flux:button
+            <x-ui.button
                 x-show="!showRecoveryCodes"
-                icon="eye"
-                icon:variant="outline"
                 variant="primary"
                 @click="showRecoveryCodes = true;"
                 aria-expanded="false"
                 aria-controls="recovery-codes-section"
             >
+                <x-lucide-eye class="size-5" aria-hidden="true" />
                 {{ __('View recovery codes') }}
-            </flux:button>
+            </x-ui.button>
 
-            <flux:button
+            <x-ui.button
                 x-show="showRecoveryCodes"
-                icon="eye-slash"
-                icon:variant="outline"
                 variant="primary"
                 @click="showRecoveryCodes = false"
                 aria-expanded="true"
                 aria-controls="recovery-codes-section"
             >
+                <x-lucide-eye-off class="size-5" aria-hidden="true" />
                 {{ __('Hide recovery codes') }}
-            </flux:button>
+            </x-ui.button>
 
             @if (filled($recoveryCodes))
-                <flux:button
+                <x-ui.button
                     x-show="showRecoveryCodes"
-                    icon="arrow-path"
-                    variant="filled"
+                    variant="secondary"
                     wire:click="regenerateRecoveryCodes"
                 >
+                    <x-lucide-refresh-cw class="size-5" aria-hidden="true" />
                     {{ __('Regenerate codes') }}
-                </flux:button>
+                </x-ui.button>
             @endif
         </div>
 
@@ -114,12 +112,15 @@ new class extends Component {
         >
             <div class="mt-3 space-y-3">
                 @error('recoveryCodes')
-                    <flux:callout variant="danger" icon="x-circle" heading="{{$message}}"/>
+                    <div class="flex items-center gap-2 rounded-lg bg-bad-bg px-4 py-3 text-sm font-semibold text-bad">
+                        <x-lucide-circle-x class="size-5 shrink-0" aria-hidden="true" />
+                        {{ $message }}
+                    </div>
                 @enderror
 
                 @if (filled($recoveryCodes))
                     <div
-                        class="grid gap-1 p-4 font-mono text-sm rounded-lg bg-zinc-100 dark:bg-white/5"
+                        class="grid gap-1 rounded-lg bg-surface-2 p-4 font-mono text-sm text-ink"
                         role="list"
                         aria-label="{{ __('Recovery codes') }}"
                     >
@@ -133,9 +134,9 @@ new class extends Component {
                             </div>
                         @endforeach
                     </div>
-                    <flux:text variant="subtle" class="text-xs">
+                    <p class="text-xs text-muted">
                         {{ __('Each recovery code can be used once to access your account and will be removed after use. If you need more, click Regenerate codes above.') }}
-                    </flux:text>
+                    </p>
                 @endif
             </div>
         </div>

@@ -8,6 +8,10 @@ return [
     'otp' => [
         'label' => 'Código de 6 dígitos',
     ],
+    'password' => [
+        'show' => 'Mostrar contraseña',
+        'hide' => 'Ocultar contraseña',
+    ],
     'card' => [
         'featured' => 'Copy-pasta del día',
         'reason' => 'Porque te gusta',
@@ -32,6 +36,7 @@ return [
             'copy' => 'Copiar',
             'save' => 'Guardar',
             'cancel' => 'Cancelar',
+            'delete' => 'Eliminar',
             'publish' => 'Publicar',
             'small' => 'Pequeño',
             'accept' => 'Aceptar',
@@ -46,6 +51,7 @@ return [
         'nsfw' => 'Contiene contenido +18',
         'notify' => 'Avisos por email',
         'code' => 'Código de 6 dígitos',
+        'password' => 'Contraseña',
         'overlays' => 'Modal, desplegable y pestañas',
         'open_modal' => 'Abrir modal',
         'modal_title' => 'Ejemplo de modal',

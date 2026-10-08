@@ -114,29 +114,29 @@ new #[Title('Profile settings')] class extends Component {
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <flux:heading level="2" class="sr-only">{{ __('Profile settings') }}</flux:heading>
+    <h2 class="sr-only">{{ __('Profile settings') }}</h2>
 
     <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="username" :label="__('auth.username')" type="text" required autofocus autocomplete="username" />
+            <x-ui.input wire:model="username" name="username" :label="__('auth.username')" type="text" required autofocus autocomplete="username" />
 
             <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" :disabled="is_impersonating()" />
+                <x-ui.input wire:model="email" name="email" :label="__('Email')" type="email" required autocomplete="email" :disabled="is_impersonating()" />
 
                 @if ($this->hasUnverifiedEmail)
                     <div>
-                        <flux:text class="mt-4">
+                        <p class="mt-4 text-base text-muted">
                             {{ __('Your email address is unverified.') }}
 
-                            <flux:link class="text-sm cursor-pointer" wire:click.prevent="resendVerificationNotification">
+                            <button type="button" class="cursor-pointer text-sm font-semibold text-ink underline" wire:click.prevent="resendVerificationNotification">
                                 {{ __('Click here to re-send the verification email.') }}
-                            </flux:link>
-                        </flux:text>
+                            </button>
+                        </p>
 
                         @if (session('status') === 'verification-link-sent')
-                            <flux:text class="mt-2 font-medium !dark:text-green-400 !text-green-600">
+                            <p class="mt-2 text-sm font-semibold text-ok">
                                 {{ __('A new verification link has been sent to your email address.') }}
-                            </flux:text>
+                            </p>
                         @endif
                     </div>
                 @endif
@@ -144,23 +144,24 @@ new #[Title('Profile settings')] class extends Component {
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
+                    <x-ui.button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
                         {{ __('Save') }}
-                    </flux:button>
+                    </x-ui.button>
                 </div>
 
             </div>
         </form>
 
         <form wire:submit="updateNsfwPreference" class="my-6 w-full space-y-6" data-test="nsfw-preference-form">
-            <flux:switch wire:model="showNsfw" :label="__('app.profile.show_nsfw')" :description="__('app.profile.show_nsfw_helper')" />
+            <x-ui.switch wire:model="showNsfw" name="showNsfw" :label="__('app.profile.show_nsfw')" />
+            <p class="-mt-4 text-sm text-muted">{{ __('app.profile.show_nsfw_helper') }}</p>
 
-            <flux:checkbox wire:model="ageConfirmed" :label="__('app.profile.nsfw_age_confirm')" />
+            <x-ui.checkbox wire:model="ageConfirmed" name="ageConfirmed" :label="__('app.profile.nsfw_age_confirm')" />
 
             <div class="flex items-center justify-end">
-                <flux:button variant="primary" type="submit" data-test="update-nsfw-button">
+                <x-ui.button variant="primary" type="submit" data-test="update-nsfw-button">
                     {{ __('Save') }}
-                </flux:button>
+                </x-ui.button>
             </div>
         </form>
 

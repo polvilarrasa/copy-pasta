@@ -5,6 +5,7 @@
         'primary' => 'bg-accent text-on-accent',
         'secondary' => 'bg-surface-2 text-ink',
         'ghost' => 'bg-transparent text-muted',
+        'danger' => 'bg-bad-bg text-bad',
     ];
     $sizes = [
         'md' => 'min-h-11 px-4 text-md',

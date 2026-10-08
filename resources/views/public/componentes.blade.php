@@ -28,6 +28,7 @@
                         <x-ui.button variant="primary">{{ __('ui.showcase.button.copy') }}</x-ui.button>
                         <x-ui.button variant="secondary">{{ __('ui.showcase.button.save') }}</x-ui.button>
                         <x-ui.button variant="ghost">{{ __('ui.showcase.button.cancel') }}</x-ui.button>
+                        <x-ui.button variant="danger">{{ __('ui.showcase.button.delete') }}</x-ui.button>
                         <x-ui.button variant="primary" size="lg">{{ __('ui.showcase.button.publish') }}</x-ui.button>
                         <x-ui.button variant="secondary" size="sm">{{ __('ui.showcase.button.small') }}</x-ui.button>
                     </div>
@@ -45,6 +46,7 @@
                     <x-ui.checkbox :name="'nsfw-'.$mode" :label="__('ui.showcase.nsfw')" />
                     <x-ui.switch :name="'notify-'.$mode" :label="__('ui.showcase.notify')" checked />
                     <x-ui.otp :name="'code-'.$mode" :label="__('ui.showcase.code')" />
+                    <x-ui.password-input :name="'password-'.$mode" :label="__('ui.showcase.password')" autocomplete="new-password" />
                 </div>
 
                 <div class="grid gap-3">

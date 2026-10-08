@@ -1,13 +1,21 @@
-@props(['id', 'title'])
+@props(['id', 'title', 'open' => false, 'wireModel' => null, 'close' => null])
 
 @php
     $titleId = $id.'-title';
 @endphp
 
-{{-- Opened by dispatching open-modal with this id; the focus trap keeps Tab inside and returns focus on close. --}}
+{{--
+    Opened by dispatching open-modal with this id, or by binding `open` / `wire-model` from the server. The focus
+    trap keeps Tab inside and returns focus on close. `close` names a Livewire method called once, when the modal
+    transitions to closed through Escape, the backdrop or the built-in close button — not on the initial render —
+    mirroring Flux's old `@close`, for callers that need to reset state the boolean alone does not cover.
+--}}
 <div
-    x-data="{ open: false }"
+    x-data="{ open: @if ($wireModel) @entangle($wireModel) @else {{ $open ? 'true' : 'false' }} @endif }"
     x-on:open-modal.window="if ($event.detail === '{{ $id }}') open = true"
+    @if ($close)
+        x-init="$watch('open', (value, old) => { if (! value && old) { $wire.{{ $close }}() } })"
+    @endif
     x-on:keydown.escape.window="open = false"
     x-show="open"
     x-cloak
