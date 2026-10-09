@@ -3,7 +3,6 @@
 use App\Actions\ChangeUsername;
 use App\Concerns\ProfileValidationRules;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Computed;
@@ -41,7 +40,7 @@ new #[Title('Profile settings')] class extends Component {
             $user->forceFill(['show_nsfw' => false])->save();
             $this->ageConfirmed = false;
 
-            Flux::toast(variant: 'success', text: __('Profile updated.'));
+            $this->dispatch('ui-toast', message: __('Profile updated.'));
 
             return;
         }
@@ -52,7 +51,7 @@ new #[Title('Profile settings')] class extends Component {
             $user->forceFill(['show_nsfw' => true, 'nsfw_confirmed_at' => now()])->save();
         }
 
-        Flux::toast(variant: 'success', text: __('Profile updated.'));
+        $this->dispatch('ui-toast', message: __('Profile updated.'));
     }
 
     /**
@@ -76,7 +75,7 @@ new #[Title('Profile settings')] class extends Component {
 
         $user->save();
 
-        Flux::toast(variant: 'success', text: __('Profile updated.'));
+        $this->dispatch('ui-toast', message: __('Profile updated.'));
     }
 
     /**

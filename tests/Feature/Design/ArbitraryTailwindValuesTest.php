@@ -12,12 +12,6 @@ use Illuminate\Support\Facades\File;
  * @var array<string, array<string, string>>
  */
 const ARBITRARY_VALUE_EXCEPTIONS = [
-    'resources/views/flux/navlist/group.blade.php' => [
-        'mb-[2px]' => 'Flux override, removed in 14b with Flux.',
-        'dark:hover:bg-white/[7%]' => 'Flux override, removed in 14b with Flux.',
-        'space-y-[2px]' => 'Flux override, removed in 14b with Flux.',
-        'inset-y-[3px]' => 'Flux override, removed in 14b with Flux.',
-    ],
     'resources/views/components/copypasta-card.blade.php' => [
         '[unicode-bidi:isolate]' => 'Replaced by bidi-isolate in the new card; removed in 14b.',
     ],
@@ -26,9 +20,6 @@ const ARBITRARY_VALUE_EXCEPTIONS = [
     ],
     'resources/views/components/impersonation-banner.blade.php' => [
         'z-[60]' => 'Above the sticky header and the Flux overlays; removed in 14b.',
-    ],
-    'resources/views/layouts/app/header.blade.php' => [
-        '[&>div>svg]:size-5' => 'Flux header layout, removed in 14b.',
     ],
 ];
 

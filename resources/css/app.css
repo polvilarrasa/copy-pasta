@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import '../../vendor/livewire/flux/dist/flux.css';
 @import './tokens.css';
 @import '@fontsource-variable/bricolage-grotesque';
 @import '@fontsource/jetbrains-mono/400.css';
@@ -7,8 +6,6 @@
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
-@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -27,26 +24,3 @@
     --color-zinc-950: #0a0a0a;
 }
 
-/* Flux still reads these names until Fase 14b removes it; they map onto the design tokens. */
-@theme inline {
-    --color-accent-foreground: var(--cp-on-accent);
-    --color-accent-content: var(--cp-on-accent);
-}
-
-[data-flux-field]:not(ui-radio, ui-checkbox) {
-    @apply grid gap-2;
-}
-
-[data-flux-label] {
-    @apply  !mb-0 !leading-tight;
-}
-
-input:focus[data-flux-control],
-textarea:focus[data-flux-control],
-select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
-}
-
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */

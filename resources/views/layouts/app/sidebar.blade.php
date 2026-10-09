@@ -1,102 +1,79 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark" @themeAttributes>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @themeAttributes>
     <head>
         @include('partials.head')
+        @livewireStyles
     </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
+    <body class="min-h-screen bg-bg text-ink antialiased" x-data="{ sidebarOpen: false }">
         <x-impersonation-banner />
-        <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
-            <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
-                <flux:sidebar.collapse class="lg:hidden" />
-            </flux:sidebar.header>
 
-            <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+        <div class="lg:flex">
+            <div
+                x-show="sidebarOpen"
+                x-cloak
+                x-on:click="sidebarOpen = false"
+                class="fixed inset-0 z-40 bg-scrim lg:hidden"
+            ></div>
+
+            <aside
+                x-on:keydown.escape.window="sidebarOpen = false"
+                :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+                class="fixed inset-y-0 start-0 z-50 flex w-72 shrink-0 flex-col gap-4 border-e border-border bg-surface p-4 transition-transform lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:translate-x-0 lg:self-start"
+            >
+                <div class="flex items-center justify-between">
+                    <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
+                    <button type="button" x-on:click="sidebarOpen = false" class="rounded-lg p-2 text-muted lg:hidden" aria-label="{{ __('ui.close') }}">
+                        <x-lucide-x class="size-5" aria-hidden="true" />
+                    </button>
+                </div>
+
+                <nav class="flex flex-col gap-1">
+                    <a
+                        href="{{ route('dashboard') }}"
+                        wire:navigate
+                        @if (request()->routeIs('dashboard')) aria-current="page" @endif
+                        class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold {{ request()->routeIs('dashboard') ? 'bg-surface-2 text-ink' : 'text-muted hover:bg-surface-2 hover:text-ink' }}"
+                    >
+                        <x-lucide-home class="size-5" aria-hidden="true" />
                         {{ __('Dashboard') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
-            </flux:sidebar.nav>
+                    </a>
+                </nav>
 
-            <flux:spacer />
+                <div class="flex-1"></div>
 
-            <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
-                </flux:sidebar.item>
+                <nav class="flex flex-col gap-1">
+                    <a href="https://github.com/laravel/livewire-starter-kit" target="_blank" class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-muted hover:bg-surface-2 hover:text-ink">
+                        <x-lucide-folder-git-2 class="size-5" aria-hidden="true" />
+                        {{ __('Repository') }}
+                    </a>
+                    <a href="https://laravel.com/docs/starter-kits#livewire" target="_blank" class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-muted hover:bg-surface-2 hover:text-ink">
+                        <x-lucide-book-open-text class="size-5" aria-hidden="true" />
+                        {{ __('Documentation') }}
+                    </a>
+                </nav>
 
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
-                </flux:sidebar.item>
-            </flux:sidebar.nav>
+                <div class="hidden lg:block">
+                    <x-desktop-user-menu />
+                </div>
+            </aside>
 
-            <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->username" />
-        </flux:sidebar>
+            <div class="flex min-h-screen flex-1 flex-col">
+                <header class="flex items-center gap-2 border-b border-border bg-surface p-3 lg:hidden">
+                    <button type="button" x-on:click="sidebarOpen = true" class="rounded-lg p-2 text-ink" aria-label="{{ __('ui.showcase.menu') }}">
+                        <x-lucide-menu class="size-5" aria-hidden="true" />
+                    </button>
 
-        <!-- Mobile User Menu -->
-        <flux:header class="lg:hidden">
-            <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
+                    <div class="flex-1"></div>
 
-            <flux:spacer />
+                    <x-desktop-user-menu />
+                </header>
 
-            <flux:dropdown position="top" align="end">
-                <flux:profile
-                    :initials="auth()->user()->initials()"
-                    icon-trailing="chevron-down"
-                />
+                {{ $slot }}
+            </div>
+        </div>
 
-                <flux:menu>
-                    <flux:menu.radio.group>
-                        <div class="p-0 text-sm font-normal">
-                            <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                                <flux:avatar
-                                    :name="auth()->user()->username"
-                                    :initials="auth()->user()->initials()"
-                                />
+        <x-ui.toast />
 
-                                <div class="grid flex-1 text-start text-sm leading-tight">
-                                    <flux:heading class="truncate">{{ auth()->user()->username }}</flux:heading>
-                                    <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
-                                </div>
-                            </div>
-                        </div>
-                    </flux:menu.radio.group>
-
-                    <flux:menu.separator />
-
-                    <flux:menu.radio.group>
-                        <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                            {{ __('Settings') }}
-                        </flux:menu.item>
-                    </flux:menu.radio.group>
-
-                    <flux:menu.separator />
-
-                    <form method="POST" action="{{ route('logout') }}" class="w-full">
-                        @csrf
-                        <flux:menu.item
-                            as="button"
-                            type="submit"
-                            icon="arrow-right-start-on-rectangle"
-                            class="w-full cursor-pointer"
-                            data-test="logout-button"
-                        >
-                            {{ __('Log out') }}
-                        </flux:menu.item>
-                    </form>
-                </flux:menu>
-            </flux:dropdown>
-        </flux:header>
-
-        {{ $slot }}
-
-        @persist('toast')
-            <flux:toast.group>
-                <flux:toast />
-            </flux:toast.group>
-        @endpersist
-
-        @fluxScripts
+        @livewireScripts
     </body>
 </html>

@@ -254,8 +254,8 @@ Aceptación: tests de redirección por rol; un título con U+202E se guarda sin 
 - [x] Página `/_componentes`, solo en local, con todos los componentes en los dos modos.
 - [x] Componentes propios: botón, input, textarea, select, checkbox, switch, campo de código de 6 dígitos (2FA), modal, desplegable, pestañas, toast, chip de etiqueta, avatar, skeleton y estado vacío. Todos aparecen en `/_componentes`.
 - [x] Alpine con el plugin oficial `@alpinejs/focus` para modales y desplegables.
-- [ ] Migrar todas las vistas que usan `<flux:*>` (login, registro, recuperación, ajustes, 2FA, passkeys, menús) a los componentes propios.
-- [ ] Eliminar `livewire/flux` de `composer.json` y sus assets (estilos en `resources/css/app.css` y vistas en `resources/views/flux`).
+- [x] Migrar todas las vistas que usan `<flux:*>` (login, registro, recuperación, ajustes, 2FA, passkeys, menús) a los componentes propios.
+- [x] Eliminar `livewire/flux` de `composer.json` y sus assets (estilos en `resources/css/app.css` y vistas en `resources/views/flux`).
 - [ ] Tests de navegador: el staff entra con un código TOTP real en el campo nuevo, no con el código de recuperación.
 
 Aceptación: ninguna vista usa colores o tamaños arbitrarios de Tailwind (comprobación automática en CI); ningún `<flux:*>` en `resources/views` (comprobación en CI); modal, desplegable y pestañas usables solo con teclado (Tab, Escape, flechas), con foco atrapado en el modal y atributos ARIA correctos, cubierto con tests de navegador; accesibilidad de Lighthouse de 95 o más en claro y oscuro; los tests de navegador de la Fase 12 siguen en verde.
@@ -288,6 +288,17 @@ Aceptación: ninguna vista usa colores o tamaños arbitrarios de Tailwind (compr
 - **`signInInBrowser()` sigue usando el código de recuperación**, no un TOTP real. El criterio de aceptación de la Fase 14 sobre esto queda pendiente para la 14c: cambiarlo afecta a seis tests de navegador que usan ese helper para entrar como staff.
 - **`layouts/auth/card.blade.php` y `layouts/auth/split.blade.php` migrados pero sin usar.** `layouts/auth.blade.php` siempre resuelve a `auth.simple`; los otros dos son herencia del starter kit de Laravel, ya sin ninguna vista que los referencie.
 - **Excepciones de valores arbitrarios retiradas.** Las de `layouts/auth/split.blade.php`, `pages/settings/layout.blade.php` y `⚡two-factor-setup-modal.blade.php` en `ArbitraryTailwindValuesTest`; las de `copypasta-card`, `impersonation-banner`, `layouts/app/header.blade.php` y `flux/navlist/group.blade.php` siguen hasta la segunda mitad.
+
+**Desviaciones de la Fase 14b, segunda mitad** (menú de usuario y cabecera/sidebar de `/app`; cierra la migración de Flux). El feed, el detalle y las páginas legales quedan para cuando se aborde ese rediseño, ya sin relación con Flux:
+
+- **Contenido de la sidebar sin cambios.** "Dashboard" (la vista placeholder del starter kit, sin contenido real) y los enlaces "Repository"/"Documentation" (al repo de Laravel, no al del proyecto) se quedan tal cual: es contenido del starter kit nunca adaptado, y la Fase 15 reconstruye esta zona entera con el menú de usuario definitivo. Decisión explícita del propietario del proyecto.
+- **Drawer móvil hecho a mano, no en el sistema de diseño.** `layouts/app/sidebar.blade.php` monta su propio panel deslizante (backdrop, Escape, transform) en vez de usar `ui.modal` o un componente nuevo: es específico de esta sidebar, que la Fase 15 sustituye por completo. Sin `x-trap.inert` a propósito — con la sidebar fija en escritorio dentro del mismo árbol, atraparía el foco también fuera de pantallas pequeñas.
+- **`ui.menu-item` gana la prop `type`** (por defecto `button`, antes fija). La necesita el botón de "Log out", que es un `<button type="submit">` dentro de un formulario, no un enlace.
+- **`layouts/app/header.blade.php` borrado, no migrado.** A diferencia de `auth/card.blade.php` y `auth/split.blade.php` (migrados aunque sin uso), esta variante no la referencia ninguna ruta y su contenido apunta al repositorio de Laravel; migrar algo que nadie puede alcanzar no aportaba nada.
+- **`resources/views/flux/` borrado entero.** `navlist/group.blade.php` y los cuatro overrides de iconos (`layout-grid`, `folder-git-2`, `chevrons-up-down`, `book-open-text`) quedaron huérfanos al migrar sidebar/menú a Lucide; Lucide ya trae esos cuatro iconos de serie, por eso existían los overrides.
+- **`Flux::toast()` sustituido por `$this->dispatch('ui-toast', message: ...)`** en `⚡profile.blade.php` y `⚡security.blade.php` (perfil actualizado, contraseña actualizada). Es la única línea de lógica que toca esos dos ficheros en toda la Fase 14b: necesaria para quitar la dependencia, igual de intacta queda el resto (comprobado con los mismos tests de la 12.2a/12.2b).
+- **`livewire/flux` fuera de `composer.json`**, con el `@import`, los dos `@source` y las reglas `[data-flux-*]`/`--color-accent-foreground`/`--color-accent-content` quitados de `resources/css/app.css`; `@fluxAppearance` quitado de `partials/head.blade.php`. El CSS compilado baja de 420 KB a 46 KB. La paleta `zinc` de `@theme` se queda: la siguen usando las vistas de feed/detalle/legales sin migrar.
+- **Sin ningún `<flux:*>` en el proyecto.** El criterio de aceptación de la Fase 14 sobre esto ya se cumple antes de terminar la fase entera.
 
 ### Fase 15 — Área de usuario fuera de Filament
 
