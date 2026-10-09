@@ -300,6 +300,15 @@ Aceptación: ninguna vista usa colores o tamaños arbitrarios de Tailwind (compr
 - **`livewire/flux` fuera de `composer.json`**, con el `@import`, los dos `@source` y las reglas `[data-flux-*]`/`--color-accent-foreground`/`--color-accent-content` quitados de `resources/css/app.css`; `@fluxAppearance` quitado de `partials/head.blade.php`. El CSS compilado baja de 420 KB a 46 KB. La paleta `zinc` de `@theme` se queda: la siguen usando las vistas de feed/detalle/legales sin migrar.
 - **Sin ningún `<flux:*>` en el proyecto.** El criterio de aceptación de la Fase 14 sobre esto ya se cumple antes de terminar la fase entera.
 
+**Desviaciones del rediseño de páginas legales y cabecera pública** (bloque B del rediseño pendiente de la Fase 14: cabecera/pie de `layouts/public.blade.php`, el banner de impersonación, las páginas legales y las de error; el feed, la tarjeta y el detalle — con toda su interactividad — quedan para el bloque A):
+
+- **Los toasts globales (`toast`/`login-required`) no se tocan, solo se reskinan.** `layouts/public.blade.php` sigue escuchando esos dos eventos tal cual los despacha `copypastaActions`/`copypastaFolders`/`copypastaReport` en `resources/js/app.js`; no se tocó ese JavaScript en este bloque, que no le correspondía. Si el bloque A decide unificar con el evento `ui-toast` de `ui.toast`, se hace entonces.
+- **`x-app-logo` reemplaza el texto plano de la cabecera pública.** La cabecera no tenía nunca el icono de la marca, solo el nombre en texto; se iguala con el resto de cabeceras del sitio (settings, /app) en vez de reproducir la inconsistencia anterior.
+- **El buscador de la cabecera no usa `x-ui.input`.** No tiene hueco para una etiqueta visible en una cabecera de una sola fila; mantiene el `aria-label` que ya tenía y los mismos tokens de borde/fondo que el resto de campos.
+- **`z-[60]` del banner de impersonación, con la razón reescrita.** Seguía siendo el único valor arbitrario justificado del fichero; el motivo original ("por encima de los overlays de Flux") ya no aplicaba.
+- **Las excepciones de `copypasta-card.blade.php` y `public/copypasta.blade.php`** en `ArbitraryTailwindValuesTest` cambian de texto ("se quitan en la 14b" → "se quitan cuando llegue la migración de feed/detalle"), porque siguen sin tocarse: son del bloque A.
+- **Tests de navegador intermitentes bajo carga.** La suite completa falló una vez en un test de reportar un copy-pasta por timeout; en aislado y en una repetición de la suite completa pasó limpio. No es una regresión de este bloque — ni `copypasta-actions` ni el modal de reporte se tocaron aquí.
+
 ### Fase 15 — Área de usuario fuera de Filament
 
 - [ ] Páginas Livewire: mis copy-pastas, publicar con vista previa, editar, carpetas y detalle de carpeta.
