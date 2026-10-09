@@ -249,7 +249,7 @@ Aceptación: tests de redirección por rol; un título con U+202E se guarda sin 
 - [x] Tokens en Tailwind (colores, tipografía, radios, sombras, espaciado) para modo claro y oscuro. El modo sigue al sistema por defecto, con selector guardado en `users.theme` y en cookie para anónimos.
 - [x] Fuentes autoalojadas, porque la CSP solo permite `'self'`.
 - [x] Componentes Blade: botón, tarjeta de copy-pasta, pestañas, chip de etiqueta, modal, toast, estado vacío, skeleton de carga, avatar, menú de usuario.
-- [ ] Rediseño con esos componentes de feed, detalle, login, registro, recuperación, ajustes y páginas legales.
+- [x] Rediseño con esos componentes de feed, detalle, login, registro, recuperación, ajustes y páginas legales.
 - [ ] Tema propio de Filament para `/admin` con los mismos tokens.
 - [x] Página `/_componentes`, solo en local, con todos los componentes en los dos modos.
 - [x] Componentes propios: botón, input, textarea, select, checkbox, switch, campo de código de 6 dígitos (2FA), modal, desplegable, pestañas, toast, chip de etiqueta, avatar, skeleton y estado vacío. Todos aparecen en `/_componentes`.
@@ -308,6 +308,18 @@ Aceptación: ninguna vista usa colores o tamaños arbitrarios de Tailwind (compr
 - **`z-[60]` del banner de impersonación, con la razón reescrita.** Seguía siendo el único valor arbitrario justificado del fichero; el motivo original ("por encima de los overlays de Flux") ya no aplicaba.
 - **Las excepciones de `copypasta-card.blade.php` y `public/copypasta.blade.php`** en `ArbitraryTailwindValuesTest` cambian de texto ("se quitan en la 14b" → "se quitan cuando llegue la migración de feed/detalle"), porque siguen sin tocarse: son del bloque A.
 - **Tests de navegador intermitentes bajo carga.** La suite completa falló una vez en un test de reportar un copy-pasta por timeout; en aislado y en una repetición de la suite completa pasó limpio. No es una regresión de este bloque — ni `copypasta-actions` ni el modal de reporte se tocaron aquí.
+
+**Desviaciones del bloque A del rediseño pendiente de la Fase 14** (feed, tarjeta de copy-pasta con su interactividad real, detalle, modales de carpeta y reporte). Cierra el rediseño completo de la Fase 14 salvo el tema de Filament y el test de navegador con TOTP real, que siguen pendientes:
+
+- **`ui.copypasta-card` deja de ser solo presentacional.** Gana un prop `copypasta` (modelo, opcional): cuando está presente, calcula sus propias URLs/mensajes y usa `x-data="copypastaActions(...)"` (voto, copiar, guardar, compartir) en vez del `{ revealed: false }` de solo-NSFW; cuando no está (como en `/_componentes`), se comporta exactamente igual que antes. El botón "⋯" pasa a ser un `ui.dropdown` con "Añadir a carpeta" y "Reportar" (antes botones sueltos).
+- **`components/copypasta-card.blade.php` (sin namespace) pasa a ser un adaptador fino.** Antes tenía toda la lógica e interactividad; ahora solo traduce un `Copypasta` de Eloquent a los props presentacionales de `ui.copypasta-card` (incluida la conversión de color de etiqueta, ver más abajo) y le reenvía el modelo para que esta calcule el resto.
+- **`components/copypasta-actions.blade.php` eliminado.** Quedó huérfano: su contenido vive ahora dentro de `ui.copypasta-card`, y nada más lo incluía.
+- **Prop `context` en `ui.copypasta-card`**, además de `source`/`position`. El detalle lo necesitaba para no perder el `ref` (código de enlace compartido) que `EventContext::fromRequest()` ya traía; el feed sigue usando `source`/`position` sueltos.
+- **`@js()` no se compila dentro de un atributo de un componente Blade, solo en etiquetas HTML normales.** Lo usé mal en los dos `x-on:click` del menú "⋯" (`@js($copypasta->getKey())` dentro de `<x-ui.menu-item x-on:click="...">`) y Blade lo dejó como texto literal, rompiendo el JavaScript de toda la página. Solucionado con `'{{ $copypasta->getKey() }}'`, igual que ya hacía el código original en las mismas etiquetas.
+- **Mapeo de los 10 colores de `TagColor` (el admin de Filament) a los 5 tonos del sistema de diseño.** `tags.color` guarda valores como `red`/`teal`/`indigo`, pero `ui.tag-chip` solo entiende `t1`…`t5`; sin el mapeo, cualquier etiqueta con un color fuera de ese conjunto rompía la página con un error de índice no definido. Añadido `TagColor::tone()`, usado solo al construir la tarjeta pública; el selector de color del admin no cambia.
+- **Colisión de texto "Guardar" entre el botón de favoritos de la tarjeta y el de confirmar carpeta.** El botón de guardar/favorito de la tarjeta nueva dice "Guardar" (antes decía "Añadir/Quitar de favoritos", oculto para lectores de pantalla); coincide con el texto del botón de guardar selección de carpetas. Añadido `data-test="folders-save-button"` al segundo para que los tests de navegador no sean ambiguos; nada cambia para quien usa la página.
+- **`tests/Browser/CopypastaFlowsTest.php` actualizado para los nuevos botones.** El voto ya no es el carácter "▲" sino un botón solo-icono (`aria-label` de `ui.card.vote_up`); "Añadir a carpeta" y "Reportar" ahora viven dentro del menú "⋯", así que el test abre ese menú antes de pulsarlos.
+- **El toast global se queda como estaba.** `copypastaActions`/`copypastaFolders`/`copypastaReport` siguen despachando el evento `toast` (no `ui-toast`); no hacía falta unificarlo para esta migración y tocar `resources/js/app.js` sin necesidad no entraba en el alcance.
 
 ### Fase 15 — Área de usuario fuera de Filament
 

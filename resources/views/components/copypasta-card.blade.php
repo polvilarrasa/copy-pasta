@@ -1,75 +1,18 @@
 @props(['copypasta', 'source' => null, 'position' => null])
 
-@php
-    $shareUrl = route('copypastas.show', [$copypasta, $copypasta->slug]);
-    // The list the copy-pasta was shown in travels with the link, so the detail view can record where it came from.
-    $listContext = array_filter(['source' => $source, 'position' => $position], fn (mixed $value): bool => $value !== null);
-    $detailUrl = $listContext === [] ? $shareUrl : $shareUrl.'?'.http_build_query(['from' => $source, 'pos' => $position]);
-    $previewLines = explode("\n", $copypasta->body);
-    $isTruncated = count($previewLines) > 6;
-    $preview = implode("\n", array_slice($previewLines, 0, 6));
-@endphp
-
-<article
-    x-data="copypastaActions({
-        body: @js($copypasta->body),
-        copyUrl: @js(route('copypastas.copy', $copypasta)),
-        voteUrl: @js(route('copypastas.vote', $copypasta)),
-        favoriteUrl: @js(route('copypastas.favorite', $copypasta)),
-        shareEventUrl: @js(route('copypastas.share', $copypasta)),
-        shareUrl: @js($shareUrl),
-        shareTitle: @js($copypasta->title),
-        context: @js($listContext),
-        authenticated: @js(auth()->check()),
-        score: @js($copypasta->score),
-        myVote: @js($copypasta->my_vote),
-        isFavorite: @js((bool) $copypasta->is_favorite),
-        favoritesCount: @js($copypasta->favorites_count),
-        copiedMessage: @js(__('public.copy.copied')),
-        linkCopiedMessage: @js(__('public.copy.link_copied')),
-        loginRequiredVoteMessage: @js(__('public.login_modal.vote')),
-        loginRequiredFavoriteMessage: @js(__('public.login_modal.favorite')),
-            loginRequiredFolderMessage: @js(__('public.login_modal.folder')),
-        actionFailedMessage: @js(__('public.copy.action_failed')),
-    })"
-    x-on:copypasta-folders-saved="applyFolderState($event.detail)"
-    class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200"
+{{-- Maps a real Copypasta model onto the presentational ui.copypasta-card, which wires up its own interactivity. --}}
+<x-ui.copypasta-card
+    :copypasta="$copypasta"
+    :source="$source"
+    :position="$position"
+    :title="$copypasta->title"
+    :body="$copypasta->body"
+    :author="$copypasta->user->displayName()"
+    :author-hue="\App\Support\AvatarColor::hueFor($copypasta->user_id)"
+    :score="$copypasta->score"
+    :my-vote="$copypasta->my_vote"
+    :saved="(bool) $copypasta->is_favorite"
+    :nsfw="$copypasta->is_nsfw"
+    :tags="$copypasta->tags->map(fn ($tag) => ['name' => $tag->name, 'color' => \App\Enums\TagColor::from($tag->color)->tone()])->all()"
     {{ $attributes }}
->
-    <header class="flex items-start justify-between gap-3">
-        <a href="{{ $detailUrl }}" class="font-semibold text-zinc-900 hover:underline">{{ $copypasta->title }}</a>
-        @if ($copypasta->is_nsfw)
-            <span class="shrink-0 rounded bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700">{{ __('public.card.nsfw_badge') }}</span>
-        @endif
-    </header>
-
-    <div class="relative mt-3">
-        <div
-            class="-my-1 overflow-hidden py-1 whitespace-pre-wrap break-words font-mono text-sm text-zinc-700 [unicode-bidi:isolate]"
-            @if ($copypasta->is_nsfw) :class="{ 'blur-md select-none': ! revealed }" @endif
-        >{{ $preview }}{{ $isTruncated ? "\n…" : '' }}</div>
-
-        @if ($copypasta->is_nsfw)
-            <button
-                type="button"
-                x-show="! revealed"
-                x-on:click="revealed = true"
-                class="absolute inset-0 flex items-center justify-center text-sm font-medium text-zinc-900"
-            >{{ __('public.card.reveal') }}</button>
-        @endif
-    </div>
-
-    <footer class="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500">
-        <div class="flex flex-wrap items-center gap-2">
-            @foreach ($copypasta->tags as $tag)
-                <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-700">{{ $tag->name }}</span>
-            @endforeach
-            <span>{{ __('public.card.by', ['username' => $copypasta->user->displayName()]) }}</span>
-            <span>· {{ $copypasta->published_at->diffForHumans() }}</span>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-            @include('components.copypasta-actions', ['requiresReveal' => $copypasta->is_nsfw])
-        </div>
-    </footer>
-</article>
+/>

@@ -15,17 +15,57 @@
     'nsfw' => false,
     'ascii' => false,
     'full' => false,
+    'copypasta' => null,
+    'source' => null,
+    'position' => null,
+    'context' => null,
 ])
 
-{{-- Presentational: the feed and detail pages wire the buttons to their actions in Fase 14b. --}}
+{{--
+    Presentational on its own (as used in /_componentes); wired to the real vote/copy/save/share/folders/report
+    actions when a `copypasta` model is passed, via the copypastaActions Alpine component in resources/js/app.js.
+--}}
 @php
     $scoreText = $score >= 1000 ? number_format($score / 1000, 1, ',', '').'k' : (string) $score;
     $isUpvoted = $myVote === 1;
     $isDownvoted = $myVote === -1;
+
+    if ($copypasta) {
+        $shareUrl = route('copypastas.show', [$copypasta, $copypasta->slug]);
+        $listContext = $context ?? array_filter(['source' => $source, 'position' => $position], fn (mixed $value): bool => $value !== null);
+        $detailQuery = array_filter(['from' => $listContext['source'] ?? null, 'pos' => $listContext['position'] ?? null]);
+        $detailUrl = $detailQuery === [] ? $shareUrl : $shareUrl.'?'.http_build_query($detailQuery);
+        $canReport = auth()->check() && auth()->id() !== $copypasta->user_id;
+    }
 @endphp
 
 <article
-    x-data="{ revealed: false }"
+    @if ($copypasta)
+        x-data="copypastaActions({
+            body: @js($copypasta->body),
+            copyUrl: @js(route('copypastas.copy', $copypasta)),
+            voteUrl: @js(route('copypastas.vote', $copypasta)),
+            favoriteUrl: @js(route('copypastas.favorite', $copypasta)),
+            shareEventUrl: @js(route('copypastas.share', $copypasta)),
+            shareUrl: @js($shareUrl),
+            shareTitle: @js($copypasta->title),
+            context: @js($listContext),
+            authenticated: @js(auth()->check()),
+            score: @js($score),
+            myVote: @js($myVote),
+            isFavorite: @js($saved),
+            favoritesCount: @js($copypasta->favorites_count),
+            copiedMessage: @js(__('public.copy.copied')),
+            linkCopiedMessage: @js(__('public.copy.link_copied')),
+            loginRequiredVoteMessage: @js(__('public.login_modal.vote')),
+            loginRequiredFavoriteMessage: @js(__('public.login_modal.favorite')),
+            loginRequiredFolderMessage: @js(__('public.login_modal.folder')),
+            actionFailedMessage: @js(__('public.copy.action_failed')),
+        })"
+        x-on:copypasta-folders-saved="applyFolderState($event.detail)"
+    @else
+        x-data="{ revealed: false }"
+    @endif
     {{ $attributes->class([
         'flex w-full flex-col overflow-hidden rounded-2xl bg-surface text-ink',
         $featured ? 'border border-vote shadow-day' : 'border border-border',
@@ -49,17 +89,34 @@
                 <button
                     type="button"
                     aria-label="{{ __('ui.card.vote_up') }}"
-                    aria-pressed="{{ $isUpvoted ? 'true' : 'false' }}"
-                    class="flex size-11 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:shadow-focus {{ $isUpvoted ? 'bg-vote text-on-vote' : 'bg-surface-2 text-muted' }}"
+                    @if ($copypasta)
+                        x-on:click="vote(1)"
+                        :aria-pressed="myVote === 1 ? 'true' : 'false'"
+                        :class="myVote === 1 ? 'bg-vote text-on-vote' : 'bg-surface-2 text-muted'"
+                        class="flex size-11 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:shadow-focus"
+                    @else
+                        aria-pressed="{{ $isUpvoted ? 'true' : 'false' }}"
+                        class="flex size-11 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:shadow-focus {{ $isUpvoted ? 'bg-vote text-on-vote' : 'bg-surface-2 text-muted' }}"
+                    @endif
                 >
                     <x-lucide-arrow-up class="size-5" aria-hidden="true" />
                 </button>
-                <span class="py-1 text-sm font-extrabold tabular-nums {{ $isUpvoted ? 'text-vote' : 'text-ink' }}">{{ $scoreText }}</span>
+                <span
+                    @if ($copypasta) x-text="score" :class="myVote === 1 ? 'text-vote' : 'text-ink'" @endif
+                    class="py-1 text-sm font-extrabold tabular-nums {{ $isUpvoted ? 'text-vote' : 'text-ink' }}"
+                >{{ $scoreText }}</span>
                 <button
                     type="button"
                     aria-label="{{ __('ui.card.vote_down') }}"
-                    aria-pressed="{{ $isDownvoted ? 'true' : 'false' }}"
-                    class="flex size-11 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:shadow-focus {{ $isDownvoted ? 'bg-ach text-surface' : 'text-muted' }}"
+                    @if ($copypasta)
+                        x-on:click="vote(-1)"
+                        :aria-pressed="myVote === -1 ? 'true' : 'false'"
+                        :class="myVote === -1 ? 'bg-ach text-surface' : 'text-muted'"
+                        class="flex size-11 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:shadow-focus"
+                    @else
+                        aria-pressed="{{ $isDownvoted ? 'true' : 'false' }}"
+                        class="flex size-11 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:shadow-focus {{ $isDownvoted ? 'bg-ach text-surface' : 'text-muted' }}"
+                    @endif
                 >
                     <x-lucide-arrow-down class="size-5" aria-hidden="true" />
                 </button>
@@ -96,7 +153,13 @@
                         class="flex flex-col gap-1.5 bidi-isolate {{ $nsfw ? 'blur-md select-none pointer-events-none' : '' }}"
                         @if ($nsfw) x-bind:class="revealed && '!blur-none !select-auto !pointer-events-auto'" @endif
                     >
-                        <h3 class="text-lg text-balance text-ink">{{ $title }}</h3>
+                        @if ($copypasta)
+                            <h3 class="text-lg text-balance text-ink">
+                                <a href="{{ $detailUrl }}" class="hover:underline">{{ $title }}</a>
+                            </h3>
+                        @else
+                            <h3 class="text-lg text-balance text-ink">{{ $title }}</h3>
+                        @endif
                         <p class="{{ $ascii ? 'rounded-md bg-surface-2 p-3 font-mono leading-ascii whitespace-pre' : 'text-base whitespace-pre-line text-ink' }} {{ $full ? '' : 'line-clamp-6' }}">{{ $body }}</p>
                     </div>
 
@@ -131,7 +194,11 @@
 
         <button
             type="button"
-            class="flex h-13 w-full items-center justify-center gap-2.5 rounded-lg bg-accent text-md font-extrabold text-on-accent focus-visible:outline-none focus-visible:shadow-focus"
+            @if ($copypasta)
+                x-on:click="copy()"
+                @if ($nsfw) x-bind:disabled="! revealed" @endif
+            @endif
+            class="flex h-13 w-full items-center justify-center gap-2.5 rounded-lg bg-accent text-md font-extrabold text-on-accent focus-visible:outline-none focus-visible:shadow-focus disabled:opacity-40"
         >
             <x-lucide-copy class="size-5" aria-hidden="true" />
             {{ __('ui.card.copy') }}
@@ -140,27 +207,69 @@
         <div class="-mx-1.5 flex items-center gap-0.5">
             <button
                 type="button"
-                aria-pressed="{{ $saved ? 'true' : 'false' }}"
-                class="flex h-11 items-center gap-2 rounded-md px-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:shadow-focus {{ $saved ? 'text-vote' : 'text-ink' }}"
+                @if ($copypasta)
+                    x-on:click="toggleFavorite()"
+                    :aria-pressed="isFavorite ? 'true' : 'false'"
+                    :class="isFavorite ? 'text-vote' : 'text-ink'"
+                    class="flex h-11 items-center gap-2 rounded-md px-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:shadow-focus"
+                @else
+                    aria-pressed="{{ $saved ? 'true' : 'false' }}"
+                    class="flex h-11 items-center gap-2 rounded-md px-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:shadow-focus {{ $saved ? 'text-vote' : 'text-ink' }}"
+                @endif
             >
-                <x-lucide-bookmark class="size-5 {{ $saved ? 'fill-current' : 'fill-none' }}" aria-hidden="true" />
-                {{ $saved ? __('ui.card.saved') : __('ui.card.save') }}
+                @if ($copypasta)
+                    <x-lucide-bookmark class="size-5" x-bind:class="isFavorite ? 'fill-current' : 'fill-none'" aria-hidden="true" />
+                    <span x-text="isFavorite ? @js(__('ui.card.saved')) : @js(__('ui.card.save'))"></span>
+                @else
+                    <x-lucide-bookmark class="size-5 {{ $saved ? 'fill-current' : 'fill-none' }}" aria-hidden="true" />
+                    {{ $saved ? __('ui.card.saved') : __('ui.card.save') }}
+                @endif
             </button>
             <button
                 type="button"
+                @if ($copypasta) x-on:click="share()" @endif
                 class="flex h-11 items-center gap-2 rounded-md px-2.5 text-sm font-semibold text-ink focus-visible:outline-none focus-visible:shadow-focus"
             >
                 <x-lucide-upload class="size-5" aria-hidden="true" />
                 {{ __('ui.card.share') }}
             </button>
             <span class="flex-1"></span>
-            <button
-                type="button"
-                aria-label="{{ __('ui.card.more') }}"
-                class="flex size-11 items-center justify-center rounded-md text-muted focus-visible:outline-none focus-visible:shadow-focus"
-            >
-                <x-lucide-ellipsis class="size-5" aria-hidden="true" />
-            </button>
+
+            @if ($copypasta)
+                <x-ui.dropdown :label="__('ui.card.more')">
+                    <x-slot:trigger>
+                        <span class="flex size-11 items-center justify-center rounded-md text-muted">
+                            <x-lucide-ellipsis class="size-5" aria-hidden="true" />
+                            <span class="sr-only">{{ __('ui.card.more') }}</span>
+                        </span>
+                    </x-slot:trigger>
+
+                    <x-ui.menu-item x-on:click="open = false; authenticated ? $dispatch('folders-open', { copypasta: '{{ $copypasta->getKey() }}', context }) : requireLogin(loginRequiredFolderMessage)">
+                        {{ __('public.folders.button') }}
+                    </x-ui.menu-item>
+
+                    @if ($canReport)
+                        <x-ui.menu-item x-on:click="open = false; $dispatch('report-open', { copypasta: '{{ $copypasta->getKey() }}', context })">
+                            {{ __('public.report.button') }}
+                        </x-ui.menu-item>
+                    @endif
+                </x-ui.dropdown>
+            @else
+                <button
+                    type="button"
+                    aria-label="{{ __('ui.card.more') }}"
+                    class="flex size-11 items-center justify-center rounded-md text-muted focus-visible:outline-none focus-visible:shadow-focus"
+                >
+                    <x-lucide-ellipsis class="size-5" aria-hidden="true" />
+                </button>
+            @endif
         </div>
     </div>
+
+    @if ($copypasta)
+        @include('components.copypasta-folder-selector')
+        @if (auth()->check())
+            @include('components.copypasta-report-modal')
+        @endif
+    @endif
 </article>

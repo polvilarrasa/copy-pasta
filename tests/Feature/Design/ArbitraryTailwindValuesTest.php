@@ -12,12 +12,6 @@ use Illuminate\Support\Facades\File;
  * @var array<string, array<string, string>>
  */
 const ARBITRARY_VALUE_EXCEPTIONS = [
-    'resources/views/components/copypasta-card.blade.php' => [
-        '[unicode-bidi:isolate]' => 'Replaced by bidi-isolate in the new card; removed when the feed/detail migration lands.',
-    ],
-    'resources/views/public/copypasta.blade.php' => [
-        '[unicode-bidi:isolate]' => 'Replaced by bidi-isolate in the new card; removed when the feed/detail migration lands.',
-    ],
     'resources/views/components/impersonation-banner.blade.php' => [
         'z-[60]' => 'Above everything else, including the modal overlays at z-50, so leaving impersonation is always reachable.',
     ],

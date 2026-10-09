@@ -31,8 +31,8 @@ test('votar a favor desde el feed suma un punto y deja marcado el voto', functio
 
     visit('/')
         ->assertSee($copypasta->title)
-        ->press('▲')
-        ->assertAttribute('button[aria-label="'.__('public.vote.up').'"]', 'aria-pressed', 'true');
+        ->click('button[aria-label="'.__('ui.card.vote_up').'"]')
+        ->assertAttribute('button[aria-label="'.__('ui.card.vote_up').'"]', 'aria-pressed', 'true');
 
     expect($copypasta->refresh()->score)->toBe(1);
 });
@@ -46,9 +46,10 @@ test('guardar en una carpeta desde el feed la añade a esa carpeta', function ()
 
     visit('/')
         ->assertSee($copypasta->title)
-        ->press(__('public.folders.button'))
+        ->click('button[aria-haspopup="menu"]')
+        ->click(__('public.folders.button'))
         ->check('Recetas de prueba')
-        ->press(__('public.folders.save'))
+        ->press('@folders-save-button')
         ->waitForText(__('public.folders.saved'));
 
     expect($copypasta->folders()->whereKey($folder->getKey())->exists())->toBeTrue();
@@ -62,7 +63,8 @@ test('reportar un copy-pasta envía el motivo y confirma el envío', function ()
 
     visit('/')
         ->assertSee($copypasta->title)
-        ->press(__('public.report.button'))
+        ->click('button[aria-haspopup="menu"]')
+        ->click(__('public.report.button'))
         ->check(__('moderation.reasons.'.ReportReason::Spam->value))
         ->press(__('public.report.submit'))
         ->waitForText(__('public.report.sent'));
