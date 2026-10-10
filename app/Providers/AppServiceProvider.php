@@ -6,6 +6,7 @@ use App\Listeners\CreateDefaultFolder;
 use App\Listeners\ForgetUnreadNotificationCount;
 use App\Models\User;
 use App\Policies\DatabaseNotificationPolicy;
+use App\Support\OgImageRenderer;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -31,7 +32,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(OgImageRenderer::class, fn (): OgImageRenderer => new OgImageRenderer(
+            pangoView: (string) config('og.pango_view'),
+            timeout: (int) config('og.timeout'),
+        ));
     }
 
     /**

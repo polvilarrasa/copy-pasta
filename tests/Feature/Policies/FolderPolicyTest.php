@@ -73,3 +73,14 @@ test('solo el dueño quita copy-pastas de su carpeta', function (): void {
     expect(Gate::forUser($owner)->allows('removeCopypasta', $folder))->toBeTrue()
         ->and(Gate::forUser(User::factory()->create())->allows('removeCopypasta', $folder))->toBeFalse();
 });
+
+test('solo el staff vuelve privada una carpeta pública, y no una que ya es privada', function (): void {
+    $public = Folder::factory()->public()->create();
+    $private = Folder::factory()->create();
+
+    expect(Gate::forUser(User::factory()->create())->allows('makePrivate', $public))->toBeFalse()
+        ->and(Gate::forUser($public->user)->allows('makePrivate', $public))->toBeFalse()
+        ->and(Gate::forUser(User::factory()->moderator()->create())->allows('makePrivate', $public))->toBeTrue()
+        ->and(Gate::forUser(User::factory()->admin()->create())->allows('makePrivate', $public))->toBeTrue()
+        ->and(Gate::forUser(User::factory()->admin()->create())->allows('makePrivate', $private))->toBeFalse();
+});

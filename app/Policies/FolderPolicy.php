@@ -48,6 +48,14 @@ class FolderPolicy
             && ! $copypasta->isHidden();
     }
 
+    /**
+     * Staff take a public folder back to private; a private one has nothing to take back.
+     */
+    public function makePrivate(User $user, Folder $folder): bool
+    {
+        return $user->isStaff() && $folder->is_public;
+    }
+
     public function removeCopypasta(User $user, Folder $folder): bool
     {
         return $user->getKey() === $folder->user_id;

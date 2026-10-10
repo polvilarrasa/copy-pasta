@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Database\Factories\FolderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $user_id
  * @property string $name
  * @property string|null $description
+ * @property bool $is_public
+ * @property string|null $public_id
  * @property bool $is_default
  * @property int $position
  */
@@ -25,6 +28,8 @@ class Folder extends Model
     public const DEFAULT_NAME = 'Favoritos';
 
     public const MAX_PER_USER = 50;
+
+    public const MAX_DESCRIPTION_LENGTH = 280;
 
     /** @use HasFactory<FolderFactory> */
     use HasFactory;
@@ -36,6 +41,7 @@ class Folder extends Model
     {
         return [
             'is_default' => 'boolean',
+            'is_public' => 'boolean',
             'position' => 'integer',
         ];
     }
@@ -49,6 +55,22 @@ class Folder extends Model
             ['user_id' => $user->getKey(), 'is_default' => true],
             ['name' => self::DEFAULT_NAME, 'position' => 0],
         );
+    }
+
+    /**
+     * @param  Builder<Folder>  $query
+     */
+    public function scopePublic(Builder $query): void
+    {
+        $query->where('is_public', true);
+    }
+
+    /**
+     * The address of the public page, which only answers while the folder is public.
+     */
+    public function publicUrl(): ?string
+    {
+        return $this->public_id === null ? null : route('folders.public', $this->public_id);
     }
 
     /**

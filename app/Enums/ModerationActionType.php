@@ -29,4 +29,5 @@ enum ModerationActionType: string
     case RevokeAchievement = 'revoke_achievement';
     case RestoreAchievement = 'restore_achievement';
     case ReplaceFeatured = 'replace_featured';
+    case MakeFolderPrivate = 'make_folder_private';
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use App\Actions\RemoveFromFolder;
+use App\Actions\SetFolderVisibility;
+use App\Actions\ShareFolder;
 use App\Models\Copypasta;
 use App\Models\Folder;
 use App\Models\User;
@@ -21,11 +23,33 @@ class FolderDetail extends Component
 
     public string $search = '';
 
+    public bool $isPublic = false;
+
     public function mount(Folder $folder): void
     {
         abort_unless(Gate::allows('view', $folder), 404);
 
         $this->folder = $folder;
+        $this->isPublic = (bool) $folder->is_public;
+    }
+
+    public function togglePublic(): void
+    {
+        app(SetFolderVisibility::class)->handle($this->user(), $this->folder, ! (bool) $this->folder->is_public);
+
+        $this->isPublic = (bool) $this->folder->is_public;
+    }
+
+    /**
+     * Returns the public address, making the folder public first when it was private.
+     */
+    public function shareFolder(): string
+    {
+        $url = app(ShareFolder::class)->handle($this->user(), $this->folder);
+
+        $this->isPublic = (bool) $this->folder->is_public;
+
+        return $url;
     }
 
     public function removeFromFolder(string $copypastaId): void

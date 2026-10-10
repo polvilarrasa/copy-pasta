@@ -15,6 +15,8 @@ return [
     'models' => [
         'copypasta' => 'Copy-pasta',
         'copypastas' => 'Copy-pastas',
+        'public_folder' => 'Carpeta pública',
+        'public_folders' => 'Carpetas públicas',
         'tag' => 'Etiqueta',
         'tags' => 'Etiquetas',
         'moderation_action' => 'Acción de moderación',
@@ -38,6 +40,11 @@ return [
 
     'fields' => [
         'name' => 'Nombre',
+        'description' => 'Descripción',
+        'owner' => 'Dueño',
+        'copypastas_count' => 'Copy-pastas',
+        'public_url' => 'Enlace público',
+        'updated_at' => 'Actualizada',
         'slug' => 'Slug',
         'slug_helper' => 'Se genera a partir del nombre si se deja vacío.',
         'color' => 'Color',
@@ -151,6 +158,9 @@ return [
         'hide_heading' => 'Ocultar copy-pasta',
         'hide_submit' => 'Ocultar',
         'restore' => 'Restaurar',
+        'make_folder_private' => 'Hacer privada',
+        'make_folder_private_heading' => 'Hacer privada la carpeta',
+        'make_folder_private_submit' => 'Hacer privada',
         'restore_heading' => 'Restaurar copy-pasta',
         'mark_nsfw' => 'Marcar NSFW',
         'unmark_nsfw' => 'Quitar NSFW',
@@ -180,6 +190,7 @@ return [
         'revoke_achievement' => 'Logro revocado',
         'restore_achievement' => 'Logro restaurado',
         'replace_featured' => 'Copy-pasta del día sustituido',
+        'make_folder_private' => 'Carpeta hecha privada',
     ],
 
     'featured' => [

@@ -1,4 +1,5 @@
 import focus from '@alpinejs/focus';
+import { SHARE_IMAGE_STYLES, canvasToBlob, drawShareImage, loadShareImageFonts } from './share-image';
 
 /**
  * Contribution of one vote to the score: +1, -1 or nothing.
@@ -154,6 +155,155 @@ document.addEventListener('alpine:init', () => {
 
         toast(message) {
             window.dispatchEvent(new CustomEvent('ui-toast', { detail: { message } }));
+        },
+    }));
+
+    /**
+     * "Compartir carpeta": a public folder is shared straight away; a private one asks first, because sharing makes it
+     * public. The server returns the public address either way.
+     */
+    Alpine.data('folderShare', ({ title, copiedMessage }) => ({
+        share() {
+            if (! this.$wire.isPublic) {
+                window.dispatchEvent(new CustomEvent('open-modal', { detail: 'share-folder-confirm' }));
+
+                return;
+            }
+
+            return this.go();
+        },
+
+        async go() {
+            const url = await this.$wire.shareFolder();
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title, url });
+                } catch (error) {
+                    // The member dismissed the share sheet; nothing to report.
+                }
+
+                return;
+            }
+
+            await navigator.clipboard.writeText(url);
+            window.dispatchEvent(new CustomEvent('ui-toast', { detail: { message: copiedMessage } }));
+        },
+    }));
+
+    /**
+     * The "Compartir como imagen" panel of the detail page. The image is drawn in the browser on a canvas. Adult
+     * content asks for confirmation before anything is drawn. It is shared with the Web Share API as a file when the
+     * browser can, and downloaded otherwise; either way the share is recorded with method=image.
+     */
+    Alpine.data('shareImage', ({
+        title,
+        body,
+        author,
+        brand,
+        styleLabels,
+        slug,
+        nsfw,
+        shareEventUrl,
+        shareTitle,
+        context = {},
+        sharedMessage,
+        downloadedMessage,
+        failedMessage,
+    }) => ({
+        expanded: false,
+        confirmed: ! nsfw,
+        style: 'midnight',
+        styles: Object.keys(SHARE_IMAGE_STYLES),
+        swatches: Object.fromEntries(Object.entries(SHARE_IMAGE_STYLES).map(([key, value]) => [key, value.swatch])),
+        styleLabels,
+        busy: false,
+
+        toggle() {
+            this.expanded = ! this.expanded;
+
+            if (this.expanded && this.confirmed) {
+                this.$nextTick(() => this.draw());
+            }
+        },
+
+        confirm() {
+            this.confirmed = true;
+            this.$nextTick(() => this.draw());
+        },
+
+        pick(style) {
+            this.style = style;
+            this.draw();
+        },
+
+        async draw() {
+            await loadShareImageFonts();
+
+            drawShareImage(this.$refs.canvas, { title, body, author, style: this.style, brand });
+        },
+
+        async file() {
+            await this.draw();
+
+            return new File([await canvasToBlob(this.$refs.canvas)], `${slug || 'copy-pasta'}.png`, { type: 'image/png' });
+        },
+
+        record() {
+            postJson(shareEventUrl, { ...context, method: 'image' }).catch(() => {});
+        },
+
+        toast(message) {
+            window.dispatchEvent(new CustomEvent('ui-toast', { detail: { message } }));
+        },
+
+        canShareFile() {
+            return typeof navigator.canShare === 'function' && typeof navigator.share === 'function';
+        },
+
+        async download() {
+            this.busy = true;
+
+            try {
+                const file = await this.file();
+                const url = URL.createObjectURL(file);
+                const link = document.createElement('a');
+
+                link.href = url;
+                link.download = file.name;
+                link.click();
+                URL.revokeObjectURL(url);
+
+                this.record();
+                this.toast(downloadedMessage);
+            } catch (error) {
+                this.toast(failedMessage);
+            } finally {
+                this.busy = false;
+            }
+        },
+
+        async share() {
+            this.busy = true;
+
+            try {
+                const file = await this.file();
+
+                if (! this.canShareFile() || ! navigator.canShare({ files: [file] })) {
+                    return await this.download();
+                }
+
+                await navigator.share({ files: [file], title: shareTitle });
+
+                this.record();
+                this.toast(sharedMessage);
+            } catch (error) {
+                if (error?.name !== 'AbortError') {
+                    this.toast(failedMessage);
+                }
+            } finally {
+                this.busy = false;
+            }
         },
     }));
 

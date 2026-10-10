@@ -59,6 +59,12 @@
         </div>
 
         <div class="rounded-2xl border border-border bg-surface p-4">
+            <span class="text-sm font-bold text-muted">{{ __('public.stats.referred_visits') }}</span>
+            <p class="text-2xl font-extrabold tabular-nums" data-test="referred-visits">{{ \App\Support\Numbers::abbreviate($stats['referredVisits']) }}</p>
+            <p class="mt-1 text-sm text-muted">{{ __('public.stats.referred_visits_hint') }}</p>
+        </div>
+
+        <div class="rounded-2xl border border-border bg-surface p-4">
             <span class="text-sm font-bold text-muted">{{ __('public.stats.top_tags_title') }}</span>
             @if ($stats['topTags'] === [])
                 <p class="mt-1 text-sm text-muted">{{ __('public.stats.top_tags_empty') }}</p>

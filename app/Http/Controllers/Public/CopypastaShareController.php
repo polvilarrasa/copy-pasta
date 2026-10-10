@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Support\EventContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 
 class CopypastaShareController extends Controller
@@ -21,11 +22,13 @@ class CopypastaShareController extends Controller
 
         $user = $request->user();
 
+        $method = $request->input('method') === 'image' ? 'image' : 'link';
+
         return response()->json([
             'ref' => $recordShare->handle(
                 $copypasta,
                 $user instanceof User ? $user : null,
-                EventContext::fromRequest($request),
+                [...Arr::except(EventContext::fromRequest($request), ['ref']), 'method' => $method],
             ),
         ]);
     }
