@@ -17,6 +17,11 @@
         {{ __('ui.folders') }}
     </x-ui.menu-item>
 
+    <x-ui.menu-item href="{{ route('stats.show') }}" wire:navigate>
+        <x-lucide-bar-chart-2 class="size-4" aria-hidden="true" />
+        {{ __('ui.stats') }}
+    </x-ui.menu-item>
+
     <x-ui.menu-item href="{{ route('profile.edit') }}" wire:navigate>
         <x-lucide-settings class="size-4" aria-hidden="true" />
         {{ __('ui.settings') }}

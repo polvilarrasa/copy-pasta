@@ -9,6 +9,7 @@
     :body="$copypasta->body"
     :author="$copypasta->user->displayName()"
     :author-hue="\App\Support\AvatarColor::hueFor($copypasta->user_id)"
+    :author-username="$copypasta->user->isAnonymized() || $copypasta->user->isBanned() ? null : $copypasta->user->username"
     :score="$copypasta->score"
     :my-vote="$copypasta->my_vote"
     :saved="(bool) $copypasta->is_favorite"

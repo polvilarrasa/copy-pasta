@@ -3,6 +3,7 @@
     'body',
     'author',
     'authorHue' => 0,
+    'authorUsername' => null,
     'achievement' => null,
     'score' => 0,
     'myVote' => null,
@@ -132,13 +133,23 @@
                 @endif
 
                 <div class="flex min-h-8 items-center gap-2">
-                    <span class="size-7 shrink-0 rounded-full" aria-hidden="true" style="background: {{ \App\Support\AvatarColor::gradient($authorHue) }}"></span>
-                    <div class="flex min-w-0 flex-1 flex-col">
-                        <span class="truncate text-sm font-bold leading-tight bidi-isolate">{{ $author }}</span>
-                        @if ($achievement)
-                            <span class="truncate text-xs font-semibold leading-snug text-ach bidi-isolate">{{ $achievement }}</span>
-                        @endif
-                    </div>
+                    @if ($authorUsername !== null)
+                        <a href="{{ route('profile.show', $authorUsername) }}" class="flex min-w-0 flex-1 items-center gap-2" wire:navigate>
+                    @else
+                        <div class="flex min-w-0 flex-1 items-center gap-2">
+                    @endif
+                        <span class="size-7 shrink-0 rounded-full" aria-hidden="true" style="background: {{ \App\Support\AvatarColor::gradient($authorHue) }}"></span>
+                        <div class="flex min-w-0 flex-1 flex-col">
+                            <span class="truncate text-sm font-bold leading-tight bidi-isolate">{{ $author }}</span>
+                            @if ($achievement)
+                                <span class="truncate text-xs font-semibold leading-snug text-ach bidi-isolate">{{ $achievement }}</span>
+                            @endif
+                        </div>
+                    @if ($authorUsername !== null)
+                        </a>
+                    @else
+                        </div>
+                    @endif
                     @if ($template)
                         <span class="flex h-6.5 shrink-0 items-center gap-1.5 rounded-sm bg-accent px-2.5 text-xs font-extrabold text-on-accent">
                             <x-lucide-layout-template class="size-3.5" aria-hidden="true" />

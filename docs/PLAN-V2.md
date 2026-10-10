@@ -365,14 +365,28 @@ Aceptación: `/app` responde 301; todo lo que un usuario hacía en el MVP funcio
 
 ### Fase 16 — Perfil público y estadísticas
 
-- [ ] Primera tarea: votos netos (decisión 8). `previous` y `next` en el `context` de los eventos de voto, y agregación por deltas. Sin producción no hace falta recalcular eventos antiguos: se resiembra.
-- [ ] Gráfico de 30 días como componente Blade que genera SVG en el servidor, sin librería de gráficos. Accesible: título y descripción en el SVG, y los mismos datos en una tabla oculta para lectores de pantalla.
-- [ ] Página `/u/{username}` con contadores públicos, copy-pastas y carpetas públicas (estas últimas se activan en la Fase 20).
-- [ ] Enlaces al perfil desde el autor de cada tarjeta y del detalle; "usuario eliminado" sin enlace.
-- [ ] Página `/estadisticas` con totales, gráfico de 30 días, mejor copy-pasta, el que más crece, etiquetas fuertes y fiabilidad de reportes.
-- [ ] Consultas de estadísticas solo sobre `copypasta_daily_stats` y contadores; nunca sobre `events` en bruto.
+- [x] Primera tarea: votos netos (decisión 8). `previous` y `next` en el `context` de los eventos de voto, y agregación por deltas. Sin producción no hace falta recalcular eventos antiguos: se resiembra.
+- [x] Gráfico de 30 días como componente Blade que genera SVG en el servidor, sin librería de gráficos. Accesible: título y descripción en el SVG, y los mismos datos en una tabla oculta para lectores de pantalla.
+- [x] Página `/u/{username}` con contadores públicos, copy-pastas y carpetas públicas (estas últimas se activan en la Fase 20).
+- [x] Enlaces al perfil desde el autor de cada tarjeta y del detalle; "usuario eliminado" sin enlace.
+- [x] Página `/estadisticas` con totales, gráfico de 30 días, mejor copy-pasta, el que más crece, etiquetas fuertes y fiabilidad de reportes.
+- [x] Consultas de estadísticas solo sobre `copypasta_daily_stats` y contadores; nunca sobre `events` en bruto.
 
-Aceptación: los totales coinciden con un recuento directo en un test con datos sembrados; la página de estadísticas hace 6 consultas como máximo; el perfil de una cuenta borrada responde 404; el gráfico tiene título, descripción y tabla equivalente.
+Aceptación: los totales coinciden con un recuento directo en un test con datos sembrados; la página de estadísticas hace 6 consultas como máximo (en la práctica, 5); el perfil de una cuenta borrada responde 404; el gráfico tiene título, descripción y tabla equivalente.
+
+**Desviaciones de la Fase 16:**
+
+- **Sin migraciones nuevas.** `copypasta_daily_stats.upvotes`/`downvotes` están declaradas `unsignedInteger`, pero Postgres no tiene un tipo sin signo nativo: Laravel compila eso a un `integer` normal, sin `CHECK >= 0` (confirmado contra el esquema real). Los deltas netos de un día pueden ser negativos, igual que ya pasa con `favorites`, sin tocar el esquema.
+- **`/app` → `/mis-copypastas` corregido a `/app` → `/estadisticas`.** La Fase 15 lo había dejado apuntando a `/mis-copypastas`, en contra de lo que dice la introducción de este plan ("`/app` a `/estadisticas`"); se corrige aquí junto con su test.
+- **"Actualizado hace X" viene de una clave de caché (`stats.last_aggregated_at`), no de una columna nueva.** `events:aggregate` la escribe con `Cache::forever()` al terminar. Evita una migración para un dato que ya expresa justo lo que el job sabe: cuándo corrió por última vez.
+- **La tabla accesible del gráfico es siempre visible para lectores de pantalla (`sr-only`), no un botón "Ver como tabla" como en el diseño.** El plan solo pide "los mismos datos en una tabla oculta para lectores de pantalla"; un toggle visible es una pantalla más sin pedir. El test de navegador de aceptación (cambiar de métrica y comprobar que la tabla cambia) usa `assertSourceHas`, que lee el HTML sin exigir visibilidad.
+- **`App\Support\Numbers::abbreviate()` nuevo**, reutilizado por el perfil y las estadísticas (perfil, 3 contadores; estadísticas, KPIs y tabla): mismo formato "1,8k" que ya usaba la tarjeta para el score, sin tocar esa vista.
+- **Bug real encontrado y corregido: Livewire no puede hidratar un `Carbon` anidado en un array.** `ComputeUserStats` guardaba `Carbon` dentro de `range` y `lastAggregatedAt`; al ser propiedades públicas de `UserStats` (array), cada interacción posterior (cambiar de métrica) fallaba con "incomplete object" al deserializar el snapshot. Se formatean a texto plano dentro de la Action, antes de que el array llegue al componente.
+- **Bug real encontrado y corregido: `fill="var(--color-vote)"` en el SVG salía negro.** Los tokens de Tailwind 4 están en `@theme inline`, que no publica las variables en `:root`: `var(--color-vote)` no resuelve a nada fuera de las utilidades generadas. El gráfico usa `class="fill-vote"` / `class="stroke-border"` / `class="fill-muted"` en vez de `style`/atributos con `var()`.
+- **`wire:key` dinámico en `<x-ui.daily-chart>`.** El estado de Alpine del gráfico (el texto al pasar el ratón) se construye una vez al montar `x-data`; sin una `wire:key` que cambie con la métrica, Livewire parchea el elemento existente en vez de sustituirlo y ese estado queda con los datos de la métrica anterior. La clave es `daily-chart-{{ $metric }}`.
+- **Cinco valores arbitrarios de Tailwind sustituidos por la escala estándar** (`min-h-[22px]` → `min-h-6`, `border-[1.5px]` → `border-2`, `min-w-[480px]` → `min-w-lg`, `min-w-[220px]` → `min-w-56`, `min-w-[320px]` → `min-w-80`), exigido por `ArbitraryTailwindValuesTest`.
+- **`UsernameRedirectTest` y `AppPanelRedirectTest` (de la Fase 13/15) actualizados.** Esperaban el 404 provisional de `ProfileController` y la redirección antigua de `/app`; se actualizan a la página real de esta fase, no se tocan sus demás casos (redirección 301, expiración a los 90 días, cuenta anonimizada).
+- **Un fallo suelto más en la suite completa de navegador, no de esta fase.** `UserAreaFlowsTest::el_selector_de_carpetas_se_maneja_solo_con_teclado` falla igual en el commit anterior a esta fase (confirmado con `git stash`); la misma intermitencia bajo carga ya documentada en la Fase 14 y la 15.
 
 ### Fase 17 — Notificaciones
 

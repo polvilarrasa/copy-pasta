@@ -9,6 +9,7 @@ return [
     'sign_out' => 'Cerrar sesión',
     'mine' => 'Mis copy-pastas',
     'folders' => 'Carpetas',
+    'stats' => 'Estadísticas',
     'otp' => [
         'label' => 'Código de 6 dígitos',
     ],

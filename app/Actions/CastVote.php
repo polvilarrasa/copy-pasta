@@ -28,7 +28,9 @@ class CastVote
 
         throw_unless(in_array($value, [1, -1], true), InvalidArgumentException::class);
 
-        $result = DB::transaction(function () use ($voter, $copypasta, $value): ?int {
+        $previous = null;
+
+        $result = DB::transaction(function () use ($voter, $copypasta, $value, &$previous): ?int {
             $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
 
             $existing = Vote::query()
@@ -66,7 +68,7 @@ class CastVote
             1 => EventType::VoteUp,
             -1 => EventType::VoteDown,
             null => EventType::VoteRemoved,
-        }, $voter, $copypasta, $context);
+        }, $voter, $copypasta, [...$context, 'previous' => $previous, 'next' => $result]);
 
         return $result;
     }

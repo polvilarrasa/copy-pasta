@@ -6,10 +6,10 @@ use App\Actions\AnonymizeUser;
 use App\Actions\ChangeUsername;
 use App\Models\User;
 
-test('el username actual responde 404 hasta que exista el perfil público', function (): void {
+test('el username actual muestra el perfil público', function (): void {
     User::factory()->create(['username' => 'ana']);
 
-    $this->get('/u/ana')->assertNotFound();
+    $this->get('/u/ana')->assertOk()->assertSee('ana');
 });
 
 test('un username antiguo redirige con 301 al actual', function (): void {
@@ -36,11 +36,11 @@ test('un username de una cuenta anonimizada no redirige a nada', function (): vo
     $this->get('/u/ana')->assertNotFound();
 });
 
-test('si otra cuenta ocupa el nombre antiguo, manda la cuenta actual y no hay redirección', function (): void {
+test('si otra cuenta ocupa el nombre antiguo, muestra esa cuenta y no hay redirección', function (): void {
     $member = User::factory()->create(['username' => 'ana']);
     app(ChangeUsername::class)->handle($member, 'ana_nueva');
 
-    User::factory()->create(['username' => 'ana']);
+    $newAna = User::factory()->create(['username' => 'ana']);
 
-    $this->get('/u/ana')->assertNotFound();
+    $this->get('/u/ana')->assertOk()->assertSee($newAna->username);
 });

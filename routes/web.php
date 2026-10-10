@@ -19,6 +19,7 @@ use App\Http\Controllers\Public\ProfileController;
 use App\Http\Controllers\Public\PublishCopypastaController;
 use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SitemapController;
+use App\Http\Controllers\Public\StatsController;
 use App\Http\Controllers\Public\ThemeController;
 use Illuminate\Support\Facades\Route;
 
@@ -102,10 +103,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/publicar', [PublishCopypastaController::class, 'create'])->name('copypastas.create');
     Route::get('/carpetas', [FolderController::class, 'index'])->name('folders.index');
     Route::get('/carpetas/{folder}', [FolderController::class, 'show'])->name('folders.show');
+    Route::get('/estadisticas', [StatsController::class, 'show'])->name('stats.show');
 });
 
 // The Filament /app panel is gone (Fase 15); these URLs keep working for anyone with an old link or bookmark.
-Route::redirect('/app', '/mis-copypastas', 301);
+Route::redirect('/app', '/estadisticas', 301);
 Route::redirect('/app/copypastas', '/mis-copypastas', 301);
 Route::redirect('/app/copypastas/create', '/publicar', 301);
 Route::redirect('/app/copypastas/{record}/edit', '/c/{record}/editar', 301);

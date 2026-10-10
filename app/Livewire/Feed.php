@@ -261,7 +261,7 @@ class Feed extends Component
             ? $this->randomPage($size)
             : $this->feedQuery()->limit($size)->get();
 
-        return $page->load(['user:id,username,anonymized_at', 'tags:id,name,slug,color']);
+        return $page->load(['user:id,username,anonymized_at,banned_at', 'tags:id,name,slug,color']);
     }
 
     /**
