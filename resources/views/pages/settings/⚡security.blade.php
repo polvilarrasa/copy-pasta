@@ -12,7 +12,7 @@ use Laravel\Passkeys\Actions\DeletePasskey;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 
-new #[Title('Security settings')] class extends Component {
+new #[Title('Ajustes de seguridad')] class extends Component {
     use PasswordValidationRules;
 
     public string $current_password = '';
@@ -86,7 +86,7 @@ new #[Title('Security settings')] class extends Component {
 
         $this->reset('current_password', 'password', 'password_confirmation');
 
-        $this->dispatch('ui-toast', message: __('Password updated.'));
+        $this->dispatch('ui-toast', message: __('settings.security.update_password.updated'));
     }
 
     /**
@@ -176,21 +176,21 @@ new #[Title('Security settings')] class extends Component {
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <h2 class="sr-only">{{ __('Security settings') }}</h2>
+    <h2 class="sr-only">{{ __('settings.security.title') }}</h2>
 
-    <x-pages::settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
+    <x-pages::settings.layout :heading="__('settings.security.update_password.title')" :subheading="__('settings.security.update_password.description')">
         <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
             <x-ui.password-input
                 wire:model="current_password"
                 name="current_password"
-                :label="__('Current password')"
+                :label="__('settings.security.update_password.current_password')"
                 required
                 autocomplete="current-password"
             />
             <x-ui.password-input
                 wire:model="password"
                 name="password"
-                :label="__('New password')"
+                :label="__('settings.security.update_password.new_password')"
                 required
                 autocomplete="new-password"
                 passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
@@ -198,7 +198,7 @@ new #[Title('Security settings')] class extends Component {
             <x-ui.password-input
                 wire:model="password_confirmation"
                 name="password_confirmation"
-                :label="__('Confirm password')"
+                :label="__('settings.security.update_password.confirm_password')"
                 required
                 autocomplete="new-password"
                 passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
@@ -206,21 +206,21 @@ new #[Title('Security settings')] class extends Component {
 
             <div class="flex items-center gap-4">
                 <x-ui.button variant="primary" type="submit" data-test="update-password-button">
-                    {{ __('Save') }}
+                    {{ __('settings.security.update_password.save') }}
                 </x-ui.button>
             </div>
         </form>
 
         @if ($canManageTwoFactor)
             <section class="mt-12">
-                <h3 class="text-lg text-ink">{{ __('Two-factor authentication') }}</h3>
-                <p class="text-base text-muted">{{ __('Manage your two-factor authentication settings') }}</p>
+                <h3 class="text-lg text-ink">{{ __('settings.security.two_factor.title') }}</h3>
+                <p class="text-base text-muted">{{ __('settings.security.two_factor.description') }}</p>
 
                 <div class="flex flex-col w-full mx-auto space-y-6 text-sm" wire:cloak>
                     @if ($twoFactorEnabled)
                         <div class="space-y-4">
                             <p class="text-base text-muted">
-                                {{ __('You will be prompted for a secure, random pin during login, which you can retrieve from the TOTP-supported application on your phone.') }}
+                                {{ __('settings.security.two_factor.enabled_body') }}
                             </p>
 
                             <div class="flex justify-start">
@@ -228,7 +228,7 @@ new #[Title('Security settings')] class extends Component {
                                     variant="danger"
                                     wire:click="disable"
                                 >
-                                    {{ __('Disable 2FA') }}
+                                    {{ __('settings.security.two_factor.disable') }}
                                 </x-ui.button>
                             </div>
 
@@ -237,15 +237,16 @@ new #[Title('Security settings')] class extends Component {
                     @else
                         <div class="space-y-4">
                             <p class="text-base text-muted">
-                                {{ __('When you enable two-factor authentication, you will be prompted for a secure pin during login. This pin can be retrieved from a TOTP-supported application on your phone.') }}
+                                {{ __('settings.security.two_factor.disabled_body') }}
                             </p>
 
                             <x-ui.button
                                 variant="primary"
                                 wire:click="$dispatch('start-two-factor-setup')"
                                 x-on:click="$dispatch('open-modal', 'two-factor-setup-modal')"
+                                data-test="enable-2fa-button"
                             >
-                                {{ __('Enable 2FA') }}
+                                {{ __('settings.security.two_factor.enable') }}
                             </x-ui.button>
 
                             <livewire:pages::settings.two-factor-setup-modal :requires-confirmation="$requiresConfirmation" />
@@ -257,8 +258,8 @@ new #[Title('Security settings')] class extends Component {
 
         @if ($canManagePasskeys)
             <section class="mt-12">
-                <h3 class="text-lg text-ink">{{ __('Passkeys') }}</h3>
-                <p class="text-base text-muted">{{ __('Manage your passkeys for passwordless sign-in') }}</p>
+                <h3 class="text-lg text-ink">{{ __('settings.security.passkeys.title') }}</h3>
+                <p class="text-base text-muted">{{ __('settings.security.passkeys.description') }}</p>
 
                 <div class="mt-6 flex flex-col w-full mx-auto space-y-6 text-sm" wire:cloak>
                     <div class="rounded-lg border border-border overflow-hidden">
@@ -276,10 +277,10 @@ new #[Title('Security settings')] class extends Component {
                                             @endif
                                         </div>
                                         <p class="text-xs text-muted">
-                                            {{ __('Added :time', ['time' => $passkey['created_at_diff']]) }}
+                                            {{ __('settings.security.passkeys.added', ['time' => $passkey['created_at_diff']]) }}
                                             @if ($passkey['last_used_at_diff'])
                                                 <span class="opacity-50 mx-1">/</span>
-                                                {{ __('Last used :time', ['time' => $passkey['last_used_at_diff']]) }}
+                                                {{ __('settings.security.passkeys.last_used', ['time' => $passkey['last_used_at_diff']]) }}
                                             @endif
                                         </p>
                                     </div>
@@ -288,7 +289,7 @@ new #[Title('Security settings')] class extends Component {
                                 <button
                                     type="button"
                                     wire:click="confirmDelete({{ $passkey['id'] }})"
-                                    aria-label="{{ __('Remove passkey') }}"
+                                    aria-label="{{ __('settings.security.passkeys.remove') }}"
                                     class="flex size-11 items-center justify-center rounded-lg text-bad hover:bg-bad-bg focus-visible:outline-none focus-visible:shadow-focus"
                                 >
                                     <x-lucide-trash-2 class="size-5" aria-hidden="true" />
@@ -299,8 +300,8 @@ new #[Title('Security settings')] class extends Component {
                                 <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-surface-2">
                                     <x-lucide-key class="size-7 text-muted" aria-hidden="true" />
                                 </div>
-                                <p class="font-semibold text-ink">{{ __('No passkeys yet') }}</p>
-                                <p class="mt-1 text-base text-muted">{{ __('Add a passkey to sign in without a password') }}</p>
+                                <p class="font-semibold text-ink">{{ __('settings.security.passkeys.empty_title') }}</p>
+                                <p class="mt-1 text-base text-muted">{{ __('settings.security.passkeys.empty_body') }}</p>
                             </div>
                         @endforelse
                     </div>
@@ -313,16 +314,16 @@ new #[Title('Security settings')] class extends Component {
 
     <x-ui.modal
         id="delete-passkey-modal"
-        :title="__('Remove passkey')"
+        :title="__('settings.security.passkeys.remove')"
         wire-model="showDeleteModal"
         close="closeDeleteModal"
         class="max-w-md"
     >
-        {{ __('Are you sure you want to remove the passkey ":name"? You will no longer be able to use it to sign in.', ['name' => $deletingPasskeyName]) }}
+        {{ __('settings.security.passkeys.remove_confirm', ['name' => $deletingPasskeyName]) }}
 
         <x-slot:actions>
             <x-ui.button variant="danger" wire:click="deletePasskey">
-                {{ __('Remove passkey') }}
+                {{ __('settings.security.passkeys.remove') }}
             </x-ui.button>
         </x-slot:actions>
     </x-ui.modal>

@@ -3,25 +3,25 @@
 use Livewire\Component;
 use Livewire\Attributes\Title;
 
-new #[Title('Appearance settings')] class extends Component {
+new #[Title('Ajustes de apariencia')] class extends Component {
     //
 }; ?>
 
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <h2 class="sr-only">{{ __('Appearance settings') }}</h2>
+    <h2 class="sr-only">{{ __('settings.appearance.title') }}</h2>
 
-    <x-pages::settings.layout :heading="__('Appearance')" :subheading="__('Update the appearance settings for your account')">
+    <x-pages::settings.layout :heading="__('settings.appearance.title')" :subheading="__('settings.appearance.description')">
         @php
             $currentTheme = app(\App\Support\ThemePreference::class)->current();
         @endphp
 
-        <div class="inline-flex gap-1 rounded-full bg-surface-2 p-1" role="group" aria-label="{{ __('Appearance settings') }}">
+        <div class="inline-flex gap-1 rounded-full bg-surface-2 p-1" role="group" aria-label="{{ __('settings.appearance.title') }}">
             @foreach ([
-                ['value' => \App\Enums\Theme::Light, 'label' => __('Light'), 'icon' => 'sun'],
-                ['value' => \App\Enums\Theme::Dark, 'label' => __('Dark'), 'icon' => 'moon'],
-                ['value' => \App\Enums\Theme::System, 'label' => __('System'), 'icon' => 'monitor'],
+                ['value' => \App\Enums\Theme::Light, 'label' => __('settings.appearance.light'), 'icon' => 'sun'],
+                ['value' => \App\Enums\Theme::Dark, 'label' => __('settings.appearance.dark'), 'icon' => 'moon'],
+                ['value' => \App\Enums\Theme::System, 'label' => __('settings.appearance.system'), 'icon' => 'monitor'],
             ] as $option)
                 <form method="POST" action="{{ route('theme.update') }}">
                     @csrf

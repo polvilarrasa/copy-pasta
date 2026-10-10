@@ -1,6 +1,6 @@
-<x-layouts::auth :title="__('Forgot password')">
+<x-layouts::auth :title="__('auth.forgot_password.title')">
     <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Forgot password')" :description="__('Enter your email to receive a password reset link')" />
+        <x-auth-header :title="__('auth.forgot_password.title')" :description="__('auth.forgot_password.description')" />
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
@@ -11,7 +11,7 @@
             <!-- Email Address -->
             <x-ui.input
                 name="email"
-                :label="__('Email address')"
+                :label="__('auth.login.email')"
                 type="email"
                 required
                 autofocus
@@ -19,13 +19,13 @@
             />
 
             <x-ui.button variant="primary" type="submit" class="w-full" data-test="email-password-reset-link-button">
-                {{ __('Email password reset link') }}
+                {{ __('auth.forgot_password.submit') }}
             </x-ui.button>
         </form>
 
         <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-muted">
-            <span>{{ __('Or, return to') }}</span>
-            <a class="font-semibold text-ink" href="{{ route('login') }}" wire:navigate>{{ __('log in') }}</a>
+            <span>{{ __('auth.forgot_password.back_to') }}</span>
+            <a class="font-semibold text-ink" href="{{ route('login') }}" wire:navigate>{{ __('auth.forgot_password.log_in') }}</a>
         </div>
     </div>
 </x-layouts::auth>

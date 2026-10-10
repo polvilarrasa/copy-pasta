@@ -1,6 +1,6 @@
-<x-layouts::auth :title="__('Reset password')">
+<x-layouts::auth :title="__('auth.reset_password.title')">
     <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Reset password')" :description="__('Please enter your new password below')" />
+        <x-auth-header :title="__('auth.reset_password.title')" :description="__('auth.reset_password.description')" />
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
@@ -14,7 +14,7 @@
             <x-ui.input
                 name="email"
                 value="{{ request('email') }}"
-                :label="__('Email')"
+                :label="__('auth.reset_password.email')"
                 type="email"
                 required
                 autocomplete="email"
@@ -23,26 +23,26 @@
             <!-- Password -->
             <x-ui.password-input
                 name="password"
-                :label="__('Password')"
+                :label="__('auth.register.password')"
                 required
                 autocomplete="new-password"
-                :placeholder="__('Password')"
+                :placeholder="__('auth.register.password')"
                 passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
             />
 
             <!-- Confirm Password -->
             <x-ui.password-input
                 name="password_confirmation"
-                :label="__('Confirm password')"
+                :label="__('auth.register.password_confirmation')"
                 required
                 autocomplete="new-password"
-                :placeholder="__('Confirm password')"
+                :placeholder="__('auth.register.password_confirmation')"
                 passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
             />
 
             <div class="flex items-center justify-end">
                 <x-ui.button type="submit" variant="primary" class="w-full" data-test="reset-password-button">
-                    {{ __('Reset password') }}
+                    {{ __('auth.reset_password.submit') }}
                 </x-ui.button>
             </div>
         </form>

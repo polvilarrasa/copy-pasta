@@ -1,4 +1,4 @@
-{{-- Listens for the ui-toast window event: $dispatch('ui-toast', { message: '…' }). Separate from the layout's toast. --}}
+{{-- Listens for the ui-toast window event: $dispatch('ui-toast', { message: '…' }). The one toast element site-wide. --}}
 <div
     x-data="{ show: false, message: '', timeout: null }"
     x-on:ui-toast.window="message = $event.detail.message; show = true; clearTimeout(timeout); timeout = setTimeout(() => show = false, 2500)"

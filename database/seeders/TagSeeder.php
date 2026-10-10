@@ -22,7 +22,7 @@ class TagSeeder extends Seeder
     /**
      * @var array<int, string>
      */
-    private const COLORS = ['red', 'orange', 'amber', 'green', 'teal', 'blue', 'indigo', 'purple', 'pink', 'gray'];
+    private const COLORS = ['t1', 't2', 't3', 't4', 't5'];
 
     /**
      * Run the database seeds.

@@ -26,13 +26,13 @@ test('un moderador crea una etiqueta desde el formulario', function (): void {
         ->fillForm([
             'name' => 'Clásicos',
             'slug' => 'clasicos',
-            'color' => 'amber',
+            'color' => 't2',
             'is_active' => true,
         ])
         ->call('create')
         ->assertHasNoFormErrors();
 
-    $this->assertDatabaseHas('tags', ['slug' => 'clasicos', 'color' => 'amber']);
+    $this->assertDatabaseHas('tags', ['slug' => 'clasicos', 'color' => 't2']);
     $this->assertDatabaseHas('moderation_actions', ['actor_id' => $moderator->id, 'action' => 'tag_created']);
 });
 

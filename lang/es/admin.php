@@ -29,16 +29,11 @@ return [
     ],
 
     'tag_colors' => [
-        'red' => 'Rojo',
-        'orange' => 'Naranja',
-        'amber' => 'Ámbar',
-        'green' => 'Verde',
-        'teal' => 'Turquesa',
-        'blue' => 'Azul',
-        'indigo' => 'Índigo',
-        'purple' => 'Morado',
-        'pink' => 'Rosa',
-        'gray' => 'Gris',
+        't1' => 'Verde',
+        't2' => 'Naranja',
+        't3' => 'Violeta',
+        't4' => 'Amarillo',
+        't5' => 'Rosa',
     ],
 
     'fields' => [

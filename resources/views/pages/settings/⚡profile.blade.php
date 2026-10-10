@@ -9,7 +9,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Profile settings')] class extends Component {
+new #[Title('Ajustes de perfil')] class extends Component {
     use ProfileValidationRules;
 
     public string $username = '';
@@ -40,7 +40,7 @@ new #[Title('Profile settings')] class extends Component {
             $user->forceFill(['show_nsfw' => false])->save();
             $this->ageConfirmed = false;
 
-            $this->dispatch('ui-toast', message: __('Profile updated.'));
+            $this->dispatch('ui-toast', message: __('settings.profile.updated'));
 
             return;
         }
@@ -51,7 +51,7 @@ new #[Title('Profile settings')] class extends Component {
             $user->forceFill(['show_nsfw' => true, 'nsfw_confirmed_at' => now()])->save();
         }
 
-        $this->dispatch('ui-toast', message: __('Profile updated.'));
+        $this->dispatch('ui-toast', message: __('settings.profile.updated'));
     }
 
     /**
@@ -75,7 +75,7 @@ new #[Title('Profile settings')] class extends Component {
 
         $user->save();
 
-        $this->dispatch('ui-toast', message: __('Profile updated.'));
+        $this->dispatch('ui-toast', message: __('settings.profile.updated'));
     }
 
     /**
@@ -113,28 +113,28 @@ new #[Title('Profile settings')] class extends Component {
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <h2 class="sr-only">{{ __('Profile settings') }}</h2>
+    <h2 class="sr-only">{{ __('settings.profile.title') }}</h2>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+    <x-pages::settings.layout :heading="__('settings.profile.title')" :subheading="__('settings.profile.description')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <x-ui.input wire:model="username" name="username" :label="__('auth.username')" type="text" required autofocus autocomplete="username" />
 
             <div>
-                <x-ui.input wire:model="email" name="email" :label="__('Email')" type="email" required autocomplete="email" :disabled="is_impersonating()" />
+                <x-ui.input wire:model="email" name="email" :label="__('settings.profile.email')" type="email" required autocomplete="email" :disabled="is_impersonating()" />
 
                 @if ($this->hasUnverifiedEmail)
                     <div>
                         <p class="mt-4 text-base text-muted">
-                            {{ __('Your email address is unverified.') }}
+                            {{ __('settings.profile.unverified_email') }}
 
                             <button type="button" class="cursor-pointer text-sm font-semibold text-ink underline" wire:click.prevent="resendVerificationNotification">
-                                {{ __('Click here to re-send the verification email.') }}
+                                {{ __('settings.profile.resend_verification') }}
                             </button>
                         </p>
 
                         @if (session('status') === 'verification-link-sent')
                             <p class="mt-2 text-sm font-semibold text-ok">
-                                {{ __('A new verification link has been sent to your email address.') }}
+                                {{ __('settings.profile.verification_resent') }}
                             </p>
                         @endif
                     </div>
@@ -144,7 +144,7 @@ new #[Title('Profile settings')] class extends Component {
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
                     <x-ui.button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
-                        {{ __('Save') }}
+                        {{ __('settings.profile.save') }}
                     </x-ui.button>
                 </div>
 
@@ -159,7 +159,7 @@ new #[Title('Profile settings')] class extends Component {
 
             <div class="flex items-center justify-end">
                 <x-ui.button variant="primary" type="submit" data-test="update-nsfw-button">
-                    {{ __('Save') }}
+                    {{ __('settings.profile.save') }}
                 </x-ui.button>
             </div>
         </form>

@@ -1,13 +1,13 @@
 @php
     $links = [
-        'profile.edit' => __('Profile'),
-        'security.edit' => __('Security'),
-        'appearance.edit' => __('Appearance'),
+        'profile.edit' => __('settings.nav.profile'),
+        'security.edit' => __('settings.nav.security'),
+        'appearance.edit' => __('settings.nav.appearance'),
     ];
 @endphp
 
 <div class="flex items-start max-md:flex-col">
-    <nav class="me-10 w-full max-w-56 pb-4" aria-label="{{ __('Settings') }}">
+    <nav class="me-10 w-full max-w-56 pb-4" aria-label="{{ __('settings.nav.title') }}">
         <ul class="space-y-1">
             @foreach ($links as $route => $label)
                 <li>

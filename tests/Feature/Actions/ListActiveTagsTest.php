@@ -23,7 +23,7 @@ test('la lista se cachea y se invalida al guardar una etiqueta', function (): vo
     Tag::factory()->create(['name' => 'Beta', 'is_active' => true]);
     expect(app(ListActiveTags::class)->handle()->pluck('name')->all())->toBe(['Alfa']);
 
-    app(SaveTag::class)->handle(User::factory()->admin()->create(), ['name' => 'Gamma', 'color' => 'blue', 'is_active' => true]);
+    app(SaveTag::class)->handle(User::factory()->admin()->create(), ['name' => 'Gamma', 'color' => 't3', 'is_active' => true]);
 
     expect(app(ListActiveTags::class)->handle()->pluck('name')->all())->toBe(['Alfa', 'Beta', 'Gamma']);
     expect(Cache::has(ListActiveTags::CACHE_KEY))->toBeTrue();

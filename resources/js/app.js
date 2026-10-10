@@ -69,7 +69,7 @@ document.addEventListener('alpine:init', () => {
             if (response.ok) {
                 this.details = '';
                 this.close();
-                window.dispatchEvent(new CustomEvent('toast', { detail: messages.sent }));
+                window.dispatchEvent(new CustomEvent('ui-toast', { detail: { message: messages.sent } }));
                 return;
             }
 
@@ -153,7 +153,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         toast(message) {
-            window.dispatchEvent(new CustomEvent('toast', { detail: message }));
+            window.dispatchEvent(new CustomEvent('ui-toast', { detail: { message } }));
         },
     }));
 
@@ -293,7 +293,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         toast(message) {
-            window.dispatchEvent(new CustomEvent('toast', { detail: message }));
+            window.dispatchEvent(new CustomEvent('ui-toast', { detail: { message } }));
         },
     }));
 });

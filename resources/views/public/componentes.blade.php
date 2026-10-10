@@ -53,7 +53,7 @@
                     <h2 class="text-lg text-ink">{{ __('ui.showcase.overlays') }}</h2>
                     <div class="flex flex-wrap items-start gap-3">
                         <x-ui.button x-on:click="$dispatch('open-modal', modalId)">{{ __('ui.showcase.open_modal') }}</x-ui.button>
-                        <x-ui.dropdown :label="__('ui.showcase.menu')">
+                        <x-ui.dropdown :id="'demo-dropdown-'.$mode" :label="__('ui.showcase.menu')">
                             <x-slot:trigger>
                                 <x-ui.button variant="secondary">{{ __('ui.showcase.menu') }}</x-ui.button>
                             </x-slot:trigger>

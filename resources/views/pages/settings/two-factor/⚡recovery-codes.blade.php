@@ -60,10 +60,10 @@ new class extends Component {
     <div class="px-6 space-y-2">
         <div class="flex items-center gap-2">
             <x-lucide-lock class="size-4 text-ink" aria-hidden="true" />
-            <h3 class="text-lg text-ink">{{ __('2FA recovery codes') }}</h3>
+            <h3 class="text-lg text-ink">{{ __('settings.recovery_codes.title') }}</h3>
         </div>
         <p class="text-base text-muted">
-            {{ __('Recovery codes let you regain access if you lose your 2FA device. Store them in a secure password manager.') }}
+            {{ __('settings.recovery_codes.description') }}
         </p>
     </div>
 
@@ -77,7 +77,7 @@ new class extends Component {
                 aria-controls="recovery-codes-section"
             >
                 <x-lucide-eye class="size-5" aria-hidden="true" />
-                {{ __('View recovery codes') }}
+                {{ __('settings.recovery_codes.view') }}
             </x-ui.button>
 
             <x-ui.button
@@ -88,7 +88,7 @@ new class extends Component {
                 aria-controls="recovery-codes-section"
             >
                 <x-lucide-eye-off class="size-5" aria-hidden="true" />
-                {{ __('Hide recovery codes') }}
+                {{ __('settings.recovery_codes.hide') }}
             </x-ui.button>
 
             @if (filled($recoveryCodes))
@@ -98,7 +98,7 @@ new class extends Component {
                     wire:click="regenerateRecoveryCodes"
                 >
                     <x-lucide-refresh-cw class="size-5" aria-hidden="true" />
-                    {{ __('Regenerate codes') }}
+                    {{ __('settings.recovery_codes.regenerate') }}
                 </x-ui.button>
             @endif
         </div>
@@ -122,7 +122,7 @@ new class extends Component {
                     <div
                         class="grid gap-1 rounded-lg bg-surface-2 p-4 font-mono text-sm text-ink"
                         role="list"
-                        aria-label="{{ __('Recovery codes') }}"
+                        aria-label="{{ __('settings.recovery_codes.title') }}"
                     >
                         @foreach($recoveryCodes as $code)
                             <div
@@ -135,7 +135,7 @@ new class extends Component {
                         @endforeach
                     </div>
                     <p class="text-xs text-muted">
-                        {{ __('Each recovery code can be used once to access your account and will be removed after use. If you need more, click Regenerate codes above.') }}
+                        {{ __('settings.recovery_codes.helper') }}
                     </p>
                 @endif
             </div>

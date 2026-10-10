@@ -10,7 +10,7 @@ test('un miembro que entra desde la pantalla de login acaba en el feed', functio
     visit('/login')
         ->fill('email', $member->email)
         ->fill('password', 'password')
-        ->press('Log in')
+        ->press('@login-button')
         ->assertPathIs('/');
 });
 
@@ -28,6 +28,6 @@ test('un admin sin 2FA llega a confirmar la contraseña para configurarlo', func
     visit('/login')
         ->fill('email', $admin->email)
         ->fill('password', 'password')
-        ->press('Log in')
+        ->press('@login-button')
         ->assertPathIs(parse_url(route('password.confirm'), PHP_URL_PATH));
 });

@@ -9,14 +9,14 @@
 
     <x-ui.menu-item href="{{ route('profile.edit') }}" wire:navigate>
         <x-lucide-settings class="size-4" aria-hidden="true" />
-        {{ __('Settings') }}
+        {{ __('ui.settings') }}
     </x-ui.menu-item>
 
     <form method="POST" action="{{ route('logout') }}" class="w-full">
         @csrf
         <x-ui.menu-item type="submit" class="w-full" data-test="logout-button">
             <x-lucide-log-out class="size-4" aria-hidden="true" />
-            {{ __('Log out') }}
+            {{ __('ui.sign_out') }}
         </x-ui.menu-item>
     </form>
 </x-ui.user-menu>

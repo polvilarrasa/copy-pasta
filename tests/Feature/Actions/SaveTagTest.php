@@ -14,7 +14,7 @@ test('un moderador crea una etiqueta, genera el slug y registra la acción', fun
     $tag = app(SaveTag::class)->handle($moderator, [
         'name' => 'Frases épicas',
         'slug' => null,
-        'color' => 'blue',
+        'color' => 't3',
         'is_active' => true,
     ]);
 
@@ -35,7 +35,7 @@ test('editar una etiqueta registra tag_updated', function (): void {
     app(SaveTag::class)->handle($admin, [
         'name' => 'Nuevo',
         'slug' => 'nuevo',
-        'color' => 'green',
+        'color' => 't1',
         'is_active' => false,
     ], $tag);
 
@@ -55,7 +55,7 @@ test('un usuario normal no puede crear etiquetas', function (): void {
     app(SaveTag::class)->handle($user, [
         'name' => 'Prohibida',
         'slug' => null,
-        'color' => 'red',
+        'color' => 't4',
         'is_active' => true,
     ]);
 })->throws(AuthorizationException::class);

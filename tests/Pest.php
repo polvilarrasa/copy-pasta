@@ -3,6 +3,7 @@
 use App\Actions\PrepareEventPartition;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
 /*
@@ -52,20 +53,22 @@ function something()
 }
 
 /**
- * Signs in through the login form in the browser, answering the two-factor challenge when the account has it.
+ * Signs in through the login form in the browser, answering the two-factor challenge with a real TOTP code
+ * generated from the account's own secret when it has one enabled.
  */
 function signInInBrowser(User $user): void
 {
     $page = visit('/login')
         ->fill('email', $user->email)
         ->fill('password', 'password')
-        ->press('Log in');
+        ->press('@login-button');
 
     if ($user->hasEnabledTwoFactorAuthentication()) {
+        $otp = (new Google2FA)->getCurrentOtp(decrypt($user->two_factor_secret));
+
         $page->assertPathIs('/two-factor-challenge')
-            ->click(__('login using a recovery code'))
-            ->fill('recovery_code', 'recovery-code-1')
-            ->press(__('Continue'));
+            ->fill('code', $otp)
+            ->press(__('auth.two_factor_challenge.continue'));
     }
 
     $page->assertPathIsNot('/login')->assertPathIsNot('/two-factor-challenge');

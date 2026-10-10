@@ -1,6 +1,6 @@
-<x-layouts::auth :title="__('Register')">
+<x-layouts::auth :title="__('auth.register.title')">
     <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Create an account')" :description="__('Enter your details below to create your account')" />
+        <x-auth-header :title="__('auth.register.title')" :description="__('auth.register.description')" />
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
@@ -22,7 +22,7 @@
             <!-- Email Address -->
             <x-ui.input
                 name="email"
-                :label="__('Email address')"
+                :label="__('auth.login.email')"
                 :value="old('email')"
                 type="email"
                 required
@@ -33,33 +33,33 @@
             <!-- Password -->
             <x-ui.password-input
                 name="password"
-                :label="__('Password')"
+                :label="__('auth.register.password')"
                 required
                 autocomplete="new-password"
-                :placeholder="__('Password')"
+                :placeholder="__('auth.register.password')"
                 passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
             />
 
             <!-- Confirm Password -->
             <x-ui.password-input
                 name="password_confirmation"
-                :label="__('Confirm password')"
+                :label="__('auth.register.password_confirmation')"
                 required
                 autocomplete="new-password"
-                :placeholder="__('Confirm password')"
+                :placeholder="__('auth.register.password_confirmation')"
                 passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
             />
 
             <div class="flex items-center justify-end">
                 <x-ui.button type="submit" variant="primary" class="w-full" data-test="register-user-button">
-                    {{ __('Create account') }}
+                    {{ __('auth.register.submit') }}
                 </x-ui.button>
             </div>
         </form>
 
         <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-muted">
-            <span>{{ __('Already have an account?') }}</span>
-            <a class="font-semibold text-ink" href="{{ route('login') }}" wire:navigate>{{ __('Log in') }}</a>
+            <span>{{ __('auth.register.has_account') }}</span>
+            <a class="font-semibold text-ink" href="{{ route('login') }}" wire:navigate>{{ __('auth.register.log_in') }}</a>
         </div>
     </div>
 </x-layouts::auth>

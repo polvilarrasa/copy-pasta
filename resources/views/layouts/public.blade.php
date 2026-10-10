@@ -63,17 +63,7 @@
         <a href="{{ route('cookies') }}" class="underline hover:text-ink">{{ __('public.layout.cookies') }}</a>
     </footer>
 
-    <div
-        x-data="{ show: false, message: '' }"
-        x-on:toast.window="message = $event.detail; show = true; setTimeout(() => show = false, 2500)"
-        x-show="show"
-        x-cloak
-        role="status"
-        aria-live="polite"
-        class="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4"
-    >
-        <div class="rounded-xl bg-accent px-4 py-3 text-md font-semibold text-on-accent shadow-pop" x-text="message"></div>
-    </div>
+    <x-ui.toast />
 
     <div
         x-data="{ open: false, message: '' }"

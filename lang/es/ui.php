@@ -5,6 +5,8 @@ return [
     'menu' => 'Menú',
     'user_menu' => 'Menú de usuario',
     'loading' => 'Cargando…',
+    'settings' => 'Ajustes',
+    'sign_out' => 'Cerrar sesión',
     'otp' => [
         'label' => 'Código de 6 dígitos',
     ],
@@ -23,7 +25,7 @@ return [
         'vote_down' => 'Voto negativo',
         'copy' => 'Copiar',
         'save' => 'Guardar',
-        'saved' => 'Guardada',
+        'saved' => 'Guardado',
         'share' => 'Compartir',
         'more' => 'Más opciones',
     ],

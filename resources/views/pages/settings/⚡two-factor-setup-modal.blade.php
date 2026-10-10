@@ -136,24 +136,24 @@ new class extends Component {
     {
         if ($this->setupComplete) {
             return [
-                'title' => __('Two-factor authentication enabled'),
-                'description' => __('Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.'),
-                'buttonText' => __('Close'),
+                'title' => __('settings.two_factor_setup.enabled_title'),
+                'description' => __('settings.two_factor_setup.enabled_description'),
+                'buttonText' => __('settings.two_factor_setup.close'),
             ];
         }
 
         if ($this->showVerificationStep) {
             return [
-                'title' => __('Verify authentication code'),
-                'description' => __('Enter the 6-digit code from your authenticator app.'),
-                'buttonText' => __('Continue'),
+                'title' => __('settings.two_factor_setup.verify_title'),
+                'description' => __('settings.two_factor_setup.verify_description'),
+                'buttonText' => __('settings.two_factor_setup.continue'),
             ];
         }
 
         return [
-            'title' => __('Enable two-factor authentication'),
-            'description' => __('To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app.'),
-            'buttonText' => __('Continue'),
+            'title' => __('settings.two_factor_setup.enable_title'),
+            'description' => __('settings.two_factor_setup.enable_description'),
+            'buttonText' => __('settings.two_factor_setup.continue'),
         ];
     }
 }; ?>
@@ -194,7 +194,7 @@ new class extends Component {
                         class="flex-1"
                         wire:click="resetVerification"
                     >
-                        {{ __('Back') }}
+                        {{ __('settings.two_factor_setup.back') }}
                     </x-ui.button>
 
                     <x-ui.button
@@ -203,7 +203,7 @@ new class extends Component {
                         wire:click="confirmTwoFactor"
                         x-bind:disabled="$wire.code.length < 6"
                     >
-                        {{ __('Confirm') }}
+                        {{ __('settings.two_factor_setup.confirm') }}
                     </x-ui.button>
                 </div>
             </div>
@@ -246,7 +246,7 @@ new class extends Component {
                 <div class="relative flex items-center justify-center w-full">
                     <div class="absolute inset-0 w-full h-px top-1/2 bg-border"></div>
                     <span class="relative px-2 text-sm bg-surface text-muted">
-                        {{ __('or, enter the code manually') }}
+                        {{ __('settings.two_factor_setup.manual_key') }}
                     </span>
                 </div>
 
@@ -280,7 +280,7 @@ new class extends Component {
 
                             <button
                                 @click="copy()"
-                                aria-label="{{ __('Copy') }}"
+                                aria-label="{{ __('settings.two_factor_setup.copy') }}"
                                 class="px-3 transition-colors border-s cursor-pointer border-border"
                             >
                                 <x-lucide-copy x-show="!copied" class="size-5 text-muted" aria-hidden="true" />

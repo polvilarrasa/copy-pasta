@@ -66,7 +66,7 @@
     }"
 >
     <template x-if="!supported">
-        <p class="text-base text-muted">{{ __('Passkeys are not supported in this browser.') }}</p>
+        <p class="text-base text-muted">{{ __('settings.passkeys.not_supported') }}</p>
     </template>
 
     <template x-if="supported && !showForm">
@@ -76,7 +76,7 @@
                 x-on:click="showForm = true"
             >
                 <x-lucide-plus class="size-5" aria-hidden="true" />
-                {{ __('Add passkey') }}
+                {{ __('settings.passkeys.add') }}
             </x-ui.button>
         </div>
     </template>
@@ -85,14 +85,14 @@
         <div class="space-y-4 rounded-lg border border-border bg-surface-2 p-4">
             <x-ui.input
                 name="passkey_name"
-                label="{{ __('Passkey name') }}"
+                label="{{ __('settings.passkeys.name_label') }}"
                 x-model="name"
-                placeholder="{{ __('e.g., MacBook Pro, iPhone') }}"
+                placeholder="{{ __('settings.passkeys.name_placeholder') }}"
                 x-on:keydown.enter.prevent="register()"
                 x-ref="passkeyNameInput"
                 x-init="$nextTick(() => $refs.passkeyNameInput?.focus())"
             />
-            <p class="text-sm text-muted">{{ __('Give this passkey a name to help you identify it later.') }}</p>
+            <p class="text-sm text-muted">{{ __('settings.passkeys.name_helper') }}</p>
 
             <p x-show="error" x-text="error" x-cloak class="text-sm font-semibold text-bad"></p>
 
@@ -102,14 +102,14 @@
                     x-on:click="register()"
                     x-bind:disabled="loading || !name.trim()"
                 >
-                    <span x-show="!loading">{{ __('Register passkey') }}</span>
-                    <span x-show="loading" x-cloak>{{ __('Registering...') }}</span>
+                    <span x-show="!loading">{{ __('settings.passkeys.register') }}</span>
+                    <span x-show="loading" x-cloak>{{ __('settings.passkeys.registering') }}</span>
                 </x-ui.button>
                 <x-ui.button
                     variant="ghost"
                     x-on:click="cancel()"
                 >
-                    {{ __('Cancel') }}
+                    {{ __('settings.passkeys.cancel') }}
                 </x-ui.button>
             </div>
         </div>

@@ -13,6 +13,6 @@
     :my-vote="$copypasta->my_vote"
     :saved="(bool) $copypasta->is_favorite"
     :nsfw="$copypasta->is_nsfw"
-    :tags="$copypasta->tags->map(fn ($tag) => ['name' => $tag->name, 'color' => \App\Enums\TagColor::from($tag->color)->tone()])->all()"
+    :tags="$copypasta->tags->map(fn ($tag) => ['name' => $tag->name, 'color' => $tag->color])->all()"
     {{ $attributes }}
 />
