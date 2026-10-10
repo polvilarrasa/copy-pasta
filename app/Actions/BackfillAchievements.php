@@ -12,6 +12,19 @@ use Illuminate\Support\Facades\DB;
 
 class BackfillAchievements
 {
+    /**
+     * Distinct (visitor, link owner, day) of the retained detail views that came through a share code: the same rule
+     * the live count follows. Own visits and those to copy-pastas that are not visible now do not count.
+     */
+    private const ATTRIBUTED_VISITS = 'SELECT DISTINCT owners.id AS owner_id, '
+        ."COALESCE('u:' || events.user_id::text, events.visitor_hash) AS visitor_key, events.created_at::date AS day "
+        .'FROM events JOIN users owners ON owners.share_code = events.context ->> \'ref\' '
+        .'JOIN copypastas ON copypastas.id = events.copypasta_id '
+        ."WHERE events.type = '".EventType::DetailView->value."' "
+        .'AND copypastas.published_at IS NOT NULL AND copypastas.hidden_at IS NULL AND copypastas.deleted_at IS NULL '
+        .'AND events.user_id IS DISTINCT FROM owners.id AND owners.deleted_at IS NULL '
+        .'AND COALESCE(events.user_id::text, events.visitor_hash) IS NOT NULL';
+
     public function __construct(
         private GrantTrendingAchievements $trending,
         private AdjustAchievementProgress $adjustProgress,
@@ -32,6 +45,7 @@ class BackfillAchievements
             $this->classifyUpvotes();
             $this->backfillCounters();
             $this->backfillFlags();
+            $this->backfillDailyReferrals();
         });
 
         $granted = $this->grantAchievements();
@@ -76,6 +90,7 @@ class BackfillAchievements
             AchievementMetric::ReportsAccepted->value => 'SELECT reporter_id AS user_id, count(*) AS total FROM reports '
                 ."WHERE status = 'accepted' AND reporter_id IS NOT NULL GROUP BY reporter_id",
             AchievementMetric::VotesCast->value => 'SELECT user_id, count(*) AS total FROM votes GROUP BY user_id',
+            AchievementMetric::AttributedVisits->value => 'SELECT owner_id AS user_id, count(*) AS total FROM ('.self::ATTRIBUTED_VISITS.') visits GROUP BY owner_id',
         ];
 
         foreach ($queries as $metric => $select) {
@@ -87,6 +102,19 @@ class BackfillAchievements
                 [$metric],
             );
         }
+    }
+
+    /**
+     * The per-day visits the stats page reads, rebuilt from the same retained events as the metric.
+     */
+    private function backfillDailyReferrals(): void
+    {
+        DB::table('user_daily_referrals')->delete();
+
+        DB::insert(
+            'INSERT INTO user_daily_referrals (user_id, date, visits) '
+            .'SELECT owner_id, day, count(*) FROM ('.self::ATTRIBUTED_VISITS.') visits GROUP BY owner_id, day',
+        );
     }
 
     /**

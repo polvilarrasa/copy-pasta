@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -27,6 +28,7 @@ use Illuminate\Support\Str;
  * @property string $slug
  * @property string $body
  * @property string $body_hash
+ * @property string|null $og_image_path
  * @property bool $is_nsfw
  * @property int $upvotes_count
  * @property int $downvotes_count
@@ -171,6 +173,18 @@ class Copypasta extends Model
     public function isHidden(): bool
     {
         return $this->hidden_at !== null;
+    }
+
+    /**
+     * The absolute URL of the Open Graph image. Adult copy-pastas and those without an image yet use the generic one.
+     */
+    public function ogImageUrl(): string
+    {
+        if ($this->is_nsfw || $this->og_image_path === null) {
+            return asset('images/og-generic.png');
+        }
+
+        return url(Storage::disk((string) config('og.disk'))->url($this->og_image_path));
     }
 
     /**

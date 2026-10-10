@@ -45,7 +45,7 @@ test('incluye metaetiquetas Open Graph y Twitter con los primeros 200 caracteres
     $this->get(route('copypastas.show', [$copypasta, $copypasta->slug]))
         ->assertOk()
         ->assertSee('property="og:title" content="Titulo para compartir"', false)
-        ->assertSee('name="twitter:card" content="summary"', false)
+        ->assertSee('name="twitter:card" content="summary_large_image"', false)
         ->assertSee('property="og:description" content="'.str_repeat('a', 200).'"', false)
         ->assertDontSee('content="'.str_repeat('a', 201).'"', false);
 });

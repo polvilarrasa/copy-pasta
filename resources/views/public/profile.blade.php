@@ -31,6 +31,28 @@
 
         @include('partials.profile-achievements', ['achievements' => $achievements])
 
+        @if ($publicFolders->isNotEmpty())
+            <section class="flex flex-col gap-3" aria-labelledby="profile-folders-title" data-test="profile-public-folders">
+                <h2 id="profile-folders-title" class="text-xl font-extrabold text-ink">{{ __('public.public_folder.profile_title') }}</h2>
+
+                <ul class="grid gap-3 sm:grid-cols-2">
+                    @foreach ($publicFolders as $folder)
+                        <li>
+                            <a href="{{ route('folders.public', $folder->public_id) }}" class="flex h-full items-center gap-3 rounded-2xl border border-border bg-surface p-4 hover:border-vote focus-visible:outline-none focus-visible:shadow-focus">
+                                <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-t3-bg text-t3-fg" aria-hidden="true">
+                                    <x-lucide-folder class="size-6" />
+                                </span>
+                                <span class="min-w-0">
+                                    <span class="block truncate font-bold text-ink bidi-isolate">{{ $folder->name }}</span>
+                                    <span class="text-sm text-muted">{{ trans_choice('public.public_folder.profile_count', $folder->visible_count, ['count' => $folder->visible_count]) }}</span>
+                                </span>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
         <livewire:profile-copypastas :user="$profileUser" />
     </section>
 </x-layouts::public>

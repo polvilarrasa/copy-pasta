@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Concerns;
 
 use App\Models\User;
+use App\Support\UnicodeText;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 trait LimitsFolderChanges
 {
@@ -29,5 +31,19 @@ trait LimitsFolderChanges
             ),
             new ThrottleRequestsException(__('app.errors.folder_rate_limited')),
         );
+    }
+
+    /**
+     * A folder name goes through the same Unicode cleaning as a title. It must not end up empty: folders can be public.
+     *
+     * @throws ValidationException
+     */
+    protected function cleanName(string $name): string
+    {
+        $name = UnicodeText::cleanTitle($name);
+
+        throw_if($name === '', ValidationException::withMessages(['name' => __('app.folders.errors.name_empty')]));
+
+        return $name;
     }
 }

@@ -26,7 +26,7 @@ class CreateFolder
         Gate::forUser($user)->authorize('create', Folder::class);
         $this->ensureFolderChangeIsAllowed($user);
 
-        $name = trim($name);
+        $name = $this->cleanName($name);
 
         $folder = DB::transaction(function () use ($user, $name): Folder {
             User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();

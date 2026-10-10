@@ -16,6 +16,7 @@ return [
     'report_accepted' => 'Hemos aceptado tu reporte. Gracias por ayudar a mantener la comunidad.',
     'trusted_promotion' => 'Ya eres usuario de confianza: tus reportes pesan más.',
     'achievement_unlocked' => 'Has conseguido el logro «:name».',
+    'folder_made_private' => 'El equipo de moderación ha hecho privada tu carpeta «:name». Motivo: :reason',
 
     'types' => [
         'milestone' => [
@@ -37,6 +38,10 @@ return [
         'copypasta_hidden' => [
             'label' => 'Copy-pasta oculto',
             'description' => 'Cuando moderación oculta uno de tus copy-pastas.',
+        ],
+        'folder_made_private' => [
+            'label' => 'Carpeta hecha privada',
+            'description' => 'Cuando moderación hace privada una de tus carpetas públicas.',
         ],
         'copypasta_restored' => [
             'label' => 'Copy-pasta restaurado',

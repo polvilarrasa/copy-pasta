@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\ModerationActionType;
 use App\Enums\ReportReason;
+use App\Jobs\SyncCopypastaOgImageJob;
 use App\Models\Copypasta;
 use App\Models\ModerationAction;
 use App\Models\User;
@@ -50,6 +51,8 @@ class MarkCopypastaNsfw
         if ($isNsfw) {
             GetFeaturedCopypasta::forgetIfFeatured($copypasta);
         }
+
+        SyncCopypastaOgImageJob::dispatch($copypasta->getKey());
 
         return $copypasta;
     }

@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Enums\AchievementMetric;
 use App\Enums\EventType;
+use App\Jobs\SyncCopypastaOgImageJob;
 use App\Models\Copypasta;
 use App\Models\User;
 use App\Support\UnicodeText;
@@ -56,6 +57,8 @@ class PublishCopypasta
         });
 
         app(QueueAchievementEvaluation::class)->handle($author, [AchievementMetric::Published, AchievementMetric::NightPublications]);
+
+        SyncCopypastaOgImageJob::dispatch($copypasta->getKey());
 
         app(RecordEvent::class)->handle(EventType::Publish, $author, $copypasta);
 

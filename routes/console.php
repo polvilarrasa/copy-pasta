@@ -31,3 +31,6 @@ Schedule::command('featured:pick')->dailyAt('00:00')->timezone('Europe/Madrid')-
 Schedule::command('achievements:grant-trending')->hourly()->onOneServer();
 Schedule::command('achievements:grant-veterans')->daily()->onOneServer();
 Schedule::command('achievements:refresh-rarity')->daily()->onOneServer();
+
+// The marks that stop an attributed visit from counting twice in a day are useless after two days.
+Schedule::command('visits:prune')->daily()->onOneServer();

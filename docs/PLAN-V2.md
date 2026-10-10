@@ -488,14 +488,65 @@ Aceptación: con afinidades sembradas, al menos el 60 % de una página de Para t
 
 ### Fase 20 — Difusión
 
-- [ ] `share_code` en los enlaces del botón de compartir y atribución de visitas con las reglas antitrampa.
-- [ ] Logros de Difusión (Mensajero, Altavoz y Megáfono) sobre la infraestructura de la Fase 18: una métrica nueva de visitas atribuidas por `share_code`, que se mueve dentro de la transacción que cuenta la visita (`AdjustAchievementProgress`) y encola la evaluación; los casos en `Achievement` con sus claves de lang; su consulta en `BackfillAchievements`. Las visitas del propio usuario y de bots no cuentan, y solo cuenta un visitante distinto por día.
-- [ ] Prueba técnica de generación de imágenes Open Graph con emojis y acentos; elegir la opción más ligera que pase la prueba.
-- [ ] Imágenes Open Graph generadas al publicar o editar, genérica para NSFW.
-- [ ] "Compartir como imagen" en el navegador, con confirmación en NSFW.
-- [ ] Carpetas públicas con `/col/{public_id}`, descripción y presencia en el perfil; acción del staff para hacerlas privadas.
+- [x] `share_code` en los enlaces del botón de compartir y atribución de visitas con las reglas antitrampa.
+- [x] Logros de Difusión (Mensajero, Altavoz y Megáfono) sobre la infraestructura de la Fase 18: una métrica nueva de visitas atribuidas por `share_code`, que se mueve dentro de la transacción que cuenta la visita (`AdjustAchievementProgress`) y encola la evaluación; los casos en `Achievement` con sus claves de lang; su consulta en `BackfillAchievements`. Las visitas del propio usuario y de bots no cuentan, y solo cuenta un visitante distinto por día.
+- [x] Prueba técnica de generación de imágenes Open Graph con emojis y acentos; elegir la opción más ligera que pase la prueba.
+- [x] Imágenes Open Graph generadas al publicar o editar, genérica para NSFW.
+- [x] "Compartir como imagen" en el navegador, con confirmación en NSFW.
+- [x] Carpetas públicas con `/col/{public_id}`, descripción y presencia en el perfil; acción del staff para hacerlas privadas.
 
 Aceptación: la imagen de un copy-pasta con emojis se genera sin cuadros vacíos; una visita del propio usuario no cuenta; una carpeta pública nunca muestra copy-pastas ocultos a otros.
+
+**Desviaciones de la Fase 20:**
+
+*Prueba técnica y motor de las imágenes OG*
+
+- **Resultado de la prueba** (contenedores sobre `dunglas/frankenphp:1-php8.4-bookworm`, medidos en arm64; el texto de prueba llevaba acentos, ñ, emojis compuestos, árabe, hebreo, CJK y zalgo). Imagick con FreeType (+126 MB): sin emojis y con el RTL en orden visual invertido. Imagick con el coder `pango:` (misma imagen): emojis y RTL bien, pero el elipsis trabaja por párrafo y corta el texto. resvg + Twemoji (+14 MB): pasa, pero obliga a escribir ajuste de línea, bidi y colocación de emojis. `pango-view` + GD (+50 MB en la prueba): pasa con ajuste, bidi, shaping y fuentes de reserva de Pango. **Elegida: `pango-view` + GD**, por decisión del propietario.
+- **Tamaño de la imagen Docker.** La imagen `base` pasa de 612 MB a 681 MB (+69 MB): GD, `pango-view` con sus librerías (≈17 MB), Noto Color Emoji (11 MB) y Noto Sans CJK (19 MB). La imagen de producción completa (`docker build .`) mide 763 MB; el aumento sobre la anterior es el de la capa `base`, +69 MB.
+- **Una sola fuente CJK, en un solo peso.** `fonts-noto-cjk` instala todos los pesos y estilos; el Dockerfile borra todo menos `NotoSansCJK-Regular.ttc` en la misma capa. Ese fichero (19 MB) es el más ligero que cubre japonés, chino y coreano por apt: lleva las cuatro variantes regionales en una colección, y el OTF suelto de una sola región (16 MB) no está empaquetado. Sail y el Dockerfile de producción hacen lo mismo; CI instala solo `pango1.0-tools` y el emoji (sus tests comprueban el tamaño de la imagen, no los glifos).
+- **Seguridad del renderizador.** El texto llega a `pango-view` como texto plano (sin `--markup`) en un fichero temporal, con `Symfony\Process` y argumentos en array, y cada proceso tiene un límite de tiempo (`OG_RENDER_TIMEOUT`, 10 s). Si se supera, o si `pango-view` falla, se usa la genérica y se registra un `warning` con el id del copy-pasta; la imagen anterior se borra. El cuerpo se corta en 700 caracteres y 12 párrafos, y las imágenes intermedias de más de 12 millones de píxeles se rechazan.
+- **Neutralizado de Unicode: una excepción a la lista de la Fase 13.** Antes de dibujar se eliminan los controles de dirección (U+202A–U+202E, U+2066–U+2069) y los de ancho cero (U+200B, U+200C, U+FEFF), pero **no U+200D (unión de ancho cero)**: es lo que mantiene unido un emoji como 👨‍👩‍👧‍👦 o 👩🏽‍💻, y en una imagen no puede reordenar ni ocultar nada. `UnicodeText::forRendering()` lo documenta; los títulos siguen pasando por `cleanTitle()` (con U+200D) como antes.
+- **Plantilla.** 1200 × 630 en Medianoche: título (hasta 2 líneas, con elipsis), cuerpo y marca. No lleva autor, para que cambiar de username no deje imágenes con un nombre viejo. El cuerpo se dibuja párrafo a párrafo (el límite de líneas de Pango es por párrafo, y no se usa U+2028) y su final se desvanece con un degradado, que también contiene el zalgo.
+- **Nombre del fichero** `og/{ulid}-{hash16}.png`, con `sha256(TEMPLATE_VERSION, título, cuerpo)`. Subir `OgImageRenderer::TEMPLATE_VERSION` y ejecutar `app:generate-og-images` invalida las vistas previas cacheadas. Guardar sin cambiar el texto conserva el nombre.
+- **Disco.** `config/og.php` (`OG_IMAGES_DISK`, por defecto `public`). `og:image` sale con `url(Storage::disk(...)->url(...))`, siempre absoluta. La imagen genérica es el fichero `public/images/og-generic.png`, que se escribe con `app:generate-og-images --generic`. Las fuentes de la aplicación están en `resources/fonts/og` (Bricolage Grotesque, Noto Sans Arabic y Hebrew, OFL) y el renderizador escribe un fichero de fontconfig en `storage/framework/og`, así que no hace falta `fc-cache` y funciona igual en Sail, CI y producción.
+- **Cola.** `SyncCopypastaOgImageJob` (con `afterCommit`) llama a `SyncCopypastaOgImage`, que deja la imagen en el estado que toca: la genera para un copy-pasta visible que no es NSFW y borra el fichero de uno oculto, borrado, sin publicar o NSFW. Lo despachan `PublishCopypasta`, `UpdateCopypasta`, `ConcealCopypasta`, `RestoreCopypasta`, `DeleteCopypasta` y `MarkCopypastaNsfw`. `OG_IMAGES_ENABLED=false` en `phpunit.xml`: los tests que lo necesitan lo activan y sustituyen el renderizador; `OgImageRendererTest` ejecuta el `pango-view` real.
+- **`app:generate-og-images`** encola por lotes de 200 (`Bus::batch`) solo lo que falta o cambió de nombre; con `--force` encola todo y redibuja aunque el nombre no cambie. `--generic` escribe la imagen genérica (extra, no pedido).
+
+*Atribución y logros*
+
+- **Clave de deduplicación `(visitor_key, owner_id, visited_on)`** en `attributed_visits`: una visita cuenta una vez por visitante, día y dueño del enlace. `visitor_key` es `u:{id}` para un miembro y el hash diario de visitante para los demás. `visits:prune` (diario) borra las marcas de más de dos días.
+- **`RecordCopypastaVisit`** registra el `detail_view` y la atribución en una sola transacción (inserta la marca, suma `user_daily_referrals` y la métrica `attributed_visits`) y encola la evaluación. Los bots no llegan a la Action. No cuenta si el visitante es el dueño, si el copy-pasta está oculto o sin publicar, ni con un código desconocido. Un dueño baneado sigue sumando, como el resto de métricas. El `ref` queda en el `context` del `detail_view`, también cuando no cuenta.
+- **El botón de compartir devuelve el `share_code` del usuario con sesión, o `null` para anónimos** (que comparten el enlace sin `ref`). `CopypastaShareController` ignora el `ref` que envíe el cliente. El evento `share` lleva `method` (`link` o `image`).
+- **`user_daily_referrals`** (nueva) alimenta "Visitas traídas por tus enlaces" en `/estadisticas`, para no contar sobre `events`. Con la caché fría, `ComputeUserStats` pasa de 5 a 6 consultas (el máximo del plan); `ComputeUserStatsTest` espera 6.
+- **Logros.** `Messenger` (1, sin título), `Loudspeaker` (100, título «Altavoz») y `Megaphone` (1.000, título «Megáfono»), familia `Diffusion`. `BackfillAchievements` reconstruye la métrica y `user_daily_referrals` desde los `detail_view` retenidos con un `ref` que coincida con un `share_code`: visitantes y días distintos, sin las visitas propias ni las de copy-pastas no visibles. Repetirlo no cambia nada.
+- **`/c/{id}?ref=…` sin slug redirige conservando la query**, para no perder el `ref` ni el origen. Los enlaces con `?ref=` llevan `canonical` y `og:url` sin parámetros.
+- **Las visitas a carpetas públicas no se atribuyen** y el enlace de "Compartir carpeta" no lleva `ref`: la atribución del plan es sobre el `detail_view` de un copy-pasta.
+- **Tests existentes ajustados:** `ActionEventsTest` (el `ref` del evento `share` es el `share_code`, no un código por clic), `CopypastaShowTest` (`twitter:card` pasa a `summary_large_image`) y `ComputeUserStatsTest` (6 consultas).
+
+*Compartir como imagen*
+
+- **Panel desplegable en el detalle, no un modal.** 1080 × 1080 con la composición de la imagen OG (autor, título, primeras líneas, marca) y los tres estilos del diseño (Medianoche, Claro, Lima), sin librerías: `resources/js/share-image.js`. Web Share con fichero cuando `navigator.canShare({ files })` lo permite y descarga si no. Un copy-pasta NSFW muestra una confirmación y no dibuja nada hasta aceptarla. El evento `share` con `method=image` se registra al descargar o compartir, no al cancelar.
+- **Los emojis del lienzo salen de la fuente del sistema** de quien comparte, no de Noto Color Emoji como en la OG.
+
+*Carpetas públicas*
+
+- **`SetFolderVisibility`** autoriza con `view` (dueño), así que Favoritos también puede hacerse pública; toda carpeta empieza privada. El `public_id` (ULID) se da la primera vez y se conserva: volver a publicarla recupera la misma URL, y mientras es privada `/col/{id}` responde 404. `FolderVisibility` y `FolderShare` son tipos de evento nuevos.
+- **Carpeta de una cuenta baneada, anonimizada o borrada: 404.** La página pública muestra nombre, descripción, autor y las tarjetas normales (`PublicFolderCopypastas`, 20 más cada vez); los ocultos y borrados no aparecen, ni siquiera para el dueño y sin placeholder. NSFW: un miembro según `canSeeNsfw()` y un invitado solo con la cookie de confirmación de edad.
+- **"Compartir carpeta"** en una privada abre una confirmación y, al aceptar, la hace pública y comparte (`ShareFolder`); en una pública comparte el enlace.
+- **Limpieza Unicode del nombre y la descripción** como los títulos (`cleanName()` y `UnicodeText::cleanTitle()`). Se corrige un hueco: los 280 caracteres de la descripción solo se limitaban en el cliente, y una más larga provocaba un error de base de datos; ahora se valida en `UpdateFolderDescription`. Un nombre que queda vacío tras limpiarlo se rechaza.
+- **`/admin` → Carpetas públicas** (`PublicFolderResource`, solo staff) con "Hacer privada", con motivo obligatorio y registro `make_folder_private` en `moderation_actions` (con dueño, nombre y `public_id` en `meta`). Hacerla privada la **bloquea** (ver "Carpetas moderadas" abajo).
+- **Perfil:** sección "Carpetas públicas" con el número de copy-pastas visibles de cada una.
+
+*Carpetas moderadas (cierre del hueco, commit posterior)*
+
+- **Bloqueo.** `MakeFolderPrivate` guarda `folders.public_locked_at` y `public_lock_reason` (migración nueva). Mientras esté bloqueada, el dueño no puede hacerla pública: `FolderPolicy::publish` lo deniega y `SetFolderVisibility` lo comprueba en servidor sobre la fila releída con `lockForUpdate` (un modelo en memoria desfasado no lo salta), y `ShareFolder` también, porque pasa por ella. Volver a hacerla privada sigue permitido. En la vista de carpeta el interruptor sale deshabilitado con «El equipo de moderación ha hecho privada esta carpeta» y el motivo, y no hay botón de compartir.
+- **Desbloqueo** (`UnlockFolder`, `FolderPolicy::unlock`, solo staff y solo si está bloqueada): motivo obligatorio y registro `unlock_folder` en `moderation_actions` (con dueño, nombre y el motivo del bloqueo en `meta`). La carpeta sigue privada: solo permite al dueño volver a decidir. En `/admin` el listado incluye ahora las carpetas públicas y las bloqueadas, con columna de estado y motivo; "Hacer privada" solo aparece en las públicas y "Desbloquear" en las bloqueadas.
+- **Notificación obligatoria** `FolderMadePrivate` (`FolderMadePrivateNotification`, con candado como icono): guarda `folder_id`, el nombre que tenía y el motivo, y enlaza a la carpeta mientras exista. No se crea para cuentas baneadas, borradas o anonimizadas, como el resto. Desbloquear no notifica.
+
+*Entorno*
+
+- **Sail:** se publica el runtime 8.5 (`docker/8.5`, y `docker/pgsql` porque `compose.yaml` lo referencia) para añadir `pango1.0-tools`, `fonts-noto-color-emoji` y `fonts-noto-cjk`. Hay que ejecutar `vendor/bin/sail build` una vez.
+- **Test de navegador:** el cierre de sesión se hace pulsando por script el botón del menú de usuario (cerrado), porque no hace falta el menú para lo que se prueba.
 
 ### Fase 21 — Plantillas y variantes
 
@@ -536,6 +587,7 @@ Pendiente de la Fase 12.4. El despliegue a producción lo ejecuta el propietario
 - [ ] Ejecutar `app:recalculate-counters` en cada entorno con datos.
 - [ ] Ejecutar `app:backfill-achievements` una sola vez en producción, con la app en modo mantenimiento (`php artisan down`): el comando se niega a correr si la app no está en mantenimiento, salvo con `--force`. Sustituye los contadores con borrar e insertar, y con tráfico en vivo podría perder una actualización.
 - [ ] Checklist de humo y Lighthouse sobre el VPS.
+- [ ] El disco de las imágenes OG en producción (`OG_IMAGES_DISK`) tiene que ser público y con dominio propio (por ejemplo, un bucket compatible con S3 con `AWS_URL` apuntando a su dominio), porque `og:image` necesita una URL absoluta accesible desde fuera para WhatsApp, X y el resto de plataformas. Comprobar en el humo que la `og:image` de un copy-pasta publicado responde 200 sin sesión, y ejecutar `app:generate-og-images` una vez con los datos existentes.
 
 Aceptación: el despliegue de producción se ejecuta desde CI con los tests de navegador en verde; una restauración de backup probada; checklist de humo completo y Lighthouse con los umbrales de la Fase 22.
 
@@ -588,3 +640,4 @@ Ideas aparcadas, ordenadas por valor estimado.
 | Resúmenes por email | Las notificaciones dentro de la app cubren lo básico |
 | API pública de lectura | Para bots de Discord o Telegram, cuando haya demanda |
 | Multidioma (catalán, inglés) | Los textos ya están en ficheros de idioma |
+| Atribución de visitas a carpetas públicas | Hoy `?ref=` solo se atribuye en el detalle de un copy-pasta (evento `detail_view`). Contar las visitas a `/col/{public_id}` pide un evento nuevo de visita a carpeta, su métrica y su consulta en el backfill, y que el enlace de "Compartir carpeta" lleve `?ref=`. |

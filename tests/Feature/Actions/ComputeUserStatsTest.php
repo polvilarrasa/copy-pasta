@@ -148,7 +148,7 @@ test('el cómputo hace como máximo 6 consultas y se cachea 10 minutos', functio
     });
 
     app(ComputeUserStats::class)->handle($user);
-    expect($queries)->toHaveCount(5);
+    expect($queries)->toHaveCount(6);
 
     $queries = [];
     app(ComputeUserStats::class)->handle($user);

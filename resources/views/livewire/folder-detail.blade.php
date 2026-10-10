@@ -8,7 +8,10 @@
     ]['t3'];
 @endphp
 
-<section class="mx-auto w-full max-w-3xl space-y-5 px-4 py-6">
+<section
+    class="mx-auto w-full max-w-3xl space-y-5 px-4 py-6"
+    x-data="folderShare({ title: @js($folder->name), copiedMessage: @js(__('public.public_folder.link_copied')) })"
+>
     <a href="{{ route('folders.index') }}" class="text-sm font-bold text-muted hover:text-ink">
         &larr; {{ __('public.folder.back') }}
     </a>
@@ -28,6 +31,53 @@
             </p>
         </div>
     </div>
+
+    <div class="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4" data-test="folder-sharing">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+                <x-ui.switch
+                    name="is_public"
+                    :label="__('public.public_folder.public_label')"
+                    :checked="$isPublic"
+                    :disabled="$folder->isPublicLocked()"
+                    wire:change="togglePublic"
+                    data-test="folder-public-switch"
+                />
+                @if ($folder->isPublicLocked())
+                    <p class="text-sm font-semibold text-warn" data-test="folder-locked-notice">
+                        {{ __('public.public_folder.locked') }}.
+                        {{ __('public.public_folder.locked_reason', ['reason' => $folder->public_lock_reason]) }}
+                    </p>
+                @else
+                    <p class="text-sm text-muted">{{ __('public.public_folder.public_hint') }}</p>
+                @endif
+            </div>
+
+            @unless ($folder->isPublicLocked())
+                <x-ui.button variant="primary" x-on:click="share()" data-test="folder-share-button">
+                    <x-lucide-share-2 class="size-5" aria-hidden="true" />
+                    {{ __('public.public_folder.share') }}
+                </x-ui.button>
+            @endunless
+        </div>
+
+        @if ($isPublic && $folder->publicUrl())
+            <p class="text-sm text-muted">
+                {{ __('public.public_folder.public_url') }}:
+                <a href="{{ $folder->publicUrl() }}" class="font-semibold text-ink underline" data-test="folder-public-url">{{ $folder->publicUrl() }}</a>
+            </p>
+        @endif
+    </div>
+
+    <x-ui.modal id="share-folder-confirm" :title="__('public.public_folder.share_title')">
+        {{ __('public.public_folder.share_body', ['name' => $folder->name]) }}
+
+        <x-slot:actions>
+            <x-ui.button variant="primary" x-on:click="open = false; go()" data-test="folder-share-confirm">
+                {{ __('public.public_folder.share_confirm') }}
+            </x-ui.button>
+        </x-slot:actions>
+    </x-ui.modal>
 
     <div>
         <label for="folder-search" class="sr-only">{{ __('public.folder.search_label') }}</label>

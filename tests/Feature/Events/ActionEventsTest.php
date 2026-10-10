@@ -95,19 +95,30 @@ test('reportar registra un evento report con el motivo', function (): void {
         ->context->toEqualCanonicalizing(['source' => 'random', 'reason' => 'spam']);
 });
 
-test('el botón de compartir registra un evento share y devuelve la referencia del enlace', function (): void {
+test('compartir sin sesión registra un evento share sin referencia', function (): void {
     $copypasta = Copypasta::factory()->create();
 
-    $response = $this->postJson(route('copypastas.share', $copypasta), ['source' => 'top_week', 'position' => 5])
+    $response = $this->postJson(route('copypastas.share', $copypasta), ['source' => 'top_week', 'position' => 5, 'ref' => 'forjado1'])
         ->assertOk();
 
-    $event = TrackedEvent::query()->sole();
-
-    expect($event)
+    expect(TrackedEvent::query()->sole())
         ->type->toBe(EventType::Share)
         ->copypasta_id->toBe($copypasta->getKey())
-        ->context->toEqualCanonicalizing(['source' => 'top_week', 'position' => 5, 'ref' => $response->json('ref')])
-        ->and($response->json('ref'))->toMatch('/^[A-Za-z0-9]{8}$/');
+        ->context->toEqualCanonicalizing(['source' => 'top_week', 'position' => 5, 'method' => 'link'])
+        ->and($response->json('ref'))->toBeNull();
+});
+
+test('compartir con sesión devuelve y registra el share_code del usuario, no el que envía el cliente', function (): void {
+    $copypasta = Copypasta::factory()->create();
+    $member = User::factory()->create();
+
+    $response = $this->actingAs($member)
+        ->postJson(route('copypastas.share', $copypasta), ['ref' => 'forjado1', 'method' => 'image'])
+        ->assertOk();
+
+    expect($response->json('ref'))->toBe($member->share_code)
+        ->and(TrackedEvent::query()->sole()->context)
+        ->toEqualCanonicalizing(['ref' => $member->share_code, 'method' => 'image']);
 });
 
 test('abrir la página de detalle registra detail_view con el origen y la referencia de la query', function (): void {
