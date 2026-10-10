@@ -29,7 +29,7 @@ test('la banda aparece en la web mientras se actúa como un miembro', function (
     [, $member] = impersonating();
 
     $this->get('/')->assertSee('Estás actuando como @'.$member->username);
-    $this->get('/app')->assertSee('Estás actuando como @'.$member->username);
+    $this->get('/mis-copypastas')->assertSee('Estás actuando como @'.$member->username);
     $this->get('/settings/profile')->assertSee('Estás actuando como @'.$member->username);
 });
 

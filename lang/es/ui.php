@@ -7,6 +7,8 @@ return [
     'loading' => 'Cargando…',
     'settings' => 'Ajustes',
     'sign_out' => 'Cerrar sesión',
+    'mine' => 'Mis copy-pastas',
+    'folders' => 'Carpetas',
     'otp' => [
         'label' => 'Código de 6 dígitos',
     ],

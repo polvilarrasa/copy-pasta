@@ -339,13 +339,26 @@ Aceptación: ninguna vista usa colores o tamaños arbitrarios de Tailwind (compr
 
 ### Fase 15 — Área de usuario fuera de Filament
 
-- [ ] Páginas Livewire: mis copy-pastas, publicar con vista previa, editar, carpetas y detalle de carpeta.
-- [ ] Reutilizar las Actions y Policies existentes; ninguna lógica de negocio en los componentes.
-- [ ] Eliminar el panel `/app` y redirigir sus URLs con 301.
-- [ ] Menú de usuario con todas las secciones.
-- [ ] Tests de navegador: publicar, editar, crear carpeta, añadir y quitar de una carpeta, copiar desde una carpeta.
+- [x] Páginas Livewire: mis copy-pastas, publicar con vista previa, editar, carpetas y detalle de carpeta.
+- [x] Reutilizar las Actions y Policies existentes; ninguna lógica de negocio en los componentes.
+- [x] Eliminar el panel `/app` y redirigir sus URLs con 301.
+- [x] Menú de usuario con todas las secciones.
+- [x] Tests de navegador: publicar, editar, crear carpeta, añadir y quitar de una carpeta, copiar desde una carpeta.
 
 Aceptación: `/app` responde 301; todo lo que un usuario hacía en el MVP funciona sin Filament; el detalle de carpeta muestra tarjetas con copiar y quitar.
+
+**Desviaciones de la Fase 15:**
+
+- **Redirecciones reales, no las literales del encargo.** El slug real del recurso de carpetas de Filament era `carpetas` (`/app/carpetas`), no `/app/folders`: se redirige la URL que existía de verdad. Se añade además `/app/copypastas/create` → `/publicar`, el enlace que usaba la cabecera pública.
+- **`layouts/app/sidebar.blade.php` tenía más alcance del documentado.** Además de `/dashboard` (uso explícito), era el layout *implícito* de Livewire (`config('livewire.component_layout') = 'layouts::app'`) de las tres páginas de `/settings/*`, que no lo nombraban. Las tres ganan `#[Layout('layouts::public')]` explícito; `/dashboard` se queda (lo usa Fortify como `home` de varios flujos y tres tests existentes) pero pasa a `<x-layouts::public>`.
+- **Menú de usuario: se reutiliza `<x-desktop-user-menu>`**, extendido con "Mis copy-pastas" y "Carpetas", en vez de construir un cajón móvil nuevo — el dropdown ya es accesible por teclado a cualquier anchura y no había ya ninguna sidebar que reemplazar dentro del layout público.
+- **`description` en `folders` se adelanta de la Fase 20** (solo esa columna; `is_public`/`public_id` siguen en Fase 20). Nueva Action `UpdateFolderDescription`, autorizada por `FolderPolicy::view` (ownership) en vez de `update`, para que Favoritos admita descripción aunque no admita renombrar. Sin `EventType` nuevo.
+- **Reordenar carpetas con botones subir/bajar**, no arrastrar — no hay librería de drag-and-drop instalada y añadir una no estaba pedido.
+- **`/publicar` nunca da 403.** Un usuario sin verificar recibe 200 con un aviso para verificar el email (reutilizando `auth.verify_email.*`); la verificación se comprueba en la vista, no en el middleware de la ruta. El botón "Publicar" de la cabecera enlaza siempre a `/publicar` para cualquier autenticado, verificado o no.
+- **`CopypastaEditController` y `CopypastaForm::mount()` devuelven 404, no 403**, para un copy-pasta ajeno — mismo patrón que `CopypastaController::show` (oculta la existencia en vez de revelarla).
+- **Bug encontrado y corregido: `RemoveFromFolder` no admitía copy-pastas borrados.** Usaba `Copypasta::query()` (con el scope de borrado blando activo) para bloquear la fila; quitar de una carpeta un copy-pasta ya borrado lanzaba `ModelNotFoundException`. Pasa a `Copypasta::withTrashed()`.
+- **Contador de título (`/120`) resuelto en Alpine, sin depender del servidor** — cuenta `$event.target.value.length` directamente en el input. Es una mejora deliberada: ningún texto plano nuevo depende de un viaje de red para sentirse "en vivo".
+- **Tests de navegador intermitentes bajo carga, de nuevo (ya documentado en la Fase 14).** La prueba de `/publicar` (llenar título y cuerpo con `wire:model.live`, pulsar una etiqueta y publicar) fallá intermitentemente en este entorno: en una sesión de depuración con el navegador real (fuera de Pest) el valor se escribe y persiste correctamente tras confirmarlo por JavaScript, pero bajo el driver de Playwright de Pest 4 el valor del campo a veces vuelve al estado anterior del servidor sin que medie ninguna otra acción — reproducido también en un campo ya existente y no tocado en esta fase (`username` en `/settings/profile`), así que no es específico de este formulario. Pendiente de investigar si es una incompatibilidad de versiones entre Livewire 4.1, Alpine y el plugin de navegador de Pest 4, o un límite de recursos del contenedor. El resto de la suite de navegador (editar, carpetas, añadir/quitar, copiar, selector por teclado) pasa de forma estable.
 
 ### Fase 16 — Perfil público y estadísticas
 

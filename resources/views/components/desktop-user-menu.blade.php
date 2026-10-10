@@ -7,6 +7,16 @@
         </div>
     </div>
 
+    <x-ui.menu-item href="{{ route('copypastas.mine') }}" wire:navigate>
+        <x-lucide-file-text class="size-4" aria-hidden="true" />
+        {{ __('ui.mine') }}
+    </x-ui.menu-item>
+
+    <x-ui.menu-item href="{{ route('folders.index') }}" wire:navigate>
+        <x-lucide-folder class="size-4" aria-hidden="true" />
+        {{ __('ui.folders') }}
+    </x-ui.menu-item>
+
     <x-ui.menu-item href="{{ route('profile.edit') }}" wire:navigate>
         <x-lucide-settings class="size-4" aria-hidden="true" />
         {{ __('ui.settings') }}

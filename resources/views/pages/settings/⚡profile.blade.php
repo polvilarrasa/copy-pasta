@@ -6,10 +6,11 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Ajustes de perfil')] class extends Component {
+new #[Layout('layouts::public')] #[Title('Ajustes de perfil')] class extends Component {
     use ProfileValidationRules;
 
     public string $username = '';

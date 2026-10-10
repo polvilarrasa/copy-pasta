@@ -30,7 +30,9 @@ class RemoveFromFolder
         $this->ensureFolderChangeIsAllowed($user);
 
         $removed = DB::transaction(function () use ($folder, $copypasta): bool {
-            $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
+            // withTrashed(): a folder can hold a copy-pasta the author later deleted, shown as a placeholder, and
+            // removing that placeholder must still work.
+            $locked = Copypasta::withTrashed()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
 
             if (! $folder->copypastas()->whereKey($locked->getKey())->exists()) {
                 return false;

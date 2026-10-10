@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 @php
     $currentUser = auth()->user();
-    $publishUrl = match (true) {
-        $currentUser === null => route('login'),
-        $currentUser->hasVerifiedEmail() => url('/app/copypastas/create'),
-        default => route('verification.notice'),
-    };
+    $publishUrl = $currentUser === null ? route('login') : route('copypastas.create');
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @themeAttributes>
 <head>
@@ -40,11 +36,7 @@
                     @can('access-admin')
                         <a href="{{ url('/admin') }}" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.admin') }}</a>
                     @endcan
-                    <a href="{{ url('/app') }}" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.dashboard') }}</a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.logout') }}</button>
-                    </form>
+                    <x-desktop-user-menu />
                 @else
                     <a href="{{ route('login') }}" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.login') }}</a>
                     <a href="{{ route('register') }}" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.register') }}</a>

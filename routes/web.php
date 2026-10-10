@@ -5,14 +5,18 @@ use App\Http\Controllers\Impersonation\LeaveImpersonationController;
 use App\Http\Controllers\Public\AnonymousNoticeController;
 use App\Http\Controllers\Public\CopypastaController;
 use App\Http\Controllers\Public\CopypastaCopyController;
+use App\Http\Controllers\Public\CopypastaEditController;
 use App\Http\Controllers\Public\CopypastaFavoriteController;
 use App\Http\Controllers\Public\CopypastaFolderController;
 use App\Http\Controllers\Public\CopypastaReportController;
 use App\Http\Controllers\Public\CopypastaShareController;
 use App\Http\Controllers\Public\CopypastaVoteController;
 use App\Http\Controllers\Public\FeedController;
+use App\Http\Controllers\Public\FolderController;
+use App\Http\Controllers\Public\MyCopypastasController;
 use App\Http\Controllers\Public\NsfwConfirmationController;
 use App\Http\Controllers\Public\ProfileController;
+use App\Http\Controllers\Public\PublishCopypastaController;
 use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SitemapController;
 use App\Http\Controllers\Public\ThemeController;
@@ -25,11 +29,15 @@ Route::get('/top', [FeedController::class, 'topAll'])->name('feed.top-all');
 Route::get('/nuevos', [FeedController::class, 'newest'])->name('feed.newest');
 Route::get('/etiqueta/{slug}', [FeedController::class, 'tag'])->name('feed.tag');
 
-// Declared before the detail route: its optional slug would otherwise swallow GET /c/{id}/carpetas.
+// Declared before the detail route: its optional slug would otherwise swallow GET /c/{id}/carpetas and /c/{id}/editar.
 Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     Route::get('/c/{copypasta}/carpetas', [CopypastaFolderController::class, 'index'])->name('copypastas.folders.index');
     Route::put('/c/{copypasta}/carpetas', [CopypastaFolderController::class, 'update'])->name('copypastas.folders.sync');
     Route::post('/c/{copypasta}/carpetas', [CopypastaFolderController::class, 'store'])->name('copypastas.folders.store');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/c/{copypasta}/editar', [CopypastaEditController::class, 'edit'])->name('copypastas.edit');
 });
 
 Route::get('/c/{copypasta}/{slug?}', [CopypastaController::class, 'show'])->name('copypastas.show');
@@ -88,5 +96,20 @@ Route::middleware('signed')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
 });
+
+Route::middleware('auth')->group(function () {
+    Route::get('/mis-copypastas', [MyCopypastasController::class, 'index'])->name('copypastas.mine');
+    Route::get('/publicar', [PublishCopypastaController::class, 'create'])->name('copypastas.create');
+    Route::get('/carpetas', [FolderController::class, 'index'])->name('folders.index');
+    Route::get('/carpetas/{folder}', [FolderController::class, 'show'])->name('folders.show');
+});
+
+// The Filament /app panel is gone (Fase 15); these URLs keep working for anyone with an old link or bookmark.
+Route::redirect('/app', '/mis-copypastas', 301);
+Route::redirect('/app/copypastas', '/mis-copypastas', 301);
+Route::redirect('/app/copypastas/create', '/publicar', 301);
+Route::redirect('/app/copypastas/{record}/edit', '/c/{record}/editar', 301);
+Route::redirect('/app/carpetas', '/carpetas', 301);
+Route::redirect('/app/carpetas/{record}', '/carpetas/{record}', 301);
 
 require __DIR__.'/settings.php';

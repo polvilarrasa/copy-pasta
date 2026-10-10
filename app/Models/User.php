@@ -248,7 +248,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     }
 
     /**
-     * Staff can use the admin panel and verified members can use the user panel; banned users use neither.
+     * Only staff use the admin panel; banned users use neither it nor the public user area.
      */
     public function canAccessPanel(Panel $panel): bool
     {
@@ -258,7 +258,6 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
 
         return match ($panel->getId()) {
             'admin' => $this->isStaff(),
-            'app' => true,
             default => false,
         };
     }
