@@ -419,15 +419,39 @@ Aceptación: cada tipo se genera en su caso y solo una vez; un tipo desactivado 
 
 ### Fase 18 — Logros y títulos
 
-- [ ] Definiciones en código con el catálogo de la especificación y tabla `user_achievements`.
-- [ ] Evaluación en cola a partir de los eventos de dominio, idempotente, con las reglas antitrampa.
-- [ ] Notificación al desbloquear (Fase 17).
-- [ ] Sección de logros en el perfil: conseguidos, pendientes con progreso, secretos como "???" y porcentaje de usuarios.
-- [ ] Selector de título en ajustes y título visible junto al nombre.
-- [ ] Revocación por admin con motivo y log.
-- [ ] Comando `app:backfill-achievements`.
+- [x] Definiciones en código con el catálogo de la especificación y tabla `user_achievements`.
+- [x] Evaluación en cola a partir de los eventos de dominio, idempotente, con las reglas antitrampa.
+- [x] Notificación al desbloquear (Fase 17).
+- [x] Sección de logros en el perfil: conseguidos, pendientes con progreso, secretos como "???" y porcentaje de usuarios.
+- [x] Selector de título en ajustes y título visible junto al nombre.
+- [x] Revocación por admin con motivo y log.
+- [x] Comando `app:backfill-achievements`.
+
+Alcance: esta fase implementa la infraestructura completa y las familias Creador, Popularidad, Copias, Tendencia, Coleccionista, Guardián, Votante y Veterano, más los secretos Noctámbulo y Dinamita. Los logros de Difusión (Fase 20) y de Variantes y Plantillas (Fase 21) se añaden en esas fases sobre esta misma infraestructura.
 
 Aceptación: un test por familia, incluido uno que demuestre que los upvotes de cuentas de menos de 72 horas no cuentan; ejecutar el backfill dos veces no duplica nada; un logro revocado no muestra su título.
+
+**Desviaciones de la Fase 18:**
+
+- **Registro único.** `App\Enums\Achievement` (familia, métrica, umbral, clave de título, secreto, icono y tono), `AchievementMetric` (qué mide cada métrica y cómo se calcula su progreso) y `AchievementFamily`. Un logro nuevo sobre una métrica existente es un caso del enum más sus claves en `lang/es/achievements.php` (nombre, descripción y, si da título, el título). Una métrica nueva necesita además el código que la mueve y su consulta en `BackfillAchievements`. Un test comprueba que cada logro tiene sus textos y que la descripción nombra su umbral.
+- **El progreso se escribe dentro de la transacción de la acción; el job solo lee, concede y notifica.** El encargo decía que lo actualizaban los listeners que evalúan. Con deltas en la cola, un reintento los contaría dos veces y un rollback de la acción dejaría el progreso adelantado. `user_achievement_progress` (PK `user_id, metric`) lo mueve `AdjustAchievementProgress` con un upsert atómico (`add` para contadores, que nunca bajan de 0, y `raiseTo` para flags). Cada acción encola `EvaluateUserAchievementsJob` con las métricas tocadas, con `afterCommit`.
+- **Qué mide cada métrica.** `published`: copy-pastas del usuario que existen ahora y están visibles; suma al publicar o restaurar y resta al borrar u ocultar por moderación (un test cubre que borrar uno ya oculto no resta dos veces). `votes_cast` y `saved` son los votos y favoritos activos, no los acumulados: votar y retirar no suma. `saved` es solo Favoritos (decisión 10); cualquier vía que toque la carpeta por defecto lo mueve (`ToggleFavorite`, `AddToFolder`, `RemoveFromFolder`). `folders_created`, `copies_received`, `reports_accepted` y `night_publications` no bajan nunca; Favoritos no cuenta como carpeta creada. Los logros ya conseguidos no se pierden nunca.
+- **`votes.counts_for_achievements` (migración nueva).** Se fija al votar: cuenta si el votante tiene el email verificado y la cuenta tiene 72 horas o más. Retirar o cambiar un upvote solo resta si había contado. Anonimizar a un votante (`AnonymizeUser`) retira del autor los upvotes que contaban. Los votos antiguos los clasifica el backfill con `votes.updated_at` y las fechas de verificación y alta del votante.
+- **Nueva Action `DeleteCopypasta`.** El borrado propio estaba en `MyCopypastas::delete()` y `CopypastaForm::delete()` (`$copypasta->delete()` directo, sin Action). Ahora los dos llaman a la Action, que autoriza con la Policy y mueve el progreso. `ConcealCopypasta` y `RestoreCopypasta` ajustan `published` con `AdjustPublishedProgress`.
+- **Los "jobs" periódicos son comandos programados**, como el resto del proyecto: `achievements:grant-trending` (cada hora), `achievements:grant-veterans` y `achievements:refresh-rarity` (diarios).
+- **En tendencia:** el top 10 semanal usa el orden de la pestaña pública "top semana" (`FeedSort::TopWeek`), sin NSFW y solo con score mayor que 0 (sin esa condición, con pocos copy-pastas cualquiera entraría en el top). Es una bandera: una vez conseguido, no se pierde.
+- **Veterano** deriva su progreso de `users.created_at` (días de cuenta sobre 365); no se guarda. El job diario encola la evaluación de las cuentas activas con 365 días que aún no lo tienen.
+- **Noctámbulo:** de 3:00 a 3:59 en la zona de la app (Europe/Madrid), medido sobre `published_at`. La especificación decía "entre las 3:00 y las 4:00"; manda el encargo (a las 4:00 no se concede). Se cuenta al publicar, aunque luego se oculte o se borre.
+- **Dinamita:** se mira al registrar una copia ajena, una vez registrado el evento, solo si el contador del copy-pasta llega a 100, y cuenta los eventos `copy` de las últimas 24 horas con el índice `(copypasta_id, created_at)`, sin las copias del propio autor (es una métrica recibida). Es una bandera.
+- **Cuentas baneadas, borradas o anonimizadas:** no se evalúan (no se les concede nada), pero su progreso sigue sumando. `UnbanUser` (y `RestoreUser`, que se añade por coherencia) encola una evaluación completa para conceder lo que cumplieron mientras tanto.
+- **Notificación "logro desbloqueado".** `NotificationType::AchievementUnlocked` (configurable, no obligatoria), `AchievementUnlockedNotification`, claves en `lang/es/notifications.php` y una rama en `NotificationPresenter` que enlaza a `/u/{username}#logros` con el usuario de la sesión (la lista siempre es la propia, así no hay consulta extra). `GrantAchievement` solo notifica cuando `insertOrIgnore` inserta de verdad: dos evaluaciones simultáneas no notifican dos veces. Con el tipo desactivado el logro se concede igual.
+- **Backfill (`app:backfill-achievements`, `BackfillAchievements`).** Una consulta por métrica: los contadores se sustituyen por el valor recalculado (borrar e insertar en una transacción; conviene lanzarlo con poco tráfico) y las banderas solo suben, así que repetirlo no cambia nada. Concede con `INSERT … ON CONFLICT DO NOTHING` (un revocado no vuelve) solo a cuentas activas, sin notificar, y refresca la rareza. Las copias recibidas y Dinamita salen de los `events` que se conservan (13 meses) y En tendencia, del top actual: no se puede reconstruir más atrás. El desfase menor con el cálculo en vivo: `folders_created` cuenta las carpetas que existen (en vivo no baja al borrar).
+- **Rareza:** `RefreshAchievementRarity` guarda en caché (`achievements.rarity`, sin caducidad) el porcentaje de cuentas activas (sin banear, sin anonimizar, sin borrar) con cada logro, sin contar los revocados. Por debajo del 1 % se muestra "<1 %"; mientras el job no haya corrido no se muestra rareza.
+- **Perfil.** `ListProfileAchievements` lo prepara con dos consultas como máximo (filas de `user_achievements` y, solo para el dueño, el progreso). Los pendientes son el **siguiente escalón de cada familia** y no todos, para que la lista sea corta; los secretos sin conseguir salen como "???" sin descripción solo al dueño. Los demás ven los conseguidos y el número de secretos conseguidos, nunca cuáles son. Un logro revocado no aparece en ninguna lista. La fecha usa "12 de marzo de 2026".
+- **Título.** Página nueva `/settings/titulo` (`title.edit`) con un radio por título conseguido y "Ninguno"; guarda al cambiar y registra `title_change` (`ChangeUserTitle`, máximo 20 cambios por hora). `users.title_key` guarda la clave del título (la misma del logro). Se muestra en tarjetas, detalle y perfil sin consultas extra: `title_key` entra en los `select` de `user:` de `Feed`, `ProfileCopypastas`, `FolderDetail` y `CopypastaController`, y `User::titleLabel()` lo traduce con `lang`. Las cuentas baneadas o anonimizadas no muestran título, y anonimizar lo borra.
+- **Admin.** Pestaña "Logros" en la ficha de usuario (`AchievementsRelationManager`, solo admin; `UserPolicy::manageAchievements`) con revocar y restaurar, ambas con motivo obligatorio y registradas en `moderation_actions` (`revoke_achievement` y `restore_achievement`). Revocar quita el título si era el activo; restaurar no notifica ni vuelve a fijar el título.
+- **`ModerationNotificationsTest` se ajusta** para ignorar las notificaciones de logros: las acciones de moderación ahora también mueven progreso (p. ej. aceptar un reporte concede Vigilante) y esos tests hablan de moderación.
+- **Test de navegador:** tras pulsar "Publicar" hay que esperar a la navegación (`assertPathBeginsWith('/c/')`): el título del formulario aparece también en la vista previa y un `assertSee` pasaba antes de publicar.
 
 ### Fase 19 — Descubrimiento
 
@@ -442,6 +466,7 @@ Aceptación: con afinidades sembradas, al menos el 60 % de una página de Para t
 ### Fase 20 — Difusión
 
 - [ ] `share_code` en los enlaces del botón de compartir y atribución de visitas con las reglas antitrampa.
+- [ ] Logros de Difusión (Mensajero, Altavoz y Megáfono) sobre la infraestructura de la Fase 18: una métrica nueva de visitas atribuidas por `share_code`, que se mueve dentro de la transacción que cuenta la visita (`AdjustAchievementProgress`) y encola la evaluación; los casos en `Achievement` con sus claves de lang; su consulta en `BackfillAchievements`. Las visitas del propio usuario y de bots no cuentan, y solo cuenta un visitante distinto por día.
 - [ ] Prueba técnica de generación de imágenes Open Graph con emojis y acentos; elegir la opción más ligera que pase la prueba.
 - [ ] Imágenes Open Graph generadas al publicar o editar, genérica para NSFW.
 - [ ] "Compartir como imagen" en el navegador, con confirmación en NSFW.
@@ -454,7 +479,8 @@ Aceptación: la imagen de un copy-pasta con emojis se genera sin cuadros vacíos
 - [ ] Casilla "Es plantilla", validación de variables y distintivo en la tarjeta.
 - [ ] Modal de copia con un campo por variable y vista previa.
 - [ ] Crear variante desde el detalle, "Variante de…" y lista de variantes.
-- [ ] Notificación al autor del original (Fase 17) y logros de variantes y plantillas (Fase 18).
+- [ ] Notificación al autor del original (Fase 17).
+- [ ] Logros Remezclador, Discípulo aventajado y Plantillero sobre la infraestructura de la Fase 18: métricas nuevas (variantes publicadas, variantes que superan en score al original, copias de plantillas propias), los casos en `Achievement` con sus claves de lang y su consulta en `BackfillAchievements`.
 
 Aceptación: copiar una plantilla devuelve el texto con las variables sustituidas; una plantilla sin variables no se puede publicar; borrar el original deja la variante visible con "Contenido retirado".
 

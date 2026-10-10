@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
+use App\Enums\AchievementMetric;
 use App\Enums\EventType;
 use App\Models\Folder;
 use App\Models\User;
@@ -42,13 +43,19 @@ class CreateFolder
                 throw ValidationException::withMessages(['name' => __('app.folders.errors.name_taken')]);
             }
 
-            return Folder::query()->create([
+            $folder = Folder::query()->create([
                 'user_id' => $user->getKey(),
                 'name' => $name,
                 'is_default' => false,
                 'position' => (int) (clone $folders)->max('position') + 1,
             ]);
+
+            app(AdjustAchievementProgress::class)->add($user, AchievementMetric::FoldersCreated, 1);
+
+            return $folder;
         });
+
+        app(QueueAchievementEvaluation::class)->handle($user, [AchievementMetric::FoldersCreated]);
 
         app(RecordEvent::class)->handle(EventType::FolderCreate, $user);
 

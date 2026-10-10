@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Actions\DeleteCopypasta;
 use App\Actions\FindDuplicateCopypasta;
 use App\Actions\PublishCopypasta;
 use App\Actions\ResolveCopypastaTags;
@@ -87,9 +88,7 @@ class CopypastaForm extends Component
             return;
         }
 
-        Gate::authorize('delete', $this->copypasta);
-
-        $this->copypasta->delete();
+        app(DeleteCopypasta::class)->handle($this->user(), $this->copypasta);
 
         $this->redirectRoute('copypastas.mine', navigate: true);
     }

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Public;
 
+use App\Actions\ListProfileAchievements;
 use App\Actions\ResolveUsername;
 use App\Http\Controllers\Controller;
 use App\Models\Copypasta;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class ProfileController extends Controller
@@ -17,7 +19,7 @@ class ProfileController extends Controller
      * A name that changed within the last 90 days redirects to its current name. Anonymized accounts never resolve,
      * and a banned account's current name still 404s: both are hidden from the public profile.
      */
-    public function show(string $username, ResolveUsername $resolveUsername): RedirectResponse|Response
+    public function show(Request $request, string $username, ResolveUsername $resolveUsername, ListProfileAchievements $listAchievements): RedirectResponse|Response
     {
         $currentUsername = $resolveUsername->handle($username);
 
@@ -40,6 +42,7 @@ class ProfileController extends Controller
         return response()->view('public.profile', [
             'profileUser' => $profileUser,
             'counters' => $counters,
+            'achievements' => $listAchievements->handle($profileUser, $request->user()),
         ]);
     }
 }

@@ -53,7 +53,7 @@ class FolderDetail extends Component
             ->withTrashed()
             ->withViewerState($this->user())
             ->when(trim($this->search) !== '', fn ($query) => $query->where('title', 'ilike', '%'.$this->search.'%'))
-            ->with(['user:id,username,anonymized_at,banned_at', 'tags:id,name,slug,color'])
+            ->with(['user:id,username,title_key,anonymized_at,banned_at', 'tags:id,name,slug,color'])
             ->orderByDesc('copypasta_folder.created_at')
             ->get();
     }

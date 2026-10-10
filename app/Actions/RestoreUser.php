@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Gate;
 
 class RestoreUser
 {
+    public function __construct(private QueueAchievementEvaluation $queueEvaluation) {}
+
     /**
      * Brings back a soft-deleted member, who can sign in again with the same credentials.
      */
@@ -33,5 +35,7 @@ class RestoreUser
                 'subject_id' => $target->getKey(),
             ]);
         });
+
+        $this->queueEvaluation->handle($target);
     }
 }

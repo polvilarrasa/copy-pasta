@@ -23,3 +23,8 @@ Schedule::command('events:prune')->monthlyOn(1, '03:30')->onOneServer();
 
 // Notifications: read ones are kept 90 days, unread ones 180.
 Schedule::command('notifications:prune')->daily()->onOneServer();
+
+// Achievements: trending authors are checked hourly, veterans and the rarity percentages once a day.
+Schedule::command('achievements:grant-trending')->hourly()->onOneServer();
+Schedule::command('achievements:grant-veterans')->daily()->onOneServer();
+Schedule::command('achievements:refresh-rarity')->daily()->onOneServer();

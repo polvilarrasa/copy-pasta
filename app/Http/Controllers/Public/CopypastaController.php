@@ -38,7 +38,7 @@ class CopypastaController extends Controller
 
         $copypasta = Copypasta::query()
             ->withViewerState($viewer instanceof User ? $viewer : null)
-            ->with(['user:id,username,anonymized_at,banned_at', 'tags:id,name,slug,color', 'revisions'])
+            ->with(['user:id,username,title_key,anonymized_at,banned_at', 'tags:id,name,slug,color', 'revisions'])
             ->findOrFail($copypasta->getKey());
 
         $context = EventContext::fromRequest($request);

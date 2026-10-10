@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Actions\DeleteCopypasta;
 use App\Models\Copypasta;
 use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
@@ -49,9 +50,7 @@ class MyCopypastas extends Component
 
         $copypasta = Copypasta::query()->whereKey($this->confirmingDeleteId)->firstOrFail();
 
-        Gate::authorize('delete', $copypasta);
-
-        $copypasta->delete();
+        app(DeleteCopypasta::class)->handle($this->user(), $copypasta);
 
         $this->confirmingDeleteId = null;
     }

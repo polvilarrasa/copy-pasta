@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
 use Lab404\Impersonate\Models\Impersonate;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -35,6 +36,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property bool $show_nsfw
  * @property Theme $theme
  * @property array<string, bool>|null $notification_prefs
+ * @property string|null $title_key
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $banned_at
  * @property string|null $ban_reason
@@ -51,6 +53,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasName, MustVerifyEmail, PasskeyUser
 {
+    /** Age an account needs before its upvotes count towards its authors' achievements. */
+    public const ACHIEVEMENT_VOTE_MIN_AGE_HOURS = 72;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Impersonate, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
 
@@ -178,6 +183,45 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     public function displayName(): string
     {
         return $this->isAnonymized() ? __('public.card.deleted_user') : $this->username;
+    }
+
+    /**
+     * The title shown next to the name in cards, detail and profile. It comes from the user row and lang/es, so it
+     * costs no query. Banned and anonymized accounts show none.
+     */
+    public function titleLabel(): ?string
+    {
+        if ($this->title_key === null || $this->isBanned() || $this->isAnonymized()) {
+            return null;
+        }
+
+        return Lang::has('achievements.titles.'.$this->title_key) ? __('achievements.titles.'.$this->title_key) : null;
+    }
+
+    /**
+     * Banned, deleted and anonymized accounts are not evaluated for achievements.
+     */
+    public function canEarnAchievements(): bool
+    {
+        return $this->canBeNotified();
+    }
+
+    /**
+     * Upvotes only count towards achievements when they come from a verified account at least 72 hours old.
+     */
+    public function givesAchievementUpvotes(): bool
+    {
+        return $this->hasVerifiedEmail()
+            && $this->created_at !== null
+            && $this->created_at->lte(now()->subHours(self::ACHIEVEMENT_VOTE_MIN_AGE_HOURS));
+    }
+
+    /**
+     * @return HasMany<UserAchievement, $this>
+     */
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(UserAchievement::class);
     }
 
     /**

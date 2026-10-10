@@ -13,6 +13,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::livewire('settings/notifications', 'pages::settings.notifications')->name('notifications.edit');
 
+    Route::livewire('settings/titulo', 'pages::settings.title')->name('title.edit');
+
     Route::livewire('settings/security', 'pages::settings.security')
         ->middleware([
             'password.confirm',

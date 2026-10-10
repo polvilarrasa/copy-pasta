@@ -20,9 +20,17 @@ use App\Models\Report;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * The notification types of the member, leaving out achievements: moderation actions move achievement progress too, and
+ * these tests are about the moderation notifications.
+ */
 function notificationTypes(User $user): array
 {
-    return $user->notifications()->orderBy('created_at')->pluck('type')->all();
+    return $user->notifications()
+        ->where('type', '!=', NotificationType::AchievementUnlocked->value)
+        ->orderBy('created_at')
+        ->pluck('type')
+        ->all();
 }
 
 test('ocultar un copy-pasta notifica al autor además del email', function (): void {
@@ -107,7 +115,7 @@ test('un reportero con "reporte aceptado" desactivado no recibe la notificación
 
     app(HideCopypasta::class)->handle(User::factory()->moderator()->create(), $copypasta, 'Spam');
 
-    expect($reporter->notifications()->count())->toBe(0);
+    expect(notificationTypes($reporter))->toBe([]);
 });
 
 test('marcar como NSFW acepta solo los reportes de NSFW sin marcar, con su log y la notificación', function (): void {

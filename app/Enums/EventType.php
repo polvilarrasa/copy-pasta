@@ -26,4 +26,5 @@ enum EventType: string
     case UsernameChange = 'username_change';
     case ThemeChange = 'theme_change';
     case NotificationOpen = 'notification_open';
+    case TitleChange = 'title_change';
 }

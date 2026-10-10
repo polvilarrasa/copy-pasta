@@ -1,8 +1,11 @@
 <?php
 
 use App\Actions\PrepareEventPartition;
+use App\Enums\Achievement;
+use App\Enums\AchievementMetric;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
@@ -82,4 +85,23 @@ function prepareEventPartitions(): void
     foreach (range(-2, 1) as $offset) {
         app(PrepareEventPartition::class)->handle(now()->startOfMonth()->addMonths($offset));
     }
+}
+
+/**
+ * The running value of an achievement metric for the member, as stored in user_achievement_progress.
+ */
+function achievementProgress(User $user, AchievementMetric $metric): int
+{
+    return (int) DB::table('user_achievement_progress')
+        ->where('user_id', $user->getKey())
+        ->where('metric', $metric->value)
+        ->value('value');
+}
+
+/**
+ * Whether the member holds the achievement and it has not been revoked.
+ */
+function holdsAchievement(User $user, Achievement $achievement): bool
+{
+    return $user->achievements()->where('achievement_key', $achievement->value)->whereNull('revoked_at')->exists();
 }

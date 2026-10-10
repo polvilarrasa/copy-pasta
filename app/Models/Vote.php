@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $user_id
  * @property string $copypasta_id
  * @property int $value
+ * @property bool $counts_for_achievements
  */
 #[Fillable(['user_id', 'copypasta_id', 'value'])]
 class Vote extends Model
@@ -29,6 +30,7 @@ class Vote extends Model
     {
         return [
             'value' => 'integer',
+            'counts_for_achievements' => 'boolean',
         ];
     }
 

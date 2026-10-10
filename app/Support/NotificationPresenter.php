@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Enums\Achievement;
 use App\Enums\MilestoneMetric;
 use App\Enums\NotificationType;
 use App\Models\Copypasta;
@@ -43,6 +44,11 @@ class NotificationPresenter
         }
 
         $data = $notification->data;
+
+        if ($type === NotificationType::AchievementUnlocked && Achievement::tryFrom((string) ($data['achievement'] ?? '')) === null) {
+            return null;
+        }
+
         $copypasta = $copypastas->get((string) ($data['copypasta_id'] ?? ''));
 
         [$text, $url] = match ($type) {
@@ -51,6 +57,7 @@ class NotificationPresenter
             NotificationType::CopypastaRestored => $this->ownContent('copypasta_restored', $copypasta, visibleOnly: true),
             NotificationType::ReportAccepted => [__('notifications.report_accepted'), null],
             NotificationType::TrustedPromotion => [__('notifications.trusted_promotion'), route('stats.show')],
+            NotificationType::AchievementUnlocked => $this->achievementUnlocked($data),
         };
 
         return new NotificationItem(
@@ -95,6 +102,24 @@ class NotificationPresenter
     }
 
     /**
+     * Links to the achievements section of the member's own profile. The notifications listed are always the
+     * signed-in member's, so the username comes from the session and costs no query.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{0: string, 1: string|null}
+     */
+    private function achievementUnlocked(array $data): array
+    {
+        $achievement = Achievement::from((string) $data['achievement']);
+        $username = auth()->user()?->username;
+
+        return [
+            __('notifications.achievement_unlocked', ['name' => $achievement->name()]),
+            $username === null ? null : route('profile.show', $username).'#logros',
+        ];
+    }
+
+    /**
      * Notifications about the member's own copy-pasta. The author can open it while it is hidden, so only deletion
      * removes the destination of a "hidden" notification; a "restored" one needs it to be visible again.
      *
@@ -132,6 +157,10 @@ class NotificationPresenter
      */
     private function icon(NotificationType $type, array $data): string
     {
+        if ($type === NotificationType::AchievementUnlocked) {
+            return Achievement::tryFrom((string) ($data['achievement'] ?? ''))?->icon() ?? $type->icon();
+        }
+
         if ($type !== NotificationType::Milestone) {
             return $type->icon();
         }

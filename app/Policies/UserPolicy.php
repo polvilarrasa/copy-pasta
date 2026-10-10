@@ -53,6 +53,14 @@ class UserPolicy
         return $this->ban($user, $target);
     }
 
+    /**
+     * Admins revoke and restore the achievements of any account that still has an identity.
+     */
+    public function manageAchievements(User $user, User $target): bool
+    {
+        return $user->isAdmin() && ! $target->isAnonymized();
+    }
+
     public function impersonate(User $user, User $target): bool
     {
         return $user->isAdmin()

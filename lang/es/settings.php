@@ -11,6 +11,7 @@ return [
         'security' => 'Seguridad',
         'appearance' => 'Apariencia',
         'notifications' => 'Notificaciones',
+        'title' => 'Título',
     ],
 
     'profile' => [

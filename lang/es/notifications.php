@@ -15,6 +15,7 @@ return [
     'copypasta_restored' => 'Tu copy-pasta «:title» vuelve a estar visible.',
     'report_accepted' => 'Hemos aceptado tu reporte. Gracias por ayudar a mantener la comunidad.',
     'trusted_promotion' => 'Ya eres usuario de confianza: tus reportes pesan más.',
+    'achievement_unlocked' => 'Has conseguido el logro «:name».',
 
     'types' => [
         'milestone' => [
@@ -28,6 +29,10 @@ return [
         'trusted_promotion' => [
             'label' => 'Ascenso a usuario de confianza',
             'description' => 'Cuando pasas a ser usuario de confianza.',
+        ],
+        'achievement_unlocked' => [
+            'label' => 'Logros desbloqueados',
+            'description' => 'Cuando consigues un logro nuevo.',
         ],
         'copypasta_hidden' => [
             'label' => 'Copy-pasta oculto',

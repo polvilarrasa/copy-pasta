@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\AchievementMetric;
 use App\Enums\EventType;
 use App\Enums\MilestoneMetric;
 use App\Models\Copypasta;
@@ -18,6 +19,8 @@ class CastVote
     public function __construct(
         private RecordEvent $recordEvent,
         private DetectCopypastaMilestones $detectMilestones,
+        private AdjustAchievementProgress $adjustProgress,
+        private QueueAchievementEvaluation $queueEvaluation,
     ) {}
 
     /**
@@ -46,17 +49,23 @@ class CastVote
             $previous = $existing?->value;
             $next = $previous === $value ? null : $value;
 
+            $countedBefore = $existing !== null && $existing->counts_for_achievements;
+            $countsNow = $next === 1 && $voter->givesAchievementUpvotes();
+
             if ($existing !== null && $next === null) {
                 $existing->delete();
             } elseif ($existing !== null) {
-                $existing->update(['value' => $next]);
+                $existing->forceFill(['value' => $next, 'counts_for_achievements' => $countsNow])->save();
             } elseif ($next !== null) {
-                Vote::query()->create([
+                (new Vote)->forceFill([
                     'user_id' => $voter->getKey(),
                     'copypasta_id' => $locked->getKey(),
                     'value' => $next,
-                ]);
+                    'counts_for_achievements' => $countsNow,
+                ])->save();
             }
+
+            $this->recordAchievementProgress($voter, $locked->user_id, $existing !== null, $next, $countedBefore, $countsNow);
 
             $locked->forceFill([
                 'upvotes_count' => $locked->upvotes_count + $this->upvoteDelta($previous, $next),
@@ -67,6 +76,9 @@ class CastVote
 
             return $next;
         });
+
+        $this->queueEvaluation->handle($voter, [AchievementMetric::VotesCast]);
+        $this->queueEvaluation->handle($copypasta->user_id, [AchievementMetric::UpvotesReceived]);
 
         if ($result === 1) {
             DB::afterCommit(fn () => $this->detectMilestones->handle($copypasta, MilestoneMetric::Upvotes));
@@ -79,6 +91,16 @@ class CastVote
         }, $voter, $copypasta, [...$context, 'previous' => $previous, 'next' => $result]);
 
         return $result;
+    }
+
+    /**
+     * The voter's active votes move when a vote is created or withdrawn; the author's received upvotes move by the
+     * upvotes that counted: one that did not count when cast (young or unverified voter) is never taken back.
+     */
+    private function recordAchievementProgress(User $voter, int $authorId, bool $hadVote, ?int $next, bool $countedBefore, bool $countsNow): void
+    {
+        $this->adjustProgress->add($voter, AchievementMetric::VotesCast, ($next !== null ? 1 : 0) - ($hadVote ? 1 : 0));
+        $this->adjustProgress->add($authorId, AchievementMetric::UpvotesReceived, ($countsNow ? 1 : 0) - ($countedBefore ? 1 : 0));
     }
 
     private function upvoteDelta(?int $previous, ?int $next): int

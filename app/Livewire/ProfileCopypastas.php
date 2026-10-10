@@ -61,7 +61,7 @@ class ProfileCopypastas extends Component
             ->visible()
             ->sort($this->tab === 'top' ? FeedSort::TopAll : FeedSort::Newest)
             ->withViewerState($this->viewer())
-            ->with(['user:id,username,anonymized_at,banned_at', 'tags:id,name,slug,color'])
+            ->with(['user:id,username,title_key,anonymized_at,banned_at', 'tags:id,name,slug,color'])
             ->limit($size)
             ->get();
     }

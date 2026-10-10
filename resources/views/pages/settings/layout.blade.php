@@ -4,6 +4,7 @@
         'security.edit' => __('settings.nav.security'),
         'appearance.edit' => __('settings.nav.appearance'),
         'notifications.edit' => __('settings.nav.notifications'),
+        'title.edit' => __('settings.nav.title'),
     ];
 @endphp
 

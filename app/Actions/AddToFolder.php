@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
+use App\Enums\AchievementMetric;
 use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
@@ -16,7 +17,11 @@ class AddToFolder
 {
     use LimitsFolderChanges;
 
-    public function __construct(private RecordEvent $recordEvent) {}
+    public function __construct(
+        private RecordEvent $recordEvent,
+        private AdjustAchievementProgress $adjustProgress,
+        private QueueAchievementEvaluation $queueEvaluation,
+    ) {}
 
     /**
      * Adds the copy-pasta to the folder. Entries in the default folder are favorites, so they also move the counter.
@@ -29,7 +34,7 @@ class AddToFolder
         Gate::forUser($user)->authorize('addCopypasta', [$folder, $copypasta]);
         $this->ensureFolderChangeIsAllowed($user);
 
-        $added = DB::transaction(function () use ($folder, $copypasta): bool {
+        $added = DB::transaction(function () use ($user, $folder, $copypasta): bool {
             $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
 
             if ($folder->copypastas()->whereKey($locked->getKey())->exists()) {
@@ -40,12 +45,18 @@ class AddToFolder
 
             if ($folder->is_default) {
                 $locked->forceFill(['favorites_count' => $locked->favorites_count + 1])->save();
+
+                $this->adjustProgress->add($user, AchievementMetric::Saved, 1);
             }
 
             return true;
         });
 
         if ($added) {
+            if ($folder->is_default) {
+                $this->queueEvaluation->handle($user, [AchievementMetric::Saved]);
+            }
+
             $this->recordEvent->handle(
                 $folder->is_default ? EventType::FavoriteAdd : EventType::FolderAdd,
                 $user,

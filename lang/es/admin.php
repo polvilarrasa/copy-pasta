@@ -177,6 +177,8 @@ return [
         'email_verified' => 'Email verificado a mano',
         'email_unverified' => 'Verificación quitada',
         'verification_resent' => 'Verificación reenviada',
+        'revoke_achievement' => 'Logro revocado',
+        'restore_achievement' => 'Logro restaurado',
     ],
 
     'back_to_web' => 'Volver a la web',

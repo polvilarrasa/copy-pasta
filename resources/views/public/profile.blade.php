@@ -5,6 +5,9 @@
 
             <div class="flex min-w-56 flex-1 flex-col gap-1">
                 <h1 class="text-3xl font-extrabold tracking-tight text-ink bidi-isolate">{{ $profileUser->username }}</h1>
+                @if ($profileUser->titleLabel())
+                    <span data-test="profile-title" class="flex h-8 w-fit items-center rounded-full bg-surface-2 px-3.5 text-sm font-bold text-ach bidi-isolate">{{ $profileUser->titleLabel() }}</span>
+                @endif
                 <span class="text-sm font-semibold text-muted">
                     {{ __('public.profile.member_since', ['month' => $profileUser->created_at->translatedFormat('F'), 'year' => $profileUser->created_at->year]) }}
                 </span>
@@ -25,6 +28,8 @@
                 </div>
             </div>
         </div>
+
+        @include('partials.profile-achievements', ['achievements' => $achievements])
 
         <livewire:profile-copypastas :user="$profileUser" />
     </section>

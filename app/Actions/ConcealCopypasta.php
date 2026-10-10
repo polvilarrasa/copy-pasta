@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\Mail;
 
 class ConcealCopypasta
 {
-    public function __construct(private AcceptCopypastaReports $acceptReports) {}
+    public function __construct(
+        private AcceptCopypastaReports $acceptReports,
+        private AdjustPublishedProgress $adjustPublishedProgress,
+    ) {}
 
     /**
      * Hides the copy-pasta and logs who did it. Automatic hides pass $acceptsPendingReports = false so the
@@ -26,11 +29,15 @@ class ConcealCopypasta
     public function handle(?User $actor, Copypasta $copypasta, string $reason, bool $acceptsPendingReports): Copypasta
     {
         $copypasta = DB::transaction(function () use ($actor, $copypasta, $reason, $acceptsPendingReports): Copypasta {
+            $countedBefore = AdjustPublishedProgress::counts($copypasta);
+
             $copypasta->forceFill([
                 'hidden_at' => now(),
                 'hidden_by_id' => $actor?->getKey(),
                 'hidden_reason' => $reason,
             ])->save();
+
+            $this->adjustPublishedProgress->handle($copypasta, $countedBefore);
 
             if ($acceptsPendingReports) {
                 $this->acceptReports->handle($actor, $copypasta);

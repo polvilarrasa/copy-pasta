@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Notifications\AchievementUnlockedNotification;
 use App\Notifications\AppNotification;
 use App\Notifications\CopypastaHiddenNotification;
 use App\Notifications\CopypastaMilestoneNotification;
@@ -23,6 +24,7 @@ enum NotificationType: string
     case CopypastaRestored = 'copypasta_restored';
     case ReportAccepted = 'report_accepted';
     case TrustedPromotion = 'trusted_promotion';
+    case AchievementUnlocked = 'achievement_unlocked';
 
     /**
      * @return class-string<AppNotification>
@@ -35,6 +37,7 @@ enum NotificationType: string
             self::CopypastaRestored => CopypastaRestoredNotification::class,
             self::ReportAccepted => ReportAcceptedNotification::class,
             self::TrustedPromotion => TrustedPromotionNotification::class,
+            self::AchievementUnlocked => AchievementUnlockedNotification::class,
         };
     }
 
@@ -57,6 +60,7 @@ enum NotificationType: string
             self::CopypastaRestored => 'rotate-ccw',
             self::ReportAccepted => 'shield-check',
             self::TrustedPromotion => 'badge-check',
+            self::AchievementUnlocked => 'trophy',
         };
     }
 
@@ -71,6 +75,7 @@ enum NotificationType: string
             self::CopypastaRestored => 't1',
             self::ReportAccepted => 't3',
             self::TrustedPromotion => 't4',
+            self::AchievementUnlocked => 't4',
         };
     }
 

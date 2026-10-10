@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\AchievementMetric;
 use App\Enums\EventType;
 use App\Enums\MilestoneMetric;
 use App\Models\Copypasta;
@@ -16,6 +17,9 @@ class RecordCopypastaCopy
     public function __construct(
         private RecordEvent $recordEvent,
         private DetectCopypastaMilestones $detectMilestones,
+        private AdjustAchievementProgress $adjustProgress,
+        private DetectDynamiteCopypasta $detectDynamite,
+        private QueueAchievementEvaluation $queueEvaluation,
     ) {}
 
     /**
@@ -33,11 +37,24 @@ class RecordCopypastaCopy
             return false;
         }
 
-        Copypasta::query()->whereKey($copypasta->getKey())->increment('copies_count');
+        $isOwnCopy = $user !== null && $user->getKey() === $copypasta->user_id;
+
+        DB::transaction(function () use ($copypasta, $isOwnCopy): void {
+            Copypasta::query()->whereKey($copypasta->getKey())->increment('copies_count');
+
+            if (! $isOwnCopy) {
+                $this->adjustProgress->add($copypasta->user_id, AchievementMetric::CopiesReceived, 1);
+            }
+        });
 
         DB::afterCommit(fn () => $this->detectMilestones->handle($copypasta, MilestoneMetric::Copies));
 
         $this->recordEvent->handle(EventType::Copy, $user, $copypasta, $context);
+
+        if (! $isOwnCopy) {
+            $this->detectDynamite->handle($copypasta);
+            $this->queueEvaluation->handle($copypasta->user_id, [AchievementMetric::CopiesReceived, AchievementMetric::Dynamite]);
+        }
 
         return true;
     }
