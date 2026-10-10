@@ -20,3 +20,6 @@ Schedule::command('users:anonymize-expired')->daily()->onOneServer();
 Schedule::command('events:aggregate')->hourly()->onOneServer();
 Schedule::command('events:partitions')->daily()->onOneServer();
 Schedule::command('events:prune')->monthlyOn(1, '03:30')->onOneServer();
+
+// Notifications: read ones are kept 90 days, unread ones 180.
+Schedule::command('notifications:prune')->daily()->onOneServer();

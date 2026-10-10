@@ -5,13 +5,18 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\EventType;
+use App\Enums\MilestoneMetric;
 use App\Models\Copypasta;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class RecordCopypastaCopy
 {
-    public function __construct(private RecordEvent $recordEvent) {}
+    public function __construct(
+        private RecordEvent $recordEvent,
+        private DetectCopypastaMilestones $detectMilestones,
+    ) {}
 
     /**
      * Count a copy at most once per copy-pasta, visitor and hour. Returns whether the counter moved; only a counted
@@ -29,6 +34,8 @@ class RecordCopypastaCopy
         }
 
         Copypasta::query()->whereKey($copypasta->getKey())->increment('copies_count');
+
+        DB::afterCommit(fn () => $this->detectMilestones->handle($copypasta, MilestoneMetric::Copies));
 
         $this->recordEvent->handle(EventType::Copy, $user, $copypasta, $context);
 

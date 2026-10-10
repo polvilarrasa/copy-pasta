@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\EventType;
+use App\Enums\MilestoneMetric;
 use App\Models\Copypasta;
 use App\Models\User;
 use App\Models\Vote;
@@ -14,7 +15,10 @@ use InvalidArgumentException;
 
 class CastVote
 {
-    public function __construct(private RecordEvent $recordEvent) {}
+    public function __construct(
+        private RecordEvent $recordEvent,
+        private DetectCopypastaMilestones $detectMilestones,
+    ) {}
 
     /**
      * The vote the visitor pressed decides the outcome: the same value removes the vote,
@@ -63,6 +67,10 @@ class CastVote
 
             return $next;
         });
+
+        if ($result === 1) {
+            DB::afterCommit(fn () => $this->detectMilestones->handle($copypasta, MilestoneMetric::Upvotes));
+        }
 
         $this->recordEvent->handle(match ($result) {
             1 => EventType::VoteUp,

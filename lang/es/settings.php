@@ -10,6 +10,7 @@ return [
         'profile' => 'Perfil',
         'security' => 'Seguridad',
         'appearance' => 'Apariencia',
+        'notifications' => 'Notificaciones',
     ],
 
     'profile' => [
@@ -52,6 +53,15 @@ return [
             'remove' => 'Eliminar passkey',
             'remove_confirm' => 'Seguro que quieres eliminar la passkey «:name»? No podrás volver a usarla para iniciar sesión.',
         ],
+    ],
+
+    'notifications' => [
+        'title' => 'Notificaciones',
+        'description' => 'Elige de qué quieres que te avisemos dentro de la web',
+        'optional' => 'Avisos opcionales',
+        'mandatory' => 'Avisos de moderación',
+        'mandatory_hint' => 'Siempre activado: son decisiones de moderación sobre tu contenido y no se pueden desactivar.',
+        'saved' => 'Preferencias guardadas.',
     ],
 
     'appearance' => [

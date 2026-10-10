@@ -390,14 +390,32 @@ Aceptación: los totales coinciden con un recuento directo en un test con datos 
 
 ### Fase 17 — Notificaciones
 
-- [ ] Tabla de notificaciones de Laravel y una clase por tipo.
-- [ ] Campana con contador en la cabecera, actualizada al navegar y cada 60 segundos.
-- [ ] Página `/notificaciones` con marcar una o todas como leídas.
-- [ ] Hitos de copias y upvotes (10, 100, 1.000) detectados al actualizar contadores.
-- [ ] Agrupación de hitos del mismo copy-pasta en una hora.
-- [ ] Preferencias por tipo en ajustes; las de moderación son obligatorias.
+- [x] Tabla de notificaciones de Laravel y una clase por tipo.
+- [x] Campana con contador en la cabecera, actualizada al navegar y cada 60 segundos.
+- [x] Página `/notificaciones` con marcar una o todas como leídas.
+- [x] Hitos de copias y upvotes (10, 100, 1.000) detectados al actualizar contadores.
+- [x] Agrupación de hitos del mismo copy-pasta en una hora.
+- [x] Preferencias por tipo en ajustes; las de moderación son obligatorias.
 
 Aceptación: cada tipo se genera en su caso y solo una vez; un tipo desactivado no se genera; la agrupación funciona con dos hitos seguidos.
+
+**Desviaciones de la Fase 17:**
+
+- **Añadir un tipo nuevo (Fases 18 y 21)** son tres pasos: un caso en `NotificationType` (clase, icono, tono, si es obligatoria), una clase que extiende `AppNotification` y sus líneas en `lang/es/notifications.php`, más una rama en `NotificationPresenter`. Esas clases no se crean en esta fase.
+- **La columna `notifications.type` guarda el valor del enum (`milestone`, `copypasta_hidden`…), no el nombre de la clase** (`databaseType()`), y `data` es `jsonb`. Índice en `created_at` para el borrado y un índice parcial `(notifiable_type, notifiable_id) WHERE read_at IS NULL` para la campana.
+- **Hitos:** `copypasta_milestones` (índice único) se escribe con `insertOrIgnore`, sin modelo ni factory. Si un contador cruza varios umbrales a la vez, se registran todos y se notifica el más alto. Con el copy-pasta oculto, sin publicar o borrado, o el autor baneado o anonimizado, el hito no se registra y se detecta cuando vuelva a ser válido; con el tipo desactivado se registra pero no se notifica. La detección va en `DB::afterCommit` desde `CastVote` (solo cuando el resultado es un upvote) y `RecordCopypastaCopy`; `RecalculateCounters` no notifica.
+- **Agrupación:** la ventana de una hora se mide desde el `created_at` de la notificación sin leer; el hito se añade a `data.milestones` y la lista se ordena y muestra por `updated_at`.
+- **Reporte aceptado:** texto genérico, sin título ni enlace, para no revelar un contenido que ya está oculto. Una Action nueva, `AcceptCopypastaReports`, la comparten `ConcealCopypasta` y `MarkCopypastaNsfw`. Las ocultaciones automáticas no aceptan reportes, así que tampoco notifican.
+- **Oculto y restaurado** son obligatorias. La de oculto enlaza al detalle mientras el copy-pasta no esté borrado (el autor puede abrirlo aunque esté oculto); la de restaurado exige que esté visible. Se envía además del email de moderación, que se mantiene. Hitos y reporte aceptado muestran «Contenido retirado» sin enlace si el destino está oculto, borrado o no existe. Ninguna notificación se crea para cuentas baneadas, borradas o anonimizadas.
+- **Ascenso a confianza:** hoy solo ocurre a mano con `ChangeUserRole`; no hay promoción automática. Solo notifica al pasar de `user` a `trusted`; bajar a un miembro del staff a `trusted` no es un ascenso.
+- **Se corrige un hueco del MVP: los reportes de «NSFW sin marcar» no se resolvían al marcar el copy-pasta como NSFW.** Ahora `MarkCopypastaNsfw` los acepta (solo ese motivo, con `resolved_by` y `resolved_at`), avisa a sus reporteros y deja el número en `meta.accepted_reports` del registro de moderación; la fiabilidad del reportero ya contaba los reportes aceptados. Queda fuera: un reporte de ese motivo sobre un copy-pasta que ya era NSFW (el autor lo marcó después) sigue pendiente hasta que se descarte.
+- **La restauración se unifica:** `DismissCopypastaReports::restoreIfOrphaned` llama a `RestoreCopypasta`, que es el único sitio que notifica el restaurado y escribe el registro.
+- **Abrir una notificación es una acción de Livewire** (`open()`), no un enlace: un GET que cambiara el estado se activaría con la precarga de `wire:navigate`. Marca como leída, registra `notification_open` con el tipo en el `context` y redirige al destino; una notificación sin destino solo se marca. Durante una impersonación no se marca, no se registra el evento y no se muestran los botones «Marcar leídas». Las acciones de lectura se limitan a 120 por minuto y por usuario.
+- **`wire:poll` y pestañas ocultas:** Livewire 4.4.7 solo reduce el sondeo de una pestaña en segundo plano (lo ejecuta un 5 % de las veces) y `.visible` mira el viewport, no la pestaña. El `wire:poll.60s` vive dentro de un `<template x-if="visible">` con `document.hidden`, así que no existe mientras la pestaña está oculta, y al volver se refresca de inmediato.
+- **La lista del desplegable no se consulta hasta abrirlo** (`loadList()`); cargar una página cuesta solo el contador cacheado (Redis, invalidado con `NotificationSent` y en las lecturas masivas).
+- **El presupuesto de 5 consultas del feed para miembros calienta antes la caché de la campana** (`FeedQueryCountTest`); en producción el contador sale de Redis. Un test nuevo fija que con la caché fría la cabecera añade una sola consulta.
+- **Borrado programado (`notifications:prune`, diario)** por fecha de creación: leídas de más de 90 días y no leídas de más de 180.
+- **Test de navegador de hitos:** el flujo de aceptación usa notificaciones sembradas con `notify()`; la generación de cada tipo y la agrupación se prueban en tests de Feature.
 
 ### Fase 18 — Logros y títulos
 

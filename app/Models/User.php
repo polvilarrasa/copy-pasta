@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\NotificationType;
 use App\Enums\Role;
 use App\Enums\Theme;
 use Database\Factories\UserFactory;
@@ -33,6 +34,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Role $role
  * @property bool $show_nsfw
  * @property Theme $theme
+ * @property array<string, bool>|null $notification_prefs
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $banned_at
  * @property string|null $ban_reason
@@ -70,6 +72,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'password' => 'hashed',
             'username_changed_at' => 'datetime',
             'theme' => Theme::class,
+            'notification_prefs' => 'array',
         ];
     }
 
@@ -142,6 +145,26 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     public function invitationFingerprint(): string
     {
         return sha1((string) $this->password);
+    }
+
+    /**
+     * Banned, deleted and anonymized accounts get no notifications of any type.
+     */
+    public function canBeNotified(): bool
+    {
+        return ! $this->isBanned() && ! $this->isAnonymized() && ! $this->trashed();
+    }
+
+    /**
+     * Every type is on until the member switches it off in settings; mandatory types cannot be switched off.
+     */
+    public function wantsNotification(NotificationType $type): bool
+    {
+        if (! $this->canBeNotified()) {
+            return false;
+        }
+
+        return $type->isMandatory() || ($this->notification_prefs[$type->value] ?? true);
     }
 
     public function isAnonymized(): bool

@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Gate;
 
 class DismissCopypastaReports
 {
+    public function __construct(private RestoreCopypasta $restoreCopypasta) {}
+
     /**
      * Rejects every pending report on the copy-pasta and logs the decision. Returns how many were dismissed.
      */
@@ -62,13 +64,6 @@ class DismissCopypastaReports
             return;
         }
 
-        $copypasta->forceFill(['hidden_at' => null, 'hidden_by_id' => null, 'hidden_reason' => null])->save();
-
-        ModerationAction::query()->create([
-            'actor_id' => $actor->getKey(),
-            'action' => ModerationActionType::Restore,
-            'subject_type' => $copypasta::class,
-            'subject_id' => $copypasta->getKey(),
-        ]);
+        $this->restoreCopypasta->handle($actor, $copypasta);
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Copypasta;
 use App\Models\Tag;
 use App\Models\User;
+use App\Support\UnreadNotificationCount;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\DB;
 
@@ -39,7 +40,17 @@ test('el feed de la home ejecuta cinco consultas como máximo para un invitado',
 });
 
 test('el feed de la home ejecuta cinco consultas como máximo para un miembro', function (): void {
-    $this->actingAs(User::factory()->create());
+    $member = User::factory()->create();
+    $this->actingAs($member);
+
+    // The bell's counter is served from the cache in steady state; this budget is about the feed itself.
+    app(UnreadNotificationCount::class)->get($member);
 
     expect(queriesFor('/'))->toBeLessThanOrEqual(5);
+});
+
+test('con la caché de la campana fría, la cabecera añade una sola consulta', function (): void {
+    $this->actingAs(User::factory()->create());
+
+    expect(queriesFor('/'))->toBeLessThanOrEqual(6);
 });

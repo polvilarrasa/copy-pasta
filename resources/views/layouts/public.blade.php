@@ -13,7 +13,7 @@
 <body class="min-h-screen bg-bg text-ink antialiased">
     <x-impersonation-banner />
     <header class="border-b border-border bg-surface">
-        <div class="mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-4 py-3">
+        <div class="relative mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-4 py-3">
             <x-app-logo href="{{ route('home') }}" />
 
             <form method="GET" action="{{ route('home') }}" role="search" class="order-last w-full sm:order-none sm:flex-1">
@@ -36,6 +36,7 @@
                     @can('access-admin')
                         <a href="{{ url('/admin') }}" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.admin') }}</a>
                     @endcan
+                    <livewire:notification-bell />
                     <x-desktop-user-menu />
                 @else
                     <a href="{{ route('login') }}" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.login') }}</a>

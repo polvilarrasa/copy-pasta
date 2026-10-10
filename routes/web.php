@@ -14,6 +14,7 @@ use App\Http\Controllers\Public\CopypastaVoteController;
 use App\Http\Controllers\Public\FeedController;
 use App\Http\Controllers\Public\FolderController;
 use App\Http\Controllers\Public\MyCopypastasController;
+use App\Http\Controllers\Public\NotificationController;
 use App\Http\Controllers\Public\NsfwConfirmationController;
 use App\Http\Controllers\Public\ProfileController;
 use App\Http\Controllers\Public\PublishCopypastaController;
@@ -104,6 +105,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/carpetas', [FolderController::class, 'index'])->name('folders.index');
     Route::get('/carpetas/{folder}', [FolderController::class, 'show'])->name('folders.show');
     Route::get('/estadisticas', [StatsController::class, 'show'])->name('stats.show');
+    Route::get('/notificaciones', [NotificationController::class, 'index'])->name('notifications.index');
 });
 
 // The Filament /app panel is gone (Fase 15); these URLs keep working for anyone with an old link or bookmark.

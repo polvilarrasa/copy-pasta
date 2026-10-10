@@ -5,21 +5,23 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\ModerationActionType;
-use App\Enums\ReportStatus;
 use App\Mail\CopypastaHiddenMail;
 use App\Models\Copypasta;
 use App\Models\ModerationAction;
-use App\Models\Report;
 use App\Models\User;
+use App\Notifications\CopypastaHiddenNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class ConcealCopypasta
 {
+    public function __construct(private AcceptCopypastaReports $acceptReports) {}
+
     /**
      * Hides the copy-pasta and logs who did it. Automatic hides pass $acceptsPendingReports = false so the
      * reports stay pending and keep the copy-pasta at the top of the moderation queue for review.
-     * The author is emailed after the transaction commits.
+     * The author is emailed and notified in the app after the transaction commits; the reporters whose reports were
+     * accepted are notified too.
      */
     public function handle(?User $actor, Copypasta $copypasta, string $reason, bool $acceptsPendingReports): Copypasta
     {
@@ -31,14 +33,7 @@ class ConcealCopypasta
             ])->save();
 
             if ($acceptsPendingReports) {
-                Report::query()
-                    ->where('copypasta_id', $copypasta->getKey())
-                    ->pending()
-                    ->update([
-                        'status' => ReportStatus::Accepted->value,
-                        'resolved_by_id' => $actor?->getKey(),
-                        'resolved_at' => now(),
-                    ]);
+                $this->acceptReports->handle($actor, $copypasta);
             }
 
             ModerationAction::query()->create([
@@ -56,6 +51,7 @@ class ConcealCopypasta
         $copypasta->load('user');
 
         Mail::to($copypasta->user)->queue(new CopypastaHiddenMail($copypasta));
+        $copypasta->user->notify(new CopypastaHiddenNotification($copypasta));
 
         return $copypasta;
     }

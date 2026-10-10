@@ -3,6 +3,7 @@
         'profile.edit' => __('settings.nav.profile'),
         'security.edit' => __('settings.nav.security'),
         'appearance.edit' => __('settings.nav.appearance'),
+        'notifications.edit' => __('settings.nav.notifications'),
     ];
 @endphp
 
