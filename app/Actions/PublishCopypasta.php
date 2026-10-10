@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\AchievementMetric;
 use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\User;
@@ -49,11 +50,29 @@ class PublishCopypasta
 
             app(SaveCopypastaRevision::class)->handle($copypasta);
 
+            $this->recordAchievementProgress($author, $copypasta);
+
             return $copypasta;
         });
+
+        app(QueueAchievementEvaluation::class)->handle($author, [AchievementMetric::Published, AchievementMetric::NightPublications]);
 
         app(RecordEvent::class)->handle(EventType::Publish, $author, $copypasta);
 
         return $copypasta;
+    }
+
+    /**
+     * A copy-pasta published between 3:00 and 3:59 in the app's time zone counts towards the night owl achievement.
+     */
+    private function recordAchievementProgress(User $author, Copypasta $copypasta): void
+    {
+        $adjustProgress = app(AdjustAchievementProgress::class);
+
+        $adjustProgress->add($author, AchievementMetric::Published, 1);
+
+        if ($copypasta->published_at?->copy()->timezone(config('app.timezone'))->hour === 3) {
+            $adjustProgress->add($author, AchievementMetric::NightPublications, 1);
+        }
     }
 }

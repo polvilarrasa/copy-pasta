@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Publicar escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button,input,textarea{font-family:inherit}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="min-height:1300px;box-sizing:border-box;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;{{themeVars}}">
+
+<header style="border-bottom:1px solid var(--border)">
+<div style="max-width:1216px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:16px">
+<div style="display:flex;align-items:center;gap:10px;flex:1">
+<span aria-hidden="true" style="width:32px;height:32px;border-radius:10px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15"/></svg></span>
+<span style="font-size:22px;font-weight:800;letter-spacing:-0.03em">copy-pastas</span>
+</div>
+<a href="#" style="height:44px;padding:0 16px;display:flex;align-items:center;font-size:15px;font-weight:700;color:var(--muted)">Cancelar</a>
+</div>
+</header>
+
+<div style="max-width:1216px;margin:0 auto;padding:32px 32px 56px 32px;box-sizing:border-box;display:flex;flex-direction:column;gap:24px">
+<h1 style="margin:0;font-size:32px;line-height:1.1;font-weight:800;letter-spacing:-0.03em">Publicar copy-pasta</h1>
+
+<div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+<form style="flex:1 1 420px;max-width:600px;display:flex;flex-direction:column;gap:22px" onSubmit="{{noop}}">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<label for="t" style="font-size:14px;font-weight:700;display:flex;justify-content:space-between"><span>Título</span><span style="font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums">{{titleCount}}/80</span></label>
+<input id="t" type="text" maxlength="80" value="{{title}}" onInput="{{onTitle}}" placeholder="Ponle un nombre que enganche" style="height:52px;box-sizing:border-box;padding:0 16px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:16px;outline:0">
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<label for="b" style="font-size:14px;font-weight:700">Texto</label>
+<textarea id="b" rows="8" onInput="{{onBody}}" placeholder="Pega aquí el texto tal cual se copiará" style="box-sizing:border-box;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:16px;line-height:1.5;resize:vertical;min-height:220px;outline:0;{{bodyFont}}">{{body}}</textarea>
+</div>
+
+<fieldset style="border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px">
+<legend style="padding:0;font-size:14px;font-weight:700;margin-bottom:10px">Etiquetas <span style="font-weight:600;color:var(--muted)">· hasta 5</span></legend>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{tagOpts}}" as="t" hint-placeholder-count="10">
+<button type="button" aria-pressed="{{t.on}}" onClick="{{t.pick}}" style="height:44px;padding:0 16px;border-radius:999px;border:0;font-size:15px;font-weight:700;cursor:pointer;{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+</fieldset>
+
+<div style="display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:16px">
+<sc-for list="{{switches}}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-top:{{s.border}}">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:15px;font-weight:700">{{s.label}}</span>
+<span style="font-size:13px;color:var(--muted);line-height:1.4">{{s.help}}</span>
+</div>
+<button type="button" role="switch" aria-checked="{{s.on}}" aria-label="{{s.label}}" onClick="{{s.toggle}}" style="flex:none;width:56px;height:44px;border:0;background:transparent;padding:0;cursor:pointer;display:flex;align-items:center"><span style="position:relative;width:52px;height:32px;border-radius:999px;display:block;{{s.track}}"><span style="position:absolute;top:4px;width:24px;height:24px;border-radius:50%;{{s.knob}}"></span></span></button>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;gap:10px;align-items:center">
+<button type="submit" style="flex:1;height:52px;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:17px;font-weight:800;cursor:pointer">Publicar</button>
+<button type="button" style="height:52px;padding:0 22px;border:1px solid var(--border);border-radius:14px;background:transparent;color:var(--ink);font-size:15px;font-weight:700;cursor:pointer">Guardar borrador</button>
+</div>
+</form>
+
+<section style="flex:1 1 360px;max-width:440px;display:flex;flex-direction:column;gap:10px">
+<h2 style="margin:0;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px">Vista previa<span style="font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--surface2);color:var(--muted)">en vivo</span></h2>
+<dc-import name="Card" item="{{item}}" dark="{{dark}}" hint-size="100%,520px"></dc-import>
+<p style="margin:0;font-size:13px;color:var(--muted);line-height:1.5">Así se verá en el feed: título, primeras 6 líneas y etiquetas. El texto completo se ve en el detalle.</p>
+</section>
+
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true}}'>
+const PAL = {
+  light: {bg:'#F3F2FF', surface:'#FFFFFF', surface2:'#EAE8FB', ink:'#15132B', muted:'#55527C', border:'#DAD7F3', accent:'#1B1740', 'on-accent':'#C6F432', vote:'#5B2EFF', track:'#C9C5EC', knob:'#FFFFFF',
+    t1bg:'#CFF5E3', t1fg:'#0B5A3C', t2bg:'#FFE0C9', t2fg:'#8A3A07', t3bg:'#E0D9FF', t3fg:'#40259E', t4bg:'#FAF0B5', t4fg:'#5E4D00', t5bg:'#FFD9EA', t5fg:'#99245F'},
+  dark: {bg:'#0E0D1A', surface:'#17162A', surface2:'#211F3A', ink:'#F1F0FF', muted:'#A5A2D0', border:'#2A2847', accent:'#C6F432', 'on-accent':'#0E0D1A', vote:'#C6F432', track:'#34315C', knob:'#F1F0FF',
+    t1bg:'#12392F', t1fg:'#6DF0B8', t2bg:'#4A2410', t2fg:'#FFB070', t3bg:'#2B2263', t3fg:'#B9A8FF', t4bg:'#433A0A', t4fg:'#F5E26B', t5bg:'#4A1634', t5fg:'#FF9CCB'}
+};
+const SLOT = {humor:'t2', oficina:'t4', chat:'t1', tecnología:'t3', plantillas:'t5', cringe:'t3', wholesome:'t1', gaming:'t3', anime:'t5', clásicos:'t4'};
+const TAGS = ['humor','gaming','anime','clásicos','wholesome','cringe','plantillas','oficina','chat','tecnología'];
+class Component extends DCLogic {
+  state = {title:'Carta de amor a mi router', body:'Querido router:\nSé que no hablamos mucho, pero siempre estás ahí, parpadeando.\nHoy me has dejado sin wifi justo cuando iba a ganar la partida.\nNo te guardo rencor. Bueno, un poco sí.', tags:['humor','tecnología'], template:false, nsfw:false, ascii:false};
+  renderVals() {
+    const dark = this.props.dark ?? true;
+    const p = dark ? PAL.dark : PAL.light;
+    const themeVars = Object.keys(p).map((k) => '--' + k + ':' + p[k]).join(';');
+    const s = this.state;
+    const tagOpts = TAGS.map((k) => {
+      const on = s.tags.indexOf(k) >= 0;
+      const slot = SLOT[k];
+      return {label:'#' + k, on, pick:() => {
+        let t = s.tags.slice();
+        if (on) t = t.filter((x) => x !== k); else if (t.length < 5) t.push(k);
+        this.setState({tags:t});
+      }, style: on ? 'background:var(--' + slot + 'bg);color:var(--' + slot + 'fg);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--vote)' : 'background:var(--surface2);color:var(--ink)'};
+    });
+    const mk = (key, label, help, i) => ({label, help, on:s[key], border: i === 0 ? '0' : '1px solid var(--border)',
+      toggle:() => this.setState({[key]:!s[key]}),
+      track: s[key] ? 'background:var(--vote)' : 'background:var(--track)',
+      knob: s[key] ? 'left:24px;background:var(--on-accent)' : 'left:4px;background:var(--knob)'});
+    const switches = [
+      mk('ascii','Texto en monoespaciado','Para ASCII art: respeta espacios y columnas.',0),
+      mk('template','Es una plantilla','Pon los huecos entre [CORCHETES] para que otros los rellenen.',1),
+      mk('nsfw','Contenido sensible (NSFW)','Se difuminará hasta que alguien haga clic.',2)
+    ];
+    const item = {title: s.title || 'Tu título aparece aquí', body: s.body || 'Aquí verás el texto, con las primeras 6 líneas.', author:'tu_usuario', hue:330, ach:'Recién llegado', score:0,
+      tags:s.tags, template:s.template, nsfw:s.nsfw, ascii:s.ascii};
+    return {themeVars, dark, tagOpts, switches, item, title:s.title, body:s.body, titleCount:s.title.length,
+      bodyFont: s.ascii ? "font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px;white-space:pre" : '',
+      onTitle:(e) => this.setState({title:e.target.value}),
+      onBody:(e) => this.setState({body:e.target.value}),
+      noop:(e) => { if (e && e.preventDefault) e.preventDefault(); }};
+  }
+}
+</script>
+</body>
+</html>

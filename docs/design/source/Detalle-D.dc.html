@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Detalle escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+input::placeholder{color:var(--muted);opacity:1}
+button{font-family:inherit}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="min-height:1500px;box-sizing:border-box;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;{{themeVars}}">
+
+<header style="border-bottom:1px solid var(--border);background:var(--bg)">
+<div style="max-width:1216px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:10px;flex:0 0 200px">
+<span aria-hidden="true" style="width:32px;height:32px;border-radius:10px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15"/></svg></span>
+<span style="font-size:22px;font-weight:800;letter-spacing:-0.03em">copy-pastas</span>
+</div>
+<div style="flex:1 1 320px;max-width:560px">
+<label for="q" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Buscar copy-pastas</label>
+<div style="display:flex;align-items:center;gap:10px;height:46px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:0 18px;color:var(--muted)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>
+<input id="q" type="search" placeholder="Busca textos, etiquetas o autores" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font-family:inherit;font-size:15px;color:var(--ink)">
+</div>
+</div>
+<div style="flex:1"></div>
+<button type="button" style="height:46px;padding:0 20px;border:0;border-radius:999px;background:var(--accent);color:var(--on-accent);font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Publicar</button>
+<button type="button" aria-label="Notificaciones, 3 nuevas" style="position:relative;width:46px;height:46px;border-radius:50%;border:0;background:var(--surface2);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/></svg><span style="position:absolute;top:9px;right:10px;width:10px;height:10px;border-radius:50%;background:var(--pink);border:2px solid var(--surface2)"></span></button>
+<button type="button" aria-label="Tu perfil" style="width:46px;height:46px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0"><span style="width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 70% 25%, #FFF3B0 0 16%, transparent 17%), linear-gradient(140deg, #FF5CA8, #7F5BFF)"></span></button>
+</div>
+</header>
+
+<div style="max-width:1216px;margin:0 auto;padding:20px 32px 48px 32px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px">
+<a href="#" style="display:flex;align-items:center;gap:8px;height:44px;font-size:15px;font-weight:700;color:var(--muted)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Volver al feed</a>
+
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start;justify-content:center">
+
+<main style="flex:999 1 520px;max-width:720px;min-width:0;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<h2 style="margin:0;font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px">Variantes<span style="font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--surface2);color:var(--muted)">3</span></h2>
+<div role="tablist" aria-label="Variantes" style="display:flex;gap:8px;flex-wrap:wrap">
+<sc-for list="{{variants}}" as="v" hint-placeholder-count="3">
+<button type="button" role="tab" aria-selected="{{v.on}}" onClick="{{v.pick}}" style="height:44px;padding:0 18px;border-radius:999px;border:0;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;{{v.style}}">{{v.label}}</button>
+</sc-for>
+</div>
+</div>
+<dc-import name="Card" item="{{item}}" dark="{{dark}}" full="{{true}}" hint-size="100%,760px"></dc-import>
+</main>
+
+<aside style="flex:1 1 320px;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.015em">Compartir como imagen</h2>
+<p style="margin:0;font-size:14px;color:var(--muted)">Para stories, chats y hilos donde el texto no cabe.</p>
+</div>
+
+<div style="border-radius:20px;aspect-ratio:1/1;box-sizing:border-box;padding:24px;display:flex;flex-direction:column;justify-content:space-between;{{img.box}}">
+<div style="display:flex;flex-direction:column;gap:12px">
+<span style="font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;{{img.dim}}">{{img.author}}</span>
+<span style="font-size:27px;line-height:1.1;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">{{img.title}}</span>
+<span style="font-size:15px;line-height:1.5;white-space:pre-line;{{img.dim}}">{{img.excerpt}}</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;letter-spacing:-0.02em">
+<span aria-hidden="true" style="width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;{{img.mark}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15"/></svg></span>copy-pastas</div>
+</div>
+
+<div style="display:flex;gap:10px;align-items:center">
+<span style="font-size:14px;font-weight:700;color:var(--muted)">Estilo</span>
+<sc-for list="{{imgStyles}}" as="s" hint-placeholder-count="3">
+<button type="button" aria-label="{{s.label}}" aria-pressed="{{s.on}}" onClick="{{s.pick}}" style="width:44px;height:44px;border-radius:50%;cursor:pointer;padding:0;{{s.style}}"></button>
+</sc-for>
+</div>
+
+<button type="button" style="width:100%;height:52px;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>Descargar imagen</button>
+
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+<sc-for list="{{targets}}" as="t" hint-placeholder-count="4">
+<button type="button" style="height:48px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--ink);font-size:15px;font-weight:700;cursor:pointer">{{t}}</button>
+</sc-for>
+</div>
+</aside>
+
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true}}'>
+const PAL = {
+  light: {bg:'#F3F2FF', surface:'#FFFFFF', surface2:'#EAE8FB', ink:'#15132B', muted:'#55527C', border:'#DAD7F3', accent:'#1B1740', 'on-accent':'#C6F432', vote:'#5B2EFF', pink:'#E5338B'},
+  dark: {bg:'#0E0D1A', surface:'#17162A', surface2:'#211F3A', ink:'#F1F0FF', muted:'#A5A2D0', border:'#2A2847', accent:'#C6F432', 'on-accent':'#0E0D1A', vote:'#C6F432', pink:'#FF5CA8'}
+};
+const V = [
+  {label:'Original', author:'paco_nocturno', hue:20, ach:'Maestro del Ctrl+V', score:4210, tags:['humor','oficina'], title:'Aviso urgente sobre el táper de la nevera',
+   body:'Buenas tardes, equipo.\nDesde hace tres semanas hay un táper en la nevera que ya tiene vida propia. Ha empezado a pagar la luz y todo.\nSi es tuyo, por favor reclámalo antes de que nos pida un contrato indefinido.\nSi no es tuyo, tampoco lo toques: ya forma parte de la plantilla.\nAtentamente,\nLa persona que solo quería guardar su yogur'},
+  {label:'Versión corta', author:'lola.exe', hue:200, ach:'Primera de la clase', score:1240, tags:['humor','oficina'], title:'Aviso urgente sobre el táper (versión corta)',
+   body:'Hay un táper en la nevera con vida propia.\nSi es tuyo, reclámalo.\nSi no, ya es de la plantilla.'},
+  {label:'Versión formal', author:'dr_cringe', hue:260, ach:'Veterano de foros', score:388, tags:['oficina','plantillas'], title:'Comunicado sobre objeto no identificado en refrigeración',
+   body:'Estimados compañeros:\nSe ruega a la persona propietaria del recipiente depositado en el frigorífico común que proceda a retirarlo en un plazo de 48 horas.\nTranscurrido dicho plazo, el recipiente será considerado personal de la casa.\nGracias por su colaboración.'}
+];
+const IMG = [
+  {label:'Medianoche', box:'background:#0E0D1A;color:#F1F0FF', dim:'color:#A5A2D0', mark:'background:#C6F432;color:#0E0D1A', sw:'background:#0E0D1A;border:2px solid #C6F432'},
+  {label:'Claro', box:'background:#F3F2FF;color:#15132B', dim:'color:#55527C', mark:'background:#5B2EFF;color:#FFFFFF', sw:'background:#F3F2FF;border:2px solid #5B2EFF'},
+  {label:'Lima', box:'background:#C6F432;color:#0E0D1A', dim:'color:#2F3A06', mark:'background:#0E0D1A;color:#C6F432', sw:'background:#C6F432;border:2px solid #0E0D1A'}
+];
+class Component extends DCLogic {
+  state = {variant:0, img:0};
+  renderVals() {
+    const dark = this.props.dark ?? true;
+    const p = dark ? PAL.dark : PAL.light;
+    const themeVars = Object.keys(p).map((k) => '--' + k + ':' + p[k]).join(';');
+    const cur = V[this.state.variant];
+    const variants = V.map((v, i) => ({label:v.label, on:i === this.state.variant, pick:() => this.setState({variant:i}),
+      style: i === this.state.variant ? 'background:var(--accent);color:var(--on-accent)' : 'background:var(--surface2);color:var(--ink)'}));
+    const st = IMG[this.state.img];
+    const lines = cur.body.split('\n').slice(0, 3).join('\n');
+    const img = {box:st.box, dim:st.dim, mark:st.mark, author:'@' + cur.author, title:cur.title, excerpt:lines};
+    const imgStyles = IMG.map((s, i) => ({label:s.label, on:i === this.state.img, pick:() => this.setState({img:i}),
+      style: s.sw + (i === this.state.img ? ';box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--vote)' : '')}));
+    return {themeVars, dark, variants, item:cur, img, imgStyles, targets:['WhatsApp','Discord','X','Copiar enlace']};
+  }
+}
+</script>
+</body>
+</html>

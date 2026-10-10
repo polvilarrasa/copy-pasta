@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\AchievementMetric;
+use App\Enums\AffinitySignal;
 use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
@@ -13,7 +15,12 @@ use Illuminate\Support\Facades\Gate;
 
 class ToggleFavorite
 {
-    public function __construct(private RecordEvent $recordEvent) {}
+    public function __construct(
+        private RecordEvent $recordEvent,
+        private AdjustAchievementProgress $adjustProgress,
+        private QueueAchievementEvaluation $queueEvaluation,
+        private AdjustTagAffinity $adjustAffinity,
+    ) {}
 
     /**
      * Adds or removes the copy-pasta from the user's default folder. Returns whether it is now a favorite.
@@ -39,8 +46,13 @@ class ToggleFavorite
 
             $locked->forceFill(['favorites_count' => max(0, $locked->favorites_count + ($isFavorite ? -1 : 1))])->save();
 
+            $this->adjustProgress->add($user, AchievementMetric::Saved, $isFavorite ? -1 : 1);
+            $this->adjustAffinity->handle($user, $locked, $isFavorite ? -AffinitySignal::Favorite->weight() : AffinitySignal::Favorite->weight());
+
             return ! $isFavorite;
         });
+
+        $this->queueEvaluation->handle($user, [AchievementMetric::Saved]);
 
         $this->recordEvent->handle(
             $isNowFavorite ? EventType::FavoriteAdd : EventType::FavoriteRemove,

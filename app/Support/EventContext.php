@@ -15,13 +15,14 @@ final class EventContext
     private const MAX_POSITION = 1000;
 
     /**
-     * @return array{source?: string, position?: int, ref?: string}
+     * @return array{source?: string, position?: int, group?: string, ref?: string}
      */
     public static function fromRequest(Request $request): array
     {
         return array_filter([
             'source' => self::source($request->input('source', $request->query('from'))),
             'position' => self::position($request->input('position', $request->query('pos'))),
+            'group' => self::group($request->input('group')),
             'ref' => self::ref($request->input('ref', $request->query('ref'))),
         ], fn (mixed $value): bool => $value !== null);
     }
@@ -40,6 +41,14 @@ final class EventContext
         $position = (int) $value;
 
         return $position >= 0 && $position <= self::MAX_POSITION ? $position : null;
+    }
+
+    /**
+     * The "Para ti" group the copy-pasta came from, only meaningful together with that source.
+     */
+    private static function group(mixed $value): ?string
+    {
+        return in_array($value, ['affinity', 'explore', 'recent', 'fallback'], true) ? $value : null;
     }
 
     private static function ref(mixed $value): ?string

@@ -22,7 +22,7 @@ test('las páginas de los paneles también llevan cabeceras de seguridad', funct
         ->assertHeader('X-Frame-Options', 'DENY');
 
     $this->actingAs(User::factory()->create())
-        ->get('/app')
+        ->get('/mis-copypastas')
         ->assertOk()
         ->assertHeader('X-Content-Type-Options', 'nosniff');
 });

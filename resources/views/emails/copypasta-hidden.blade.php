@@ -9,7 +9,7 @@
 
 {{ __('moderation.mail.hidden.footer') }}
 
-<x-mail::button :url="url('/app/copypastas')">
+<x-mail::button :url="route('copypastas.mine')">
 {{ __('moderation.mail.hidden.button') }}
 </x-mail::button>
 </x-mail::message>

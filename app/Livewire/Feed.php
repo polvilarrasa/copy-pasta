@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Actions\GetFeaturedCopypasta;
 use App\Actions\ListActiveTags;
+use App\Actions\ListForYouFeed;
 use App\Actions\RecordEvent;
 use App\Actions\RecordFeedImpressions;
 use App\Enums\EventType;
@@ -14,6 +16,8 @@ use App\Models\Copypasta;
 use App\Models\Tag;
 use App\Models\User;
 use App\Queries\FeedQuery;
+use App\Support\ForYouCache;
+use App\Support\TagAffinities;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -37,8 +41,12 @@ class Feed extends Component
     /** Set on /etiqueta/{slug}; combined with the tags in the query string. */
     public ?string $tagSlug = null;
 
+    /** The "Para ti" tab, which is not one of the FeedSort orders: it is a personal list of candidates. */
+    public const FOR_YOU = 'para_ti';
+
+    /** Empty means "the default tab": Para ti for members with enough signals or favorite tags, random otherwise. */
     #[Url(as: 'sort')]
-    public string $sort = FeedSort::Random->value;
+    public string $sort = '';
 
     /** Comma-separated tag slugs, e.g. `?tags=a,b`. */
     #[Url(as: 'tags')]
@@ -63,8 +71,14 @@ class Feed extends Component
      */
     private ?int $impressionsFrom = null;
 
+    /** Set by the "Actualizar" button for the request that handles it, so the list is rebuilt once. */
+    private bool $refreshForYou = false;
+
+    private ?string $defaultTab = null;
+
     public function mount(): void
     {
+        $this->clearFiltersOnForYou();
         $this->ensureSeed();
         $this->recordSearch();
 
@@ -79,6 +93,7 @@ class Feed extends Component
         }
 
         if ($property === 'sort') {
+            $this->clearFiltersOnForYou();
             $this->ensureSeed();
         }
 
@@ -91,6 +106,18 @@ class Feed extends Component
     {
         $this->impressionsFrom = $this->limit;
         $this->limit += self::PER_PAGE;
+    }
+
+    /**
+     * "Actualizar": drops the cached list and builds a new one, which leaves out what was already shown.
+     */
+    public function refreshForYou(): void
+    {
+        $this->refreshForYou = true;
+        $this->limit = self::PER_PAGE;
+        $this->impressionsFrom = 0;
+
+        $this->dispatch('ui-toast', message: __('public.feed.for_you_refreshed'));
     }
 
     public function shuffle(): void
@@ -113,18 +140,43 @@ class Feed extends Component
 
     public function render(): View
     {
-        $results = $this->feedPage($this->limit + 1);
-        $copypastas = $results->take($this->limit);
+        $viewer = $this->viewer();
+        $forYou = null;
+
+        if ($this->isForYou() && $viewer !== null) {
+            $forYou = app(ListForYouFeed::class)->handle($viewer, $this->limit, $this->refreshForYou);
+            $copypastas = new EloquentCollection(array_map(fn ($item): Copypasta => $item->copypasta, $forYou->items));
+            $hasMore = $forYou->hasMore;
+        } else {
+            $results = $this->feedPage($this->limit + 1);
+            $copypastas = $results->take($this->limit);
+            $hasMore = $results->count() > $this->limit;
+        }
 
         if ($this->impressionsFrom !== null) {
-            $this->countImpressions($copypastas->slice($this->impressionsFrom)->pluck('id'));
+            $shown = $copypastas->slice($this->impressionsFrom)->pluck('id');
+
+            $this->countImpressions($shown);
+
+            if ($forYou !== null) {
+                app(ForYouCache::class)->markSeen($viewer, $shown->values()->all());
+            }
+
             $this->impressionsFrom = null;
         }
 
+        $this->refreshForYou = false;
+
         return view('livewire.feed', [
+            'viewer' => $viewer,
             'copypastas' => $copypastas,
-            'hasMore' => $results->count() > $this->limit,
+            'forYou' => $forYou,
+            'hasMore' => $hasMore,
             'sortOptions' => $this->fixedSort === null ? FeedSort::cases() : [],
+            'activeTab' => $this->isForYou() ? self::FOR_YOU : $this->activeSort()->value,
+            'hasForYouTab' => $viewer !== null && $this->fixedSort === null && $this->tagSlug === null,
+            'featured' => $this->featured($viewer),
+            'favoriteTags' => $viewer === null ? null : $this->favoriteTags($viewer),
             'activeSort' => $this->activeSort(),
             'availableTags' => app(ListActiveTags::class)->handle(),
             'activeTagSlugs' => $this->activeTagSlugs(),
@@ -187,6 +239,63 @@ class Feed extends Component
         });
     }
 
+    /**
+     * The copy-pasta of the day tops the home, until the visitor searches or filters.
+     */
+    private function featured(?User $viewer): ?Copypasta
+    {
+        if ($this->fixedSort !== null || $this->tagSlug !== null || filled($this->search) || $this->requestedTagSlugs()->isNotEmpty()) {
+            return null;
+        }
+
+        return app(GetFeaturedCopypasta::class)->handle($viewer);
+    }
+
+    /**
+     * @return EloquentCollection<int, Tag>
+     */
+    private function favoriteTags(User $viewer): EloquentCollection
+    {
+        return Tag::query()
+            ->join('user_favorite_tags', 'user_favorite_tags.tag_id', '=', 'tags.id')
+            ->where('user_favorite_tags.user_id', $viewer->getKey())
+            ->where('tags.is_active', true)
+            ->orderBy('tags.name')
+            ->get(['tags.id', 'tags.name', 'tags.slug', 'tags.color']);
+    }
+
+    /**
+     * Para ti ignores the search box and the tag filters, so opening it drops them from the URL: a shared link must not
+     * carry filters the tab does not apply.
+     */
+    private function clearFiltersOnForYou(): void
+    {
+        if ($this->isForYou()) {
+            $this->search = '';
+            $this->tags = '';
+        }
+    }
+
+    private function isForYou(): bool
+    {
+        if ($this->fixedSort !== null || $this->tagSlug !== null || $this->viewer() === null) {
+            return false;
+        }
+
+        return $this->activeTab() === self::FOR_YOU;
+    }
+
+    private function activeTab(): string
+    {
+        if ($this->sort !== '') {
+            return $this->sort;
+        }
+
+        return $this->defaultTab ??= ($this->viewer() !== null && app(TagAffinities::class)->defaultsToForYou($this->viewer()))
+            ? self::FOR_YOU
+            : FeedSort::Random->value;
+    }
+
     private function viewer(): ?User
     {
         $user = auth()->user();
@@ -196,7 +305,7 @@ class Feed extends Component
 
     private function activeSort(): FeedSort
     {
-        return FeedSort::tryFrom($this->fixedSort ?? $this->sort) ?? FeedSort::Random;
+        return FeedSort::tryFrom($this->fixedSort ?? $this->activeTab()) ?? FeedSort::Random;
     }
 
     /**
@@ -261,7 +370,7 @@ class Feed extends Component
             ? $this->randomPage($size)
             : $this->feedQuery()->limit($size)->get();
 
-        return $page->load(['user:id,username,anonymized_at', 'tags:id,name,slug,color']);
+        return $page->load(['user:id,username,title_key,anonymized_at,banned_at', 'tags:id,name,slug,color']);
     }
 
     /**

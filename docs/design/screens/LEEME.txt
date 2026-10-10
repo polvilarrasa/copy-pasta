@@ -1,0 +1,3 @@
+Capturas exportadas de Claude Design (opcional). Nombres sugeridos:
+01-feed-movil-claro.png, 01-feed-movil-oscuro.png, 01-feed-escritorio-claro.png...
+Si no hay capturas, Claude Code usa source/.

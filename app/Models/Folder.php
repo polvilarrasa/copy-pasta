@@ -15,10 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $id
  * @property int $user_id
  * @property string $name
+ * @property string|null $description
  * @property bool $is_default
  * @property int $position
  */
-#[Fillable(['user_id', 'name', 'is_default', 'position'])]
+#[Fillable(['user_id', 'name', 'description', 'is_default', 'position'])]
 class Folder extends Model
 {
     public const DEFAULT_NAME = 'Favoritos';

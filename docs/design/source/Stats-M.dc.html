@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Estadísticas móvil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit}
+table{border-collapse:collapse}
+</style>
+</helmet>
+<div style="width:390px;min-height:2300px;box-sizing:border-box;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;display:flex;flex-direction:column;{{themeVars}}">
+
+<header style="display:flex;align-items:center;gap:4px;padding:8px 8px 8px 8px">
+<button type="button" aria-label="Volver" style="width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+<h1 style="margin:0;flex:1;font-size:17px;font-weight:800">Mis estadísticas</h1>
+<span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--surface2);color:var(--muted);margin-right:8px">Privado</span>
+</header>
+
+<div style="display:flex;flex-direction:column;gap:16px;padding:8px 16px 40px 16px">
+
+<div style="display:flex;align-items:center;justify-content:space-between">
+<h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.015em">Últimos 30 días</h2>
+<span style="font-size:13px;color:var(--muted)">6 sep – 5 oct</span>
+</div>
+
+<div role="tablist" aria-label="Métrica" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+<button type="button" role="tab" aria-selected="{{k.on}}" onClick="{{k.pick}}" style="text-align:left;border-radius:16px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:4px;color:var(--ink);{{k.style}}">
+<span style="font-size:13px;font-weight:700;color:var(--muted)">{{k.label}}</span>
+<span style="font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">{{k.total}}</span>
+<span style="display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;{{k.deltaStyle}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{k.arrow}}"/></svg>{{k.delta}}<span style="font-weight:500;color:var(--muted)">vs. 30 días antes</span></span>
+</button>
+</sc-for>
+</div>
+
+<section style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+<div style="display:flex;flex-direction:column;gap:2px">
+<h3 style="margin:0;font-size:16px;font-weight:800">{{metricName}} por día</h3>
+<span style="font-size:14px;color:var(--muted);min-height:20px;font-variant-numeric:tabular-nums">{{readout}}</span>
+</div>
+<button type="button" onClick="{{toggleTable}}" aria-pressed="{{showTable}}" style="flex:none;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:transparent;color:var(--ink);font-size:13.5px;font-weight:700;cursor:pointer">{{tableLabel}}</button>
+</div>
+
+<sc-if value="{{showChart}}" hint-placeholder-val="{{ true }}">
+<div aria-hidden="true" style="position:relative;height:230px;margin-top:4px">
+<sc-for list="{{grid}}" as="g" hint-placeholder-count="4">
+<div style="position:absolute;left:0;right:0;bottom:{{g.bottom}};height:0;border-top:1px solid var(--border)"><span style="position:absolute;left:0;top:-18px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums">{{g.label}}</span></div>
+</sc-for>
+<div style="position:absolute;left:34px;right:0;top:0;bottom:0;display:flex;align-items:flex-end;gap:3px">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="30">
+<div onMouseEnter="{{b.enter}}" onMouseLeave="{{b.leave}}" style="flex:1;height:100%;display:flex;align-items:flex-end"><div style="width:100%;border-radius:3px 3px 0 0;background:var(--vote);height:{{b.h}};opacity:{{b.o}}"></div></div>
+</sc-for>
+</div>
+</div>
+<div aria-hidden="true" style="display:flex;justify-content:space-between;padding-left:34px;font-size:12px;color:var(--muted)">
+<span>6 sep</span><span>14 sep</span><span>22 sep</span><span>29 sep</span><span>5 oct</span>
+</div>
+</sc-if>
+
+<sc-if value="{{showTable}}" hint-placeholder-val="{{ false }}">
+<div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:12px">
+<table style="width:100%;font-size:14px;font-variant-numeric:tabular-nums">
+<caption style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{metricName}} por día</caption>
+<thead><tr style="background:var(--surface2);text-align:left"><th scope="col" style="padding:10px 12px;font-weight:700">Día</th><th scope="col" style="padding:10px 12px;font-weight:700;text-align:right">{{metricName}}</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<tr style="border-top:1px solid var(--border)"><td style="padding:10px 12px;color:var(--muted)">{{r.day}}</td><td style="padding:10px 12px;text-align:right;font-weight:700">{{r.v}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</sc-if>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:10px">
+<h2 style="margin:8px 0 0 0;font-size:20px;font-weight:800;letter-spacing:-0.015em">Tus mejores copy-pastas</h2>
+<div style="overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:16px">
+<table style="width:100%;min-width:420px;font-size:14px;font-variant-numeric:tabular-nums">
+<thead><tr style="text-align:left;color:var(--muted);font-size:12.5px"><th scope="col" style="padding:12px 14px;font-weight:700">Título</th><th scope="col" style="padding:12px 8px;font-weight:700;text-align:right">Copias</th><th scope="col" style="padding:12px 8px;font-weight:700;text-align:right">Votos</th><th scope="col" style="padding:12px 14px;font-weight:700;text-align:right">Guardados</th></tr></thead>
+<tbody>
+<sc-for list="{{top}}" as="t" hint-placeholder-count="5">
+<tr style="border-top:1px solid var(--border)"><th scope="row" style="padding:12px 14px;font-weight:600;text-align:left;max-width:190px">{{t.title}}</th><td style="padding:12px 8px;text-align:right">{{t.copies}}</td><td style="padding:12px 8px;text-align:right">{{t.votes}}</td><td style="padding:12px 14px;text-align:right">{{t.saves}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true}}'>
+const PAL = {
+  light: {bg:'#F3F2FF', surface:'#FFFFFF', surface2:'#EAE8FB', ink:'#15132B', muted:'#55527C', border:'#DAD7F3', accent:'#1B1740', 'on-accent':'#C6F432', vote:'#5B2EFF', ok:'#0B5A3C', bad:'#A3202B'},
+  dark: {bg:'#0E0D1A', surface:'#17162A', surface2:'#211F3A', ink:'#F1F0FF', muted:'#A5A2D0', border:'#2A2847', accent:'#C6F432', 'on-accent':'#0E0D1A', vote:'#C6F432', ok:'#6DF0B8', bad:'#FF8A8A'}
+};
+const MONTHS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const dayLabel = (i) => { const d = new Date(2026, 8, 6 + i); return d.getDate() + ' ' + MONTHS[d.getMonth()]; };
+const SERIES = {
+  copias: {name:'Copias', unit:'copias', base:130, amp:55, slope:4, delta:12},
+  votos: {name:'Votos', unit:'votos', base:34, amp:14, slope:0.8, delta:4},
+  guardados: {name:'Guardados', unit:'guardados', base:11, amp:5, slope:0.3, delta:-3},
+  compartidos: {name:'Compartidos', unit:'compartidos', base:4, amp:3, slope:0.15, delta:21}
+};
+Object.keys(SERIES).forEach((k, j) => {
+  const s = SERIES[k];
+  s.data = [];
+  for (let i = 0; i < 30; i++) {
+    const spike = (i % 9 === 5) ? s.amp * 1.4 : 0;
+    s.data.push(Math.max(0, Math.round(s.base + s.amp * Math.sin(i / 3.1 + j) + s.slope * i + spike)));
+  }
+});
+const nf = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const TOP = [
+  {title:'Aviso urgente sobre el táper de la nevera', copies:'1.920', votes:'4.210', saves:'312'},
+  {title:'Carta de amor a mi router', copies:'1.104', votes:'1.800', saves:'187'},
+  {title:'Carta de baja de un grupo de WhatsApp', copies:'846', votes:'962', saves:'140'},
+  {title:'El gato que te mira mientras copias', copies:'611', votes:'1.030', saves:'96'},
+  {title:'Comunicado sobre objeto no identificado', copies:'398', votes:'388', saves:'51'}
+];
+class Component extends DCLogic {
+  state = {metric:'copias', hover:null, table:false};
+  renderVals() {
+    const dark = this.props.dark ?? true;
+    const p = dark ? PAL.dark : PAL.light;
+    const themeVars = Object.keys(p).map((k) => '--' + k + ':' + p[k]).join(';');
+    const cur = SERIES[this.state.metric];
+    const max = Math.max.apply(null, cur.data);
+    const step = max > 200 ? 100 : (max > 60 ? 50 : (max > 20 ? 10 : 5));
+    const top = Math.ceil(max / step) * step;
+    const kpis = Object.keys(SERIES).map((k) => {
+      const s = SERIES[k];
+      const total = s.data.reduce((a, b) => a + b, 0);
+      const up = s.delta >= 0;
+      return {label:s.name, total:nf(total), delta:(up ? '+' : '−') + Math.abs(s.delta) + '%', arrow: up ? 'M12 19V6M6 11l6-6 6 6' : 'M12 5v13M6 13l6 6 6-6',
+        deltaStyle: up ? 'color:var(--ok)' : 'color:var(--bad)', on:k === this.state.metric, pick:() => this.setState({metric:k, hover:null}),
+        style: k === this.state.metric ? 'background:var(--surface);border:1.5px solid var(--vote)' : 'background:var(--surface);border:1px solid var(--border)'};
+    });
+    const h = this.state.hover;
+    const bars = cur.data.map((v, i) => ({h:Math.max(2, Math.round(v / top * 100)) + '%', o: h === null || h === i ? '1' : '0.55',
+      enter:() => this.setState({hover:i}), leave:() => this.setState({hover:null})}));
+    const grid = [0, 1, 2, 3].map((i) => ({bottom:(i / 3 * 100) + '%', label:nf(Math.round(top * i / 3))}));
+    const total = cur.data.reduce((a, b) => a + b, 0);
+    const readout = h === null ? 'Total: ' + nf(total) + ' ' + cur.unit : dayLabel(h) + ' · ' + nf(cur.data[h]) + ' ' + cur.unit;
+    const rows = cur.data.map((v, i) => ({day:dayLabel(i), v:nf(v)}));
+    return {themeVars, dark, kpis, bars, grid, readout, rows, top:TOP, metricName:cur.name,
+      showTable:this.state.table, showChart:!this.state.table,
+      tableLabel: this.state.table ? 'Ver gráfico' : 'Ver como tabla',
+      toggleTable:() => this.setState({table:!this.state.table})};
+  }
+}
+</script>
+</body>
+</html>

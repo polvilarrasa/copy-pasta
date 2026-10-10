@@ -55,4 +55,12 @@ class TrackedEventFactory extends Factory
     {
         return $this->state(fn (array $attributes) => ['created_at' => $createdAt]);
     }
+
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    public function withContext(array $context): static
+    {
+        return $this->state(fn (array $attributes) => ['context' => $context]);
+    }
 }

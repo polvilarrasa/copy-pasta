@@ -12,11 +12,16 @@ use Illuminate\Support\Facades\Gate;
 
 class UnbanUser
 {
+    public function __construct(private QueueAchievementEvaluation $queueEvaluation) {}
+
+    /**
+     * Lifts the ban and evaluates all the member's achievements, so what they met while banned is granted now.
+     */
     public function handle(User $actor, User $target): User
     {
         Gate::forUser($actor)->authorize('unban', $target);
 
-        return DB::transaction(function () use ($actor, $target): User {
+        $target = DB::transaction(function () use ($actor, $target): User {
             $target->forceFill([
                 'banned_at' => null,
                 'ban_reason' => null,
@@ -31,5 +36,9 @@ class UnbanUser
 
             return $target;
         });
+
+        $this->queueEvaluation->handle($target);
+
+        return $target;
     }
 }

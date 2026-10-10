@@ -11,7 +11,7 @@ use App\Models\User;
 test('copiar desde el feed registra la copia y confirma en pantalla', function (): void {
     $copypasta = Copypasta::factory()->create(['title' => 'Copia de prueba del navegador']);
 
-    $page = visit('/')->assertSee($copypasta->title);
+    $page = visitInteractive('/')->assertSee($copypasta->title);
 
     // Headless Chromium denies clipboard writes without a granted permission; the rest of the flow stays real.
     $page->script('navigator.clipboard.writeText = async () => {}');
@@ -29,10 +29,10 @@ test('votar a favor desde el feed suma un punto y deja marcado el voto', functio
 
     signInInBrowser($member);
 
-    visit('/')
+    visitInteractive('/')
         ->assertSee($copypasta->title)
-        ->press('▲')
-        ->assertAttribute('button[aria-label="'.__('public.vote.up').'"]', 'aria-pressed', 'true');
+        ->click('button[aria-label="'.__('ui.card.vote_up').'"]')
+        ->assertAttribute('button[aria-label="'.__('ui.card.vote_up').'"]', 'aria-pressed', 'true');
 
     expect($copypasta->refresh()->score)->toBe(1);
 });
@@ -44,11 +44,12 @@ test('guardar en una carpeta desde el feed la añade a esa carpeta', function ()
 
     signInInBrowser($member);
 
-    visit('/')
+    visitInteractive('/')
         ->assertSee($copypasta->title)
-        ->press(__('public.folders.button'))
+        ->click('article button[aria-haspopup="menu"]')
+        ->click(__('public.folders.button'))
         ->check('Recetas de prueba')
-        ->press(__('public.folders.save'))
+        ->press('@folders-save-button')
         ->waitForText(__('public.folders.saved'));
 
     expect($copypasta->folders()->whereKey($folder->getKey())->exists())->toBeTrue();
@@ -60,9 +61,10 @@ test('reportar un copy-pasta envía el motivo y confirma el envío', function ()
 
     signInInBrowser($reporter);
 
-    visit('/')
+    visitInteractive('/')
         ->assertSee($copypasta->title)
-        ->press(__('public.report.button'))
+        ->click('article button[aria-haspopup="menu"]')
+        ->click(__('public.report.button'))
         ->check(__('moderation.reasons.'.ReportReason::Spam->value))
         ->press(__('public.report.submit'))
         ->waitForText(__('public.report.sent'));

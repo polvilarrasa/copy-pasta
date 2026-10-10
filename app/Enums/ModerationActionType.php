@@ -26,4 +26,7 @@ enum ModerationActionType: string
     case EmailVerified = 'email_verified';
     case EmailUnverified = 'email_unverified';
     case VerificationResent = 'verification_resent';
+    case RevokeAchievement = 'revoke_achievement';
+    case RestoreAchievement = 'restore_achievement';
+    case ReplaceFeatured = 'replace_featured';
 }

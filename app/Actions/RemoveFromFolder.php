@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
+use App\Enums\AchievementMetric;
+use App\Enums\AffinitySignal;
 use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
@@ -16,7 +18,11 @@ class RemoveFromFolder
 {
     use LimitsFolderChanges;
 
-    public function __construct(private RecordEvent $recordEvent) {}
+    public function __construct(
+        private RecordEvent $recordEvent,
+        private AdjustAchievementProgress $adjustProgress,
+        private AdjustTagAffinity $adjustAffinity,
+    ) {}
 
     /**
      * Removes the copy-pasta from the folder, lowering the favorites counter when the folder is the default one.
@@ -29,8 +35,10 @@ class RemoveFromFolder
         Gate::forUser($user)->authorize('removeCopypasta', $folder);
         $this->ensureFolderChangeIsAllowed($user);
 
-        $removed = DB::transaction(function () use ($folder, $copypasta): bool {
-            $locked = Copypasta::query()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
+        $removed = DB::transaction(function () use ($user, $folder, $copypasta): bool {
+            // withTrashed(): a folder can hold a copy-pasta the author later deleted, shown as a placeholder, and
+            // removing that placeholder must still work.
+            $locked = Copypasta::withTrashed()->whereKey($copypasta->getKey())->lockForUpdate()->firstOrFail();
 
             if (! $folder->copypastas()->whereKey($locked->getKey())->exists()) {
                 return false;
@@ -40,6 +48,9 @@ class RemoveFromFolder
 
             if ($folder->is_default) {
                 $locked->forceFill(['favorites_count' => max(0, $locked->favorites_count - 1)])->save();
+
+                $this->adjustProgress->add($user, AchievementMetric::Saved, -1);
+                $this->adjustAffinity->handle($user, $locked, -AffinitySignal::Favorite->weight());
             }
 
             return true;

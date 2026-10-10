@@ -53,6 +53,18 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check for large files in the commits
+        # Fails when a commit adds a file over 1 MB that is not justified in .github/large-files-allowed.txt.
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "No base commit to compare against, skipping."
+          else
+            bash .github/scripts/check-large-files.sh "$BASE_SHA" "$GITHUB_SHA"
+          fi
 
       - name: Setup PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
@@ -67,7 +79,18 @@ jobs:
           node-version: '22'
 
       - name: Setup Application
-        run: composer setup
+        run: |
+          composer install --no-interaction --prefer-dist
+          cp -n .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Build the frontend assets
+        # The browser tests render real pages, so the Vite manifest must exist before they run.
+        run: npm run build
 
       - name: Install the browser for browser tests
         run: npx playwright install --with-deps chromium

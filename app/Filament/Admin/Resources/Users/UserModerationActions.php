@@ -141,7 +141,7 @@ class UserModerationActions
             ->action(function (User $record) {
                 app(ImpersonateUser::class)->handle(self::actor(), $record);
 
-                return redirect()->to(url('/app'));
+                return redirect()->route('copypastas.mine');
             });
     }
 

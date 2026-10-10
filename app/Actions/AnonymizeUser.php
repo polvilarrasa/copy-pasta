@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\AchievementMetric;
 use App\Enums\ModerationActionType;
 use App\Enums\Role;
 use App\Models\Copypasta;
@@ -32,6 +33,8 @@ class AnonymizeUser
 
             TrackedEvent::query()->where('user_id', $user->getKey())->update(['user_id' => null]);
 
+            $this->deleteFeedData($user);
+
             $user->folders()->delete();
             $user->passkeys()->delete();
 
@@ -47,6 +50,7 @@ class AnonymizeUser
                 'two_factor_confirmed_at' => null,
                 'remember_token' => null,
                 'anonymized_at' => now(),
+                'title_key' => null,
             ])->save();
 
             UsernameHistory::query()->where('user_id', $user->getKey())->delete();
@@ -80,6 +84,8 @@ class AnonymizeUser
             Copypasta::query()->whereKey($downvotedIds)->decrement('downvotes_count');
         }
 
+        $this->retireAchievementUpvotes($user);
+
         Vote::query()->where('user_id', $user->getKey())->delete();
 
         $affectedIds = $upvotedIds->merge($downvotedIds)->unique();
@@ -88,6 +94,35 @@ class AnonymizeUser
             Copypasta::query()
                 ->whereKey($affectedIds)
                 ->update(['score' => DB::raw('upvotes_count - downvotes_count')]);
+        }
+    }
+
+    /**
+     * The affinity, favorite tags, copies and dismissals of the account describe a person who is gone.
+     */
+    private function deleteFeedData(User $user): void
+    {
+        foreach (['user_tag_affinities', 'user_favorite_tags', 'user_copied_copypastas', 'copypasta_dismissals'] as $table) {
+            DB::table($table)->where('user_id', $user->getKey())->delete();
+        }
+    }
+
+    /**
+     * The upvotes of the retired account that counted towards its authors' achievements stop counting, like the
+     * counters above. Achievements already earned stay.
+     */
+    private function retireAchievementUpvotes(User $user): void
+    {
+        $counted = Vote::query()
+            ->join('copypastas', 'copypastas.id', '=', 'votes.copypasta_id')
+            ->where('votes.user_id', $user->getKey())
+            ->where('votes.counts_for_achievements', true)
+            ->groupBy('copypastas.user_id')
+            ->selectRaw('copypastas.user_id as author_id, count(*) as total')
+            ->get();
+
+        foreach ($counted as $row) {
+            app(AdjustAchievementProgress::class)->add((int) $row->getAttribute('author_id'), AchievementMetric::UpvotesReceived, -((int) $row->getAttribute('total')));
         }
     }
 

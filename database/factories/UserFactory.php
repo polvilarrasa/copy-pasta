@@ -3,10 +3,12 @@
 namespace Database\Factories;
 
 use App\Enums\Role;
+use App\Enums\Theme;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 
 /**
  * @extends Factory<User>
@@ -30,7 +32,9 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'role' => Role::User,
             'show_nsfw' => false,
+            'theme' => Theme::System,
             'email_verified_at' => now(),
+            'onboarded_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
@@ -50,12 +54,21 @@ class UserFactory extends Factory
     }
 
     /**
+     * A member who was never offered the welcome screen.
+     */
+    public function notOnboarded(): static
+    {
+        return $this->state(fn (array $attributes) => ['onboarded_at' => null]);
+    }
+
+    /**
      * Indicate that the model has two-factor authentication configured.
      */
     public function withTwoFactor(): static
     {
         return $this->state(fn (array $attributes) => [
-            'two_factor_secret' => encrypt('secret'),
+            // A real, valid secret so tests can generate a real TOTP code, not just the recovery-code fallback.
+            'two_factor_secret' => encrypt(app(TwoFactorAuthenticationProvider::class)->generateSecretKey()),
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
         ]);

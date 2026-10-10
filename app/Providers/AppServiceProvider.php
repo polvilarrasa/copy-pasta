@@ -3,12 +3,17 @@
 namespace App\Providers;
 
 use App\Listeners\CreateDefaultFolder;
+use App\Listeners\ForgetUnreadNotificationCount;
 use App\Models\User;
+use App\Policies\DatabaseNotificationPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\Events\NotificationSent;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -38,6 +43,16 @@ class AppServiceProvider extends ServiceProvider
         $this->configureGates();
         $this->configureListeners();
         $this->configureRateLimiting();
+        $this->configureBlade();
+    }
+
+    /**
+     * Named Blade directives. The theme directive writes the stored preference onto the <html> element, so pages
+     * paint in the right mode without a script.
+     */
+    protected function configureBlade(): void
+    {
+        Blade::directive('themeAttributes', fn (): string => '<?php echo app(\App\Support\ThemePreference::class)->htmlAttributes(); ?>');
     }
 
     /**
@@ -55,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
     protected function configureListeners(): void
     {
         Event::listen(Registered::class, CreateDefaultFolder::class);
+        Event::listen(NotificationSent::class, ForgetUnreadNotificationCount::class);
     }
 
     /**
@@ -97,5 +113,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('access-admin', fn (User $user): bool => $user->isStaff());
 
         Gate::define('manage-users', fn (User $user): bool => $user->isAdmin());
+
+        Gate::policy(DatabaseNotification::class, DatabaseNotificationPolicy::class);
     }
 }

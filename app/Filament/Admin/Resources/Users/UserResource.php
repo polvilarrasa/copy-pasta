@@ -8,6 +8,7 @@ use App\Filament\Admin\Resources\Users\Pages\CreateUser;
 use App\Filament\Admin\Resources\Users\Pages\EditUser;
 use App\Filament\Admin\Resources\Users\Pages\ListUsers;
 use App\Filament\Admin\Resources\Users\Pages\ViewUser;
+use App\Filament\Admin\Resources\Users\RelationManagers\AchievementsRelationManager;
 use App\Filament\Admin\Resources\Users\RelationManagers\CopypastasRelationManager;
 use App\Filament\Admin\Resources\Users\RelationManagers\ModerationLogRelationManager;
 use App\Filament\Admin\Resources\Users\RelationManagers\ReportsSentRelationManager;
@@ -59,6 +60,7 @@ class UserResource extends Resource
     {
         return [
             CopypastasRelationManager::class,
+            AchievementsRelationManager::class,
             ReportsSentRelationManager::class,
             ModerationLogRelationManager::class,
         ];

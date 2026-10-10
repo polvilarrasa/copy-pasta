@@ -1,0 +1,69 @@
+/* copy-pastas · tokens "Medianoche"
+   Claro por defecto; oscuro con la clase .dark en <html> (o prefers-color-scheme si lo prefieres).
+   Los mismos valores se usan en Filament (ver tailwind.config.js, bloque FILAMENT). */
+
+:root {
+  --cp-bg: #F3F2FF;
+  --cp-surface: #FFFFFF;
+  --cp-surface-2: #EAE8FB;
+  --cp-border: #DAD7F3;
+  --cp-ink: #15132B;
+  --cp-muted: #55527C;
+  --cp-accent: #1B1740;       /* botón Copiar, Publicar, pestaña activa */
+  --cp-on-accent: #C6F432;
+  --cp-vote: #5B2EFF;         /* voto activo, enlaces, foco, gráficos */
+  --cp-on-vote: #FFFFFF;
+  --cp-ach: #5B2EFF;          /* título de logro */
+  --cp-pink: #E5338B;         /* punto de notificación */
+
+  --cp-ok: #0B5A3C;   --cp-ok-bg: #CFF5E3;
+  --cp-warn: #5E4D00; --cp-warn-bg: #FAF0B5;
+  --cp-bad: #A3202B;  --cp-bad-bg: #FFD9DC;
+  --cp-info: #40259E; --cp-info-bg: #E0D9FF;
+
+  /* etiquetas: t1 menta, t2 naranja, t3 violeta, t4 amarillo, t5 rosa */
+  --cp-t1-bg: #CFF5E3; --cp-t1-fg: #0B5A3C;
+  --cp-t2-bg: #FFE0C9; --cp-t2-fg: #8A3A07;
+  --cp-t3-bg: #E0D9FF; --cp-t3-fg: #40259E;
+  --cp-t4-bg: #FAF0B5; --cp-t4-fg: #5E4D00;
+  --cp-t5-bg: #FFD9EA; --cp-t5-fg: #99245F;
+
+  --cp-unread: rgba(91, 46, 255, 0.07);
+  --cp-scrim: rgba(21, 19, 43, 0.35);
+  --cp-shadow-day: 0 10px 36px rgba(91, 46, 255, 0.16);
+  --cp-shadow-pop: 0 16px 48px rgba(21, 19, 43, 0.18);
+}
+
+.dark {
+  --cp-bg: #0E0D1A;
+  --cp-surface: #17162A;
+  --cp-surface-2: #211F3A;
+  --cp-border: #2A2847;
+  --cp-ink: #F1F0FF;
+  --cp-muted: #A5A2D0;
+  --cp-accent: #C6F432;
+  --cp-on-accent: #0E0D1A;
+  --cp-vote: #C6F432;
+  --cp-on-vote: #0E0D1A;
+  --cp-ach: #FF8EC4;
+  --cp-pink: #FF5CA8;
+
+  --cp-ok: #6DF0B8;   --cp-ok-bg: #12392F;
+  --cp-warn: #F5E26B; --cp-warn-bg: #433A0A;
+  --cp-bad: #FF8A8A;  --cp-bad-bg: #4D1A22;
+  --cp-info: #B9A8FF; --cp-info-bg: #2B2263;
+
+  --cp-t1-bg: #12392F; --cp-t1-fg: #6DF0B8;
+  --cp-t2-bg: #4A2410; --cp-t2-fg: #FFB070;
+  --cp-t3-bg: #2B2263; --cp-t3-fg: #B9A8FF;
+  --cp-t4-bg: #433A0A; --cp-t4-fg: #F5E26B;
+  --cp-t5-bg: #4A1634; --cp-t5-fg: #FF9CCB;
+
+  --cp-unread: rgba(198, 244, 50, 0.06);
+  --cp-scrim: rgba(5, 4, 14, 0.6);
+  --cp-shadow-day: 0 10px 36px rgba(198, 244, 50, 0.16);
+  --cp-shadow-pop: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+/* Fuentes (autoalojables desde Google Fonts):
+   Bricolage Grotesque variable (opsz 12–96, wght 400–800) y JetBrains Mono 400/500. */

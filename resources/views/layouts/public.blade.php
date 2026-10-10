@@ -1,24 +1,20 @@
 <!DOCTYPE html>
 @php
     $currentUser = auth()->user();
-    $publishUrl = match (true) {
-        $currentUser === null => route('login'),
-        $currentUser->hasVerifiedEmail() => url('/app/copypastas/create'),
-        default => route('verification.notice'),
-    };
+    $publishUrl = $currentUser === null ? route('login') : route('copypastas.create');
 @endphp
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @themeAttributes>
 <head>
     @include('partials.head', ['title' => $title ?? null])
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('meta')
     @livewireStyles
 </head>
-<body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
+<body class="min-h-screen bg-bg text-ink antialiased">
     <x-impersonation-banner />
-    <header class="border-b border-zinc-200 bg-white">
-        <div class="mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-4 py-3">
-            <a href="{{ route('home') }}" class="text-lg font-bold tracking-tight">{{ config('app.name') }}</a>
+    <header class="border-b border-border bg-surface">
+        <div class="relative mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-4 py-3">
+            <x-app-logo href="{{ route('home') }}" />
 
             <form method="GET" action="{{ route('home') }}" role="search" class="order-last w-full sm:order-none sm:flex-1">
                 <input
@@ -27,28 +23,24 @@
                     value="{{ request('q') }}"
                     placeholder="{{ __('public.layout.search_placeholder') }}"
                     aria-label="{{ __('public.layout.search_placeholder') }}"
-                    class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
+                    class="h-12 w-full rounded-lg border border-border bg-surface px-3.5 text-md text-ink placeholder:text-muted focus-visible:outline-none focus-visible:shadow-focus"
                 >
             </form>
 
             <nav class="flex items-center gap-2 text-sm">
-                <a href="{{ $publishUrl }}"
-                   class="rounded-lg bg-zinc-900 px-3 py-2 font-medium text-white hover:bg-zinc-700">
+                <a href="{{ $publishUrl }}" class="flex min-h-11 items-center rounded-lg bg-accent px-4 font-bold text-on-accent">
                     {{ __('public.layout.publish') }}
                 </a>
 
                 @auth
                     @can('access-admin')
-                        <a href="{{ url('/admin') }}" class="px-2 py-2 text-zinc-600 hover:text-zinc-900">{{ __('public.layout.admin') }}</a>
+                        <a href="{{ url('/admin') }}" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.admin') }}</a>
                     @endcan
-                    <a href="{{ url('/app') }}" class="px-2 py-2 text-zinc-600 hover:text-zinc-900">{{ __('public.layout.dashboard') }}</a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="px-2 py-2 text-zinc-600 hover:text-zinc-900">{{ __('public.layout.logout') }}</button>
-                    </form>
+                    <livewire:notification-bell />
+                    <x-desktop-user-menu />
                 @else
-                    <a href="{{ route('login') }}" class="px-2 py-2 text-zinc-600 hover:text-zinc-900">{{ __('public.layout.login') }}</a>
-                    <a href="{{ route('register') }}" class="px-2 py-2 text-zinc-600 hover:text-zinc-900">{{ __('public.layout.register') }}</a>
+                    <a href="{{ route('login') }}" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.login') }}</a>
+                    <a href="{{ route('register') }}" class="flex min-h-11 items-center px-2 font-semibold text-muted hover:text-ink">{{ __('public.layout.register') }}</a>
                 @endauth
             </nav>
         </div>
@@ -58,23 +50,13 @@
         {{ $slot }}
     </main>
 
-    <footer class="mx-auto max-w-3xl px-4 py-8 text-center text-xs text-zinc-500">
-        <a href="{{ route('normas') }}" class="underline hover:text-zinc-900">{{ __('public.layout.rules') }}</a>
-        <a href="{{ route('privacy') }}" class="underline hover:text-zinc-900">{{ __('public.layout.privacy') }}</a>
-        <a href="{{ route('cookies') }}" class="underline hover:text-zinc-900">{{ __('public.layout.cookies') }}</a>
+    <footer class="mx-auto max-w-3xl px-4 py-8 text-center text-xs text-muted">
+        <a href="{{ route('normas') }}" class="underline hover:text-ink">{{ __('public.layout.rules') }}</a>
+        <a href="{{ route('privacy') }}" class="underline hover:text-ink">{{ __('public.layout.privacy') }}</a>
+        <a href="{{ route('cookies') }}" class="underline hover:text-ink">{{ __('public.layout.cookies') }}</a>
     </footer>
 
-    <div
-        x-data="{ show: false, message: '' }"
-        x-on:toast.window="message = $event.detail; show = true; setTimeout(() => show = false, 2500)"
-        x-show="show"
-        x-cloak
-        role="status"
-        aria-live="polite"
-        class="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4"
-    >
-        <div class="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg" x-text="message"></div>
-    </div>
+    <x-ui.toast />
 
     <div
         x-data="{ open: false, message: '' }"
@@ -84,17 +66,17 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="login-modal-title"
-        class="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/50 px-4"
+        class="fixed inset-0 z-40 flex items-center justify-center bg-scrim px-4"
         x-on:keydown.escape.window="open = false"
     >
-        <div class="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" x-on:click.outside="open = false">
-            <h2 id="login-modal-title" class="text-lg font-semibold">{{ __('public.login_modal.title') }}</h2>
-            <p class="mt-2 text-sm text-zinc-600" x-text="message"></p>
+        <div class="w-full max-w-sm rounded-3xl border border-border bg-surface p-5 text-ink shadow-pop" x-on:click.outside="open = false">
+            <h2 id="login-modal-title" class="text-xl font-extrabold">{{ __('public.login_modal.title') }}</h2>
+            <p class="mt-3 text-base text-muted" x-text="message"></p>
             <div class="mt-5 flex justify-end gap-2">
-                <button type="button" x-on:click="open = false" class="rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
+                <x-ui.button type="button" variant="ghost" x-on:click="open = false">
                     {{ __('public.login_modal.cancel') }}
-                </button>
-                <a href="{{ route('login') }}" class="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700">
+                </x-ui.button>
+                <a href="{{ route('login') }}" class="flex min-h-11 items-center rounded-lg bg-accent px-4 font-bold text-on-accent">
                     {{ __('public.login_modal.confirm') }}
                 </a>
             </div>

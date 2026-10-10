@@ -44,3 +44,5 @@ yarn-error.log
 
 # Screenshots written by failing browser tests
 /tests/Browser/Screenshots
+
+.DS_Store

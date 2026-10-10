@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\NotificationType;
 use App\Enums\Role;
+use App\Enums\Theme;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
@@ -17,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
 use Lab404\Impersonate\Models\Impersonate;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -31,6 +34,10 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $email
  * @property Role $role
  * @property bool $show_nsfw
+ * @property Theme $theme
+ * @property array<string, bool>|null $notification_prefs
+ * @property string|null $title_key
+ * @property Carbon|null $onboarded_at
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $banned_at
  * @property string|null $ban_reason
@@ -47,6 +54,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasName, MustVerifyEmail, PasskeyUser
 {
+    /** Age an account needs before its upvotes count towards its authors' achievements. */
+    public const ACHIEVEMENT_VOTE_MIN_AGE_HOURS = 72;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Impersonate, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
 
@@ -67,6 +77,9 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'is_owner' => 'boolean',
             'password' => 'hashed',
             'username_changed_at' => 'datetime',
+            'theme' => Theme::class,
+            'notification_prefs' => 'array',
+            'onboarded_at' => 'datetime',
         ];
     }
 
@@ -141,6 +154,26 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
         return sha1((string) $this->password);
     }
 
+    /**
+     * Banned, deleted and anonymized accounts get no notifications of any type.
+     */
+    public function canBeNotified(): bool
+    {
+        return ! $this->isBanned() && ! $this->isAnonymized() && ! $this->trashed();
+    }
+
+    /**
+     * Every type is on until the member switches it off in settings; mandatory types cannot be switched off.
+     */
+    public function wantsNotification(NotificationType $type): bool
+    {
+        if (! $this->canBeNotified()) {
+            return false;
+        }
+
+        return $type->isMandatory() || ($this->notification_prefs[$type->value] ?? true);
+    }
+
     public function isAnonymized(): bool
     {
         return $this->anonymized_at !== null;
@@ -152,6 +185,45 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     public function displayName(): string
     {
         return $this->isAnonymized() ? __('public.card.deleted_user') : $this->username;
+    }
+
+    /**
+     * The title shown next to the name in cards, detail and profile. It comes from the user row and lang/es, so it
+     * costs no query. Banned and anonymized accounts show none.
+     */
+    public function titleLabel(): ?string
+    {
+        if ($this->title_key === null || $this->isBanned() || $this->isAnonymized()) {
+            return null;
+        }
+
+        return Lang::has('achievements.titles.'.$this->title_key) ? __('achievements.titles.'.$this->title_key) : null;
+    }
+
+    /**
+     * Banned, deleted and anonymized accounts are not evaluated for achievements.
+     */
+    public function canEarnAchievements(): bool
+    {
+        return $this->canBeNotified();
+    }
+
+    /**
+     * Upvotes only count towards achievements when they come from a verified account at least 72 hours old.
+     */
+    public function givesAchievementUpvotes(): bool
+    {
+        return $this->hasVerifiedEmail()
+            && $this->created_at !== null
+            && $this->created_at->lte(now()->subHours(self::ACHIEVEMENT_VOTE_MIN_AGE_HOURS));
+    }
+
+    /**
+     * @return HasMany<UserAchievement, $this>
+     */
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(UserAchievement::class);
     }
 
     /**
@@ -245,7 +317,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     }
 
     /**
-     * Staff can use the admin panel and verified members can use the user panel; banned users use neither.
+     * Only staff use the admin panel; banned users use neither it nor the public user area.
      */
     public function canAccessPanel(Panel $panel): bool
     {
@@ -255,7 +327,6 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
 
         return match ($panel->getId()) {
             'admin' => $this->isStaff(),
-            'app' => true,
             default => false,
         };
     }

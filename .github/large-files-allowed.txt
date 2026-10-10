@@ -1,0 +1,4 @@
+# Files over 1 MB that are allowed in the repository, checked by .github/scripts/check-large-files.sh.
+# One path per line, followed by " # " and the reason it has to be versioned. Lines without a reason fail the check.
+# Example:
+# docs/legal/contract.pdf # signed copy the deployment checks against

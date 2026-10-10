@@ -29,7 +29,7 @@ test('votar a favor registra un evento vote_up con el contexto de la lista', fun
         ->type->toBe(EventType::VoteUp)
         ->user_id->toBe($member->getKey())
         ->copypasta_id->toBe($copypasta->getKey())
-        ->context->toEqualCanonicalizing(['source' => 'random', 'position' => 2]);
+        ->context->toEqualCanonicalizing(['source' => 'random', 'position' => 2, 'previous' => null, 'next' => 1]);
 });
 
 test('repetir el mismo voto registra vote_removed y el voto contrario registra vote_down', function (): void {

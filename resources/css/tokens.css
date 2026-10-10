@@ -1,0 +1,242 @@
+/*
+ * Design tokens "Medianoche". Source of truth: docs/design/tokens.css.
+ *
+ * Light is the default. Dark applies in three cases, all without JavaScript:
+ *   - <html data-theme="dark"> (the user chose dark),
+ *   - the system is dark and the user did not choose light (no data-theme, or the stored "system"),
+ *   - any element with data-theme="dark" (used by /_componentes to show both modes side by side).
+ * The semantic names in @theme inline resolve through these variables, so bg-surface or text-ink follow the mode.
+ */
+
+:root,
+[data-theme='light'] {
+    --cp-bg: #F3F2FF;
+    --cp-surface: #FFFFFF;
+    --cp-surface-2: #EAE8FB;
+    --cp-border: #DAD7F3;
+    --cp-ink: #15132B;
+    --cp-muted: #55527C;
+    --cp-accent: #1B1740;
+    --cp-on-accent: #C6F432;
+    --cp-vote: #5B2EFF;
+    --cp-on-vote: #FFFFFF;
+    --cp-ach: #5B2EFF;
+    --cp-pink: #E5338B;
+
+    --cp-ok: #0B5A3C;
+    --cp-ok-bg: #CFF5E3;
+    --cp-warn: #5E4D00;
+    --cp-warn-bg: #FAF0B5;
+    --cp-bad: #A3202B;
+    --cp-bad-bg: #FFD9DC;
+    --cp-info: #40259E;
+    --cp-info-bg: #E0D9FF;
+
+    /* Tags: t1 mint, t2 orange, t3 violet, t4 yellow, t5 pink. */
+    --cp-t1-bg: #CFF5E3;
+    --cp-t1-fg: #0B5A3C;
+    --cp-t2-bg: #FFE0C9;
+    --cp-t2-fg: #8A3A07;
+    --cp-t3-bg: #E0D9FF;
+    --cp-t3-fg: #40259E;
+    --cp-t4-bg: #FAF0B5;
+    --cp-t4-fg: #5E4D00;
+    --cp-t5-bg: #FFD9EA;
+    --cp-t5-fg: #99245F;
+
+    --cp-unread: rgba(91, 46, 255, 0.07);
+    --cp-scrim: rgba(21, 19, 43, 0.35);
+    --cp-shadow-day: 0 10px 36px rgba(91, 46, 255, 0.16);
+    --cp-shadow-pop: 0 16px 48px rgba(21, 19, 43, 0.18);
+
+    /* The 2FA QR code is plain black-on-white; invert it so it stays legible on a dark surface. */
+    --cp-qr-invert: none;
+}
+
+[data-theme='dark'] {
+    --cp-bg: #0E0D1A;
+    --cp-surface: #17162A;
+    --cp-surface-2: #211F3A;
+    --cp-border: #2A2847;
+    --cp-ink: #F1F0FF;
+    --cp-muted: #A5A2D0;
+    --cp-accent: #C6F432;
+    --cp-on-accent: #0E0D1A;
+    --cp-vote: #C6F432;
+    --cp-on-vote: #0E0D1A;
+    --cp-ach: #FF8EC4;
+    --cp-pink: #FF5CA8;
+
+    --cp-ok: #6DF0B8;
+    --cp-ok-bg: #12392F;
+    --cp-warn: #F5E26B;
+    --cp-warn-bg: #433A0A;
+    --cp-bad: #FF8A8A;
+    --cp-bad-bg: #4D1A22;
+    --cp-info: #B9A8FF;
+    --cp-info-bg: #2B2263;
+
+    --cp-t1-bg: #12392F;
+    --cp-t1-fg: #6DF0B8;
+    --cp-t2-bg: #4A2410;
+    --cp-t2-fg: #FFB070;
+    --cp-t3-bg: #2B2263;
+    --cp-t3-fg: #B9A8FF;
+    --cp-t4-bg: #433A0A;
+    --cp-t4-fg: #F5E26B;
+    --cp-t5-bg: #4A1634;
+    --cp-t5-fg: #FF9CCB;
+
+    --cp-unread: rgba(198, 244, 50, 0.06);
+    --cp-scrim: rgba(5, 4, 14, 0.6);
+    --cp-shadow-day: 0 10px 36px rgba(198, 244, 50, 0.16);
+    --cp-shadow-pop: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+    --cp-qr-invert: invert(1) brightness(1.5);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --cp-bg: #0E0D1A;
+        --cp-surface: #17162A;
+        --cp-surface-2: #211F3A;
+        --cp-border: #2A2847;
+        --cp-ink: #F1F0FF;
+        --cp-muted: #A5A2D0;
+        --cp-accent: #C6F432;
+        --cp-on-accent: #0E0D1A;
+        --cp-vote: #C6F432;
+        --cp-on-vote: #0E0D1A;
+        --cp-ach: #FF8EC4;
+        --cp-pink: #FF5CA8;
+
+        --cp-ok: #6DF0B8;
+        --cp-ok-bg: #12392F;
+        --cp-warn: #F5E26B;
+        --cp-warn-bg: #433A0A;
+        --cp-bad: #FF8A8A;
+        --cp-bad-bg: #4D1A22;
+        --cp-info: #B9A8FF;
+        --cp-info-bg: #2B2263;
+
+        --cp-t1-bg: #12392F;
+        --cp-t1-fg: #6DF0B8;
+        --cp-t2-bg: #4A2410;
+        --cp-t2-fg: #FFB070;
+        --cp-t3-bg: #2B2263;
+        --cp-t3-fg: #B9A8FF;
+        --cp-t4-bg: #433A0A;
+        --cp-t4-fg: #F5E26B;
+        --cp-t5-bg: #4A1634;
+        --cp-t5-fg: #FF9CCB;
+
+        --cp-unread: rgba(198, 244, 50, 0.06);
+        --cp-scrim: rgba(5, 4, 14, 0.6);
+        --cp-shadow-day: 0 10px 36px rgba(198, 244, 50, 0.16);
+        --cp-shadow-pop: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+        --cp-qr-invert: invert(1) brightness(1.5);
+    }
+}
+
+@theme inline {
+    --color-bg: var(--cp-bg);
+    --color-surface: var(--cp-surface);
+    --color-surface-2: var(--cp-surface-2);
+    --color-border: var(--cp-border);
+    --color-ink: var(--cp-ink);
+    --color-muted: var(--cp-muted);
+    --color-accent: var(--cp-accent);
+    --color-on-accent: var(--cp-on-accent);
+    --color-vote: var(--cp-vote);
+    --color-on-vote: var(--cp-on-vote);
+    --color-ach: var(--cp-ach);
+    --color-pink: var(--cp-pink);
+    --color-ok: var(--cp-ok);
+    --color-ok-bg: var(--cp-ok-bg);
+    --color-warn: var(--cp-warn);
+    --color-warn-bg: var(--cp-warn-bg);
+    --color-bad: var(--cp-bad);
+    --color-bad-bg: var(--cp-bad-bg);
+    --color-info: var(--cp-info);
+    --color-info-bg: var(--cp-info-bg);
+    --color-unread: var(--cp-unread);
+    --color-scrim: var(--cp-scrim);
+    --color-t1-bg: var(--cp-t1-bg);
+    --color-t1-fg: var(--cp-t1-fg);
+    --color-t2-bg: var(--cp-t2-bg);
+    --color-t2-fg: var(--cp-t2-fg);
+    --color-t3-bg: var(--cp-t3-bg);
+    --color-t3-fg: var(--cp-t3-fg);
+    --color-t4-bg: var(--cp-t4-bg);
+    --color-t4-fg: var(--cp-t4-fg);
+    --color-t5-bg: var(--cp-t5-bg);
+    --color-t5-fg: var(--cp-t5-fg);
+
+    --shadow-day: var(--cp-shadow-day);
+    --shadow-pop: var(--cp-shadow-pop);
+    --shadow-focus: 0 0 0 2px var(--cp-bg), 0 0 0 4px var(--cp-vote);
+
+    --font-sans: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+    /* Initials on the generated avatar gradient, which is pale in both modes. */
+    --color-avatar-ink: #15132B;
+}
+
+/* Isolates the direction of user text (Fase 13), without an arbitrary value. */
+@utility bidi-isolate {
+    unicode-bidi: isolate;
+}
+
+/* Type scale: size / line height / weight / tracking, as in docs/design/source/Tokens.dc.html. */
+@theme {
+    --text-xs: 12px;
+    --text-xs--line-height: 16px;
+    --text-xs--font-weight: 600;
+    --text-sm: 14px;
+    --text-sm--line-height: 20px;
+    --text-sm--font-weight: 600;
+    --text-base: 15px;
+    --text-base--line-height: 23px;
+    --text-base--font-weight: 400;
+    --text-md: 16px;
+    --text-md--line-height: 24px;
+    --text-md--font-weight: 700;
+    --text-lg: 19px;
+    --text-lg--line-height: 24px;
+    --text-lg--font-weight: 700;
+    --text-lg--letter-spacing: -0.015em;
+    --text-xl: 22px;
+    --text-xl--line-height: 28px;
+    --text-xl--font-weight: 800;
+    --text-xl--letter-spacing: -0.03em;
+    --text-2xl: 28px;
+    --text-2xl--line-height: 34px;
+    --text-2xl--font-weight: 800;
+    --text-2xl--letter-spacing: -0.025em;
+    --text-3xl: 36px;
+    --text-3xl--line-height: 40px;
+    --text-3xl--font-weight: 800;
+    --text-3xl--letter-spacing: -0.035em;
+    --text-4xl: 52px;
+    --text-4xl--line-height: 54px;
+    --text-4xl--font-weight: 800;
+    --text-4xl--letter-spacing: -0.04em;
+
+    --leading-ascii: 1.3;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 14px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+    --radius-3xl: 24px;
+}
+
+@layer base {
+    body {
+        background-color: var(--cp-bg);
+        color: var(--cp-ink);
+    }
+}

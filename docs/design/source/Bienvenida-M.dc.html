@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Bienvenida móvil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit}
+button:disabled{cursor:not-allowed}
+</style>
+</helmet>
+<div style="width:390px;min-height:1400px;box-sizing:border-box;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;display:flex;flex-direction:column;{{themeVars}}">
+
+<header style="display:flex;align-items:center;padding:12px 16px">
+<div style="display:flex;align-items:center;gap:8px;flex:1">
+<span aria-hidden="true" style="width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15"/></svg></span>
+<span style="font-size:22px;font-weight:800;letter-spacing:-0.03em">copy-pastas</span>
+</div>
+<button type="button" style="height:44px;padding:0 8px;border:0;background:transparent;color:var(--muted);font-size:15px;font-weight:700;cursor:pointer">Saltar</button>
+</header>
+
+<section style="display:flex;flex-direction:column;gap:12px;padding:28px 16px 8px 16px">
+<h1 style="margin:0;font-size:36px;line-height:1.05;font-weight:800;letter-spacing:-0.035em;text-wrap:balance">¿Qué te hace gracia?</h1>
+<p style="margin:0;font-size:16px;line-height:1.5;color:var(--muted)">Elige tus etiquetas favoritas y montamos tu pestaña <strong style="color:var(--ink)">Para ti</strong>. Puedes cambiarlas cuando quieras.</p>
+</section>
+
+<section aria-label="Etiquetas" style="display:flex;flex-direction:column;gap:14px;padding:20px 16px 8px 16px">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<span style="font-size:14px;font-weight:700">{{count}} elegidas</span>
+<span style="font-size:13px;color:var(--muted)">Mínimo 3</span>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:10px">
+<sc-for list="{{tags}}" as="t" hint-placeholder-count="14">
+<button type="button" aria-pressed="{{t.on}}" onClick="{{t.pick}}" style="height:48px;padding:0 18px;border-radius:999px;border:0;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;{{t.style}}">
+<sc-if value="{{t.on}}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></sc-if>{{t.label}}</button>
+</sc-for>
+</div>
+</section>
+
+<div style="display:flex;flex-direction:column;gap:8px;padding:28px 16px 40px 16px">
+<button type="button" disabled="{{disabled}}" style="width:100%;height:56px;border:0;border-radius:16px;font-size:17px;font-weight:800;{{cta}}">{{ctaLabel}}</button>
+<p style="margin:0;text-align:center;font-size:13px;color:var(--muted)">Podrás editar tus favoritas desde el feed.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true}}'>
+const PAL = {
+  light: {bg:'#F3F2FF', surface:'#FFFFFF', surface2:'#EAE8FB', ink:'#15132B', muted:'#55527C', border:'#DAD7F3', accent:'#1B1740', 'on-accent':'#C6F432', vote:'#5B2EFF', off:'#CFCBEA', 'on-off':'#55527C',
+    t1bg:'#CFF5E3', t1fg:'#0B5A3C', t2bg:'#FFE0C9', t2fg:'#8A3A07', t3bg:'#E0D9FF', t3fg:'#40259E', t4bg:'#FAF0B5', t4fg:'#5E4D00', t5bg:'#FFD9EA', t5fg:'#99245F'},
+  dark: {bg:'#0E0D1A', surface:'#17162A', surface2:'#211F3A', ink:'#F1F0FF', muted:'#A5A2D0', border:'#2A2847', accent:'#C6F432', 'on-accent':'#0E0D1A', vote:'#C6F432', off:'#2A2847', 'on-off':'#A5A2D0',
+    t1bg:'#12392F', t1fg:'#6DF0B8', t2bg:'#4A2410', t2fg:'#FFB070', t3bg:'#2B2263', t3fg:'#B9A8FF', t4bg:'#433A0A', t4fg:'#F5E26B', t5bg:'#4A1634', t5fg:'#FF9CCB'}
+};
+const TAGS = [['humor',2],['gaming',3],['anime',5],['clásicos',4],['wholesome',1],['cringe',3],['plantillas',5],['oficina',4],['chat',1],['tecnología',3],['memes',2],['música',5],['terror',3],['ascii',4]];
+class Component extends DCLogic {
+  state = {sel:['humor','plantillas']};
+  renderVals() {
+    const dark = this.props.dark ?? true;
+    const p = dark ? PAL.dark : PAL.light;
+    const themeVars = Object.keys(p).map((k) => '--' + k + ':' + p[k]).join(';');
+    const sel = this.state.sel;
+    const tags = TAGS.map((t) => {
+      const on = sel.indexOf(t[0]) >= 0;
+      return {label:'#' + t[0], on, pick:() => this.setState({sel: on ? sel.filter((x) => x !== t[0]) : sel.concat([t[0]])}),
+        style: on ? 'background:var(--t' + t[1] + 'bg);color:var(--t' + t[1] + 'fg);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--vote)' : 'background:var(--surface2);color:var(--ink)'};
+    });
+    const ok = sel.length >= 3;
+    return {themeVars, tags, count:sel.length, disabled:!ok,
+      cta: ok ? 'background:var(--accent);color:var(--on-accent);cursor:pointer' : 'background:var(--off);color:var(--on-off)',
+      ctaLabel: ok ? 'Ver mi feed' : 'Elige ' + (3 - sel.length) + ' más'};
+  }
+}
+</script>
+</body>
+</html>

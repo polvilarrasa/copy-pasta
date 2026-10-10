@@ -8,13 +8,15 @@ use App\Enums\ModerationActionType;
 use App\Enums\Role;
 use App\Models\ModerationAction;
 use App\Models\User;
+use App\Notifications\TrustedPromotionNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class ChangeUserRole
 {
     /**
-     * Sets the member's role and logs the previous and new values. A no-op when the role does not change.
+     * Sets the member's role and logs the previous and new values. A no-op when the role does not change. A member
+     * promoted to trusted is notified; moving staff down to trusted is not a promotion.
      */
     public function handle(User $actor, User $target, Role $role): User
     {
@@ -26,7 +28,7 @@ class ChangeUserRole
 
         $previous = $target->role;
 
-        return DB::transaction(function () use ($actor, $target, $role, $previous): User {
+        $target = DB::transaction(function () use ($actor, $target, $role, $previous): User {
             $target->forceFill(['role' => $role])->save();
 
             ModerationAction::query()->create([
@@ -39,5 +41,11 @@ class ChangeUserRole
 
             return $target;
         });
+
+        if ($role === Role::Trusted && $previous === Role::User) {
+            $target->notify(new TrustedPromotionNotification);
+        }
+
+        return $target;
     }
 }
