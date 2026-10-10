@@ -4,7 +4,7 @@
         'security.edit' => __('settings.nav.security'),
         'appearance.edit' => __('settings.nav.appearance'),
         'notifications.edit' => __('settings.nav.notifications'),
-        'title.edit' => __('settings.nav.title'),
+        'title.edit' => __('settings.nav.user_title'),
     ];
 @endphp
 
@@ -23,6 +23,16 @@
                     </a>
                 </li>
             @endforeach
+            <li>
+                <a
+                    href="{{ route('welcome', ['modo' => 'editar']) }}"
+                    wire:navigate
+                    data-test="settings-favorite-tags"
+                    class="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted hover:bg-surface-2 hover:text-ink"
+                >
+                    {{ __('settings.nav.favorite_tags') }}
+                </a>
+            </li>
         </ul>
     </nav>
 

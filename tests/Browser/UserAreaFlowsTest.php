@@ -22,6 +22,9 @@ test('publicar un copy-pasta desde /publicar lo deja visible en mis copy-pastas'
         ->fill('body', 'Querido router, sé que no hablamos mucho pero siempre estás ahí.')
         ->click('#tag-humor')
         ->press('@publish-submit-button')
+        // The title is also in the live preview, so wait for the redirect to the detail page before leaving.
+        ->wait(2)
+        ->assertPathBeginsWith('/c/')
         ->assertSee('Carta de amor a mi router');
 
     visit('/mis-copypastas')->assertSee('Carta de amor a mi router');
@@ -101,13 +104,14 @@ test('el selector de carpetas se maneja solo con teclado', function (): void {
 
     signInInBrowser($member);
 
-    $page = visit('/')->assertSee($copypasta->title);
+    // The first interaction can arrive before Alpine has bound its directives (same wait as in the publish test).
+    $page = visit('/')->wait(1)->assertSee($copypasta->title);
 
     $page->keys('article button[aria-haspopup="menu"]', 'Enter')
         ->assertAriaAttribute('article button[aria-haspopup="menu"]', 'expanded', 'true');
 
-    // "Añadir a carpeta" is the first item in the menu, already focused after opening it.
-    $page->keys('article [role="menu"]', 'Enter')
+    // "Añadir a carpeta" is the first item in the menu; Alpine focuses it on the next tick, so Enter must not arrive earlier.
+    $page->wait(0.5)->keys('article [role="menu"]', 'Enter')
         ->waitForText(__('public.folders.title'));
 
     $page->waitForText('Recetas con teclado')

@@ -48,6 +48,45 @@ return [
         'empty' => 'No hay copy-pastas con estos filtros.',
         'nsfw_show' => 'Mostrar contenido +18',
         'nsfw_hide' => 'Ocultar contenido +18',
+        'for_you' => 'Para ti',
+        'for_you_refresh' => 'Actualizar',
+        'for_you_refreshed' => 'Lista actualizada.',
+        'for_you_empty' => 'Todavía no hay nada que enseñarte. Vuelve en un rato.',
+    ],
+
+    'favorites' => [
+        'title' => 'Tus etiquetas',
+        'edit' => 'Editar favoritas',
+        'empty' => 'Aún no has elegido favoritas.',
+        'choose' => 'Elegir favoritas',
+    ],
+
+    'welcome' => [
+        'title' => '¿Qué te hace gracia?',
+        'intro' => 'Elige tus etiquetas favoritas y montamos tu pestaña :for_you. Puedes cambiarlas cuando quieras.',
+        'edit_title' => 'Tus etiquetas favoritas',
+        'edit_intro' => 'Cambia las etiquetas con las que montamos tu pestaña Para ti.',
+        'chosen' => '{0} Ninguna elegida|{1} 1 elegida|[2,*] :count elegidas',
+        'minimum' => 'Mínimo :min',
+        'tags_label' => 'Etiquetas disponibles',
+        'choose_more' => '{1} Elige 1 más|[2,*] Elige :count más',
+        'see_feed' => 'Ver mi feed',
+        'save' => 'Guardar',
+        'cancel' => 'Cancelar',
+        'skip' => 'Saltar por ahora',
+        'hint' => 'Podrás editar tus favoritas desde el feed.',
+        'min_tags' => 'Elige al menos :min etiquetas.',
+    ],
+
+    'dismiss' => [
+        'button' => 'No me interesa',
+        'done' => 'Listo, no volverás a verlo.',
+        'undo' => 'Deshacer',
+        'undone' => 'Copy-pasta recuperado.',
+    ],
+
+    'featured' => [
+        'date' => ':date',
     ],
 
     'nsfw' => [

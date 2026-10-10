@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
 use App\Enums\AchievementMetric;
+use App\Enums\AffinitySignal;
 use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
@@ -20,6 +21,7 @@ class RemoveFromFolder
     public function __construct(
         private RecordEvent $recordEvent,
         private AdjustAchievementProgress $adjustProgress,
+        private AdjustTagAffinity $adjustAffinity,
     ) {}
 
     /**
@@ -48,6 +50,7 @@ class RemoveFromFolder
                 $locked->forceFill(['favorites_count' => max(0, $locked->favorites_count - 1)])->save();
 
                 $this->adjustProgress->add($user, AchievementMetric::Saved, -1);
+                $this->adjustAffinity->handle($user, $locked, -AffinitySignal::Favorite->weight());
             }
 
             return true;

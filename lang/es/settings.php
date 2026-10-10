@@ -11,7 +11,8 @@ return [
         'security' => 'Seguridad',
         'appearance' => 'Apariencia',
         'notifications' => 'Notificaciones',
-        'title' => 'Título',
+        'user_title' => 'Título',
+        'favorite_tags' => 'Etiquetas favoritas',
     ],
 
     'profile' => [

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\AchievementMetric;
+use App\Enums\AffinitySignal;
 use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
@@ -18,6 +19,7 @@ class ToggleFavorite
         private RecordEvent $recordEvent,
         private AdjustAchievementProgress $adjustProgress,
         private QueueAchievementEvaluation $queueEvaluation,
+        private AdjustTagAffinity $adjustAffinity,
     ) {}
 
     /**
@@ -45,6 +47,7 @@ class ToggleFavorite
             $locked->forceFill(['favorites_count' => max(0, $locked->favorites_count + ($isFavorite ? -1 : 1))])->save();
 
             $this->adjustProgress->add($user, AchievementMetric::Saved, $isFavorite ? -1 : 1);
+            $this->adjustAffinity->handle($user, $locked, $isFavorite ? -AffinitySignal::Favorite->weight() : AffinitySignal::Favorite->weight());
 
             return ! $isFavorite;
         });

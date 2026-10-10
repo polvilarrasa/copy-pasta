@@ -37,6 +37,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Theme $theme
  * @property array<string, bool>|null $notification_prefs
  * @property string|null $title_key
+ * @property Carbon|null $onboarded_at
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $banned_at
  * @property string|null $ban_reason
@@ -78,6 +79,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
             'username_changed_at' => 'datetime',
             'theme' => Theme::class,
             'notification_prefs' => 'array',
+            'onboarded_at' => 'datetime',
         ];
     }
 

@@ -162,6 +162,7 @@ document.addEventListener('alpine:init', () => {
         copyUrl,
         voteUrl,
         favoriteUrl,
+        dismissUrl,
         shareUrl,
         shareEventUrl,
         shareTitle,
@@ -177,8 +178,12 @@ document.addEventListener('alpine:init', () => {
         loginRequiredFavoriteMessage,
         loginRequiredFolderMessage,
         actionFailedMessage,
+        dismissedMessage,
+        undoLabel,
+        undoneMessage,
     }) => ({
         revealed: false,
+        dismissed: false,
         authenticated,
         context,
         loginRequiredFolderMessage,
@@ -286,6 +291,40 @@ document.addEventListener('alpine:init', () => {
 
             this.isFavorite = response.favorited;
             this.favoritesCount = response.favorites_count;
+        },
+
+        /**
+         * "No me interesa": the card goes away at once and the toast offers to undo it, which brings the card back and
+         * gives the affinity its points again. The server request that fails puts the card back.
+         */
+        async dismiss() {
+            if (! authenticated) {
+                return;
+            }
+
+            this.dismissed = true;
+
+            const response = await sendJson(dismissUrl, 'POST', context);
+
+            if (! response.ok) {
+                this.dismissed = false;
+                return this.toast(actionFailedMessage);
+            }
+
+            window.dispatchEvent(new CustomEvent('ui-toast', {
+                detail: { message: dismissedMessage, actionLabel: undoLabel, action: () => this.undoDismiss() },
+            }));
+        },
+
+        async undoDismiss() {
+            const response = await sendJson(dismissUrl, 'DELETE', context);
+
+            if (! response.ok) {
+                return this.toast(actionFailedMessage);
+            }
+
+            this.dismissed = false;
+            this.toast(undoneMessage);
         },
 
         requireLogin(message) {

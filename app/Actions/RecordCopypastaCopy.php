@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\AchievementMetric;
+use App\Enums\AffinitySignal;
 use App\Enums\EventType;
 use App\Enums\MilestoneMetric;
 use App\Models\Copypasta;
@@ -20,6 +21,7 @@ class RecordCopypastaCopy
         private AdjustAchievementProgress $adjustProgress,
         private DetectDynamiteCopypasta $detectDynamite,
         private QueueAchievementEvaluation $queueEvaluation,
+        private AdjustTagAffinity $adjustAffinity,
     ) {}
 
     /**
@@ -39,8 +41,12 @@ class RecordCopypastaCopy
 
         $isOwnCopy = $user !== null && $user->getKey() === $copypasta->user_id;
 
-        DB::transaction(function () use ($copypasta, $isOwnCopy): void {
+        DB::transaction(function () use ($copypasta, $isOwnCopy, $user): void {
             Copypasta::query()->whereKey($copypasta->getKey())->increment('copies_count');
+
+            if ($user !== null) {
+                $this->recordFirstCopy($user, $copypasta);
+            }
 
             if (! $isOwnCopy) {
                 $this->adjustProgress->add($copypasta->user_id, AchievementMetric::CopiesReceived, 1);
@@ -57,5 +63,22 @@ class RecordCopypastaCopy
         }
 
         return true;
+    }
+
+    /**
+     * Only the first copy of each copy-pasta by each member is a signal for their affinity: the primary key of the
+     * table decides it, so repeated copies add nothing.
+     */
+    private function recordFirstCopy(User $user, Copypasta $copypasta): void
+    {
+        $isFirst = DB::table('user_copied_copypastas')->insertOrIgnore([
+            'user_id' => $user->getKey(),
+            'copypasta_id' => $copypasta->getKey(),
+            'created_at' => now(),
+        ]) === 1;
+
+        if ($isFirst) {
+            $this->adjustAffinity->handle($user, $copypasta, AffinitySignal::Copy->weight());
+        }
     }
 }

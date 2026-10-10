@@ -20,6 +20,8 @@ return [
     'card' => [
         'featured' => 'Copy-pasta del día',
         'reason' => 'Porque te gusta',
+        'discover' => 'Para que descubras algo nuevo',
+        'recent' => 'Recién publicado',
         'template' => 'Plantilla',
         'template_hint' => 'Rellena los [CAMPOS] antes de pegar.',
         'sensitive' => 'Contenido sensible',

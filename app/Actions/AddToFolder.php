@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Concerns\LimitsFolderChanges;
 use App\Enums\AchievementMetric;
+use App\Enums\AffinitySignal;
 use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
@@ -21,6 +22,7 @@ class AddToFolder
         private RecordEvent $recordEvent,
         private AdjustAchievementProgress $adjustProgress,
         private QueueAchievementEvaluation $queueEvaluation,
+        private AdjustTagAffinity $adjustAffinity,
     ) {}
 
     /**
@@ -47,6 +49,7 @@ class AddToFolder
                 $locked->forceFill(['favorites_count' => $locked->favorites_count + 1])->save();
 
                 $this->adjustProgress->add($user, AchievementMetric::Saved, 1);
+                $this->adjustAffinity->handle($user, $locked, AffinitySignal::Favorite->weight());
             }
 
             return true;

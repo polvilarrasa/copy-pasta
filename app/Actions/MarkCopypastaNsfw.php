@@ -29,7 +29,7 @@ class MarkCopypastaNsfw
             return $copypasta;
         }
 
-        return DB::transaction(function () use ($actor, $copypasta, $isNsfw): Copypasta {
+        $copypasta = DB::transaction(function () use ($actor, $copypasta, $isNsfw): Copypasta {
             $copypasta->forceFill(['is_nsfw' => $isNsfw])->save();
 
             $acceptedReports = $isNsfw
@@ -46,5 +46,11 @@ class MarkCopypastaNsfw
 
             return $copypasta;
         });
+
+        if ($isNsfw) {
+            GetFeaturedCopypasta::forgetIfFeatured($copypasta);
+        }
+
+        return $copypasta;
     }
 }

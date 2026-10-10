@@ -10,6 +10,7 @@
     'saved' => false,
     'tags' => [],
     'reason' => null,
+    'explanation' => null,
     'template' => false,
     'featured' => false,
     'featuredDate' => null,
@@ -37,6 +38,7 @@
         $detailQuery = array_filter(['from' => $listContext['source'] ?? null, 'pos' => $listContext['position'] ?? null]);
         $detailUrl = $detailQuery === [] ? $shareUrl : $shareUrl.'?'.http_build_query($detailQuery);
         $canReport = auth()->check() && auth()->id() !== $copypasta->user_id;
+        $canDismiss = $canReport;
     }
 @endphp
 
@@ -47,6 +49,7 @@
             copyUrl: @js(route('copypastas.copy', $copypasta)),
             voteUrl: @js(route('copypastas.vote', $copypasta)),
             favoriteUrl: @js(route('copypastas.favorite', $copypasta)),
+            dismissUrl: @js(route('copypastas.dismiss', $copypasta)),
             shareEventUrl: @js(route('copypastas.share', $copypasta)),
             shareUrl: @js($shareUrl),
             shareTitle: @js($copypasta->title),
@@ -62,11 +65,15 @@
             loginRequiredFavoriteMessage: @js(__('public.login_modal.favorite')),
             loginRequiredFolderMessage: @js(__('public.login_modal.folder')),
             actionFailedMessage: @js(__('public.copy.action_failed')),
+            dismissedMessage: @js(__('public.dismiss.done')),
+            undoLabel: @js(__('public.dismiss.undo')),
+            undoneMessage: @js(__('public.dismiss.undone')),
         })"
         x-on:copypasta-folders-saved="applyFolderState($event.detail)"
     @else
         x-data="{ revealed: false }"
     @endif
+    @if ($copypasta) x-show="! dismissed" @endif
     {{ $attributes->class([
         'flex w-full flex-col overflow-hidden rounded-2xl bg-surface text-ink',
         $featured ? 'border border-vote shadow-day' : 'border border-border',
@@ -125,10 +132,15 @@
 
             <div class="flex min-w-0 flex-1 flex-col gap-2.5">
                 @if ($reason)
-                    <div class="flex flex-wrap items-center gap-1.5 text-sm text-muted">
+                    <div data-test="card-explanation" class="flex flex-wrap items-center gap-1.5 text-sm text-muted">
                         <x-lucide-sparkle class="size-3.5" aria-hidden="true" />
                         <span>{{ __('ui.card.reason') }}</span>
                         <x-ui.tag-chip :name="$reason['name']" :color="$reason['color']" />
+                    </div>
+                @elseif ($explanation)
+                    <div data-test="card-explanation" class="flex flex-wrap items-center gap-1.5 text-sm text-muted">
+                        <x-lucide-sparkle class="size-3.5" aria-hidden="true" />
+                        <span>{{ $explanation }}</span>
                     </div>
                 @endif
 
@@ -258,6 +270,12 @@
                     <x-ui.menu-item x-on:click="open = false; authenticated ? $dispatch('folders-open', { copypasta: '{{ $copypasta->getKey() }}', context }) : requireLogin(loginRequiredFolderMessage)">
                         {{ __('public.folders.button') }}
                     </x-ui.menu-item>
+
+                    @if ($canDismiss)
+                        <x-ui.menu-item data-test="card-dismiss" x-on:click="open = false; dismiss()">
+                            {{ __('public.dismiss.button') }}
+                        </x-ui.menu-item>
+                    @endif
 
                     @if ($canReport)
                         <x-ui.menu-item x-on:click="open = false; $dispatch('report-open', { copypasta: '{{ $copypasta->getKey() }}', context })">

@@ -54,6 +54,8 @@ class ConcealCopypasta
             return $copypasta;
         });
 
+        GetFeaturedCopypasta::forgetIfFeatured($copypasta);
+
         // Reload: callers may hold a copy loaded with a partial user select that has no email.
         $copypasta->load('user');
 

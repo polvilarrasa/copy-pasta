@@ -77,6 +77,26 @@ class CopypastaPolicy
     }
 
     /**
+     * "No me interesa" applies to what the member could vote on: visible and not their own.
+     */
+    public function dismiss(User $user, Copypasta $copypasta): bool
+    {
+        return $this->canEngage($user, $copypasta);
+    }
+
+    /**
+     * Staff pick the copy-pasta of the day among the visible ones that are not adult content.
+     */
+    public function feature(User $user, Copypasta $copypasta): bool
+    {
+        return $user->isStaff()
+            && $copypasta->published_at !== null
+            && ! $copypasta->isHidden()
+            && $copypasta->deleted_at === null
+            && ! $copypasta->is_nsfw;
+    }
+
+    /**
      * Votes and favorites need a visible copy-pasta that is not the user's own. Unverified members may engage.
      */
     private function canEngage(User $user, Copypasta $copypasta): bool

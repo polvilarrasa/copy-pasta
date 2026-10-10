@@ -28,5 +28,7 @@ class DeleteCopypasta
 
             $this->adjustPublishedProgress->handle($copypasta, $countedBefore);
         });
+
+        GetFeaturedCopypasta::forgetIfFeatured($copypasta);
     }
 }

@@ -59,7 +59,7 @@ test('un visitante no ve los pendientes ni los secretos de otro usuario', functi
         ->assertDontSee(Achievement::HabitualPaster->name());
 })->with([
     'anónimo' => [null],
-    'otro miembro' => fn (): array => [User::factory()->create()],
+    'otro miembro' => fn (): User => User::factory()->create(),
 ]);
 
 test('los demás ven el número de secretos conseguidos pero no cuáles son', function (): void {

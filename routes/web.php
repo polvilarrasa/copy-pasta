@@ -11,6 +11,7 @@ use App\Http\Controllers\Public\CopypastaFolderController;
 use App\Http\Controllers\Public\CopypastaReportController;
 use App\Http\Controllers\Public\CopypastaShareController;
 use App\Http\Controllers\Public\CopypastaVoteController;
+use App\Http\Controllers\Public\DismissController;
 use App\Http\Controllers\Public\FeedController;
 use App\Http\Controllers\Public\FolderController;
 use App\Http\Controllers\Public\MyCopypastasController;
@@ -22,20 +23,30 @@ use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SitemapController;
 use App\Http\Controllers\Public\StatsController;
 use App\Http\Controllers\Public\ThemeController;
+use App\Http\Controllers\Public\WelcomeController;
+use App\Http\Middleware\RedirectToOnboarding;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [FeedController::class, 'home'])->name('home');
-Route::get('/top/semana', [FeedController::class, 'topWeek'])->name('feed.top-week');
-Route::get('/top/mes', [FeedController::class, 'topMonth'])->name('feed.top-month');
-Route::get('/top', [FeedController::class, 'topAll'])->name('feed.top-all');
-Route::get('/nuevos', [FeedController::class, 'newest'])->name('feed.newest');
-Route::get('/etiqueta/{slug}', [FeedController::class, 'tag'])->name('feed.tag');
+// A member who was never offered the welcome screen is sent to it the first time they open any of the feeds.
+Route::middleware(RedirectToOnboarding::class)->group(function () {
+    Route::get('/', [FeedController::class, 'home'])->name('home');
+    Route::get('/top/semana', [FeedController::class, 'topWeek'])->name('feed.top-week');
+    Route::get('/top/mes', [FeedController::class, 'topMonth'])->name('feed.top-month');
+    Route::get('/top', [FeedController::class, 'topAll'])->name('feed.top-all');
+    Route::get('/nuevos', [FeedController::class, 'newest'])->name('feed.newest');
+    Route::get('/etiqueta/{slug}', [FeedController::class, 'tag'])->name('feed.tag');
+});
 
 // Declared before the detail route: its optional slug would otherwise swallow GET /c/{id}/carpetas and /c/{id}/editar.
 Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     Route::get('/c/{copypasta}/carpetas', [CopypastaFolderController::class, 'index'])->name('copypastas.folders.index');
     Route::put('/c/{copypasta}/carpetas', [CopypastaFolderController::class, 'update'])->name('copypastas.folders.sync');
     Route::post('/c/{copypasta}/carpetas', [CopypastaFolderController::class, 'store'])->name('copypastas.folders.store');
+});
+
+Route::middleware(['auth', 'throttle:120,1'])->group(function () {
+    Route::post('/c/{copypasta}/descartar', [DismissController::class, 'store'])->name('copypastas.dismiss');
+    Route::delete('/c/{copypasta}/descartar', [DismissController::class, 'destroy'])->name('copypastas.dismiss.undo');
 });
 
 Route::middleware('auth')->group(function () {
@@ -100,6 +111,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/bienvenida', [WelcomeController::class, 'show'])->name('welcome');
     Route::get('/mis-copypastas', [MyCopypastasController::class, 'index'])->name('copypastas.mine');
     Route::get('/publicar', [PublishCopypastaController::class, 'create'])->name('copypastas.create');
     Route::get('/carpetas', [FolderController::class, 'index'])->name('folders.index');

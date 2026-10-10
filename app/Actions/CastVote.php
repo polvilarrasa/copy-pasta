@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\AchievementMetric;
+use App\Enums\AffinitySignal;
 use App\Enums\EventType;
 use App\Enums\MilestoneMetric;
 use App\Models\Copypasta;
@@ -21,6 +22,7 @@ class CastVote
         private DetectCopypastaMilestones $detectMilestones,
         private AdjustAchievementProgress $adjustProgress,
         private QueueAchievementEvaluation $queueEvaluation,
+        private AdjustTagAffinity $adjustAffinity,
     ) {}
 
     /**
@@ -64,6 +66,8 @@ class CastVote
                     'counts_for_achievements' => $countsNow,
                 ])->save();
             }
+
+            $this->adjustAffinity->handle($voter, $locked, AffinitySignal::voteWeight($next) - AffinitySignal::voteWeight($previous));
 
             $this->recordAchievementProgress($voter, $locked->user_id, $existing !== null, $next, $countedBefore, $countsNow);
 

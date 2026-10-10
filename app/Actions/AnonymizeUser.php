@@ -33,6 +33,8 @@ class AnonymizeUser
 
             TrackedEvent::query()->where('user_id', $user->getKey())->update(['user_id' => null]);
 
+            $this->deleteFeedData($user);
+
             $user->folders()->delete();
             $user->passkeys()->delete();
 
@@ -92,6 +94,16 @@ class AnonymizeUser
             Copypasta::query()
                 ->whereKey($affectedIds)
                 ->update(['score' => DB::raw('upvotes_count - downvotes_count')]);
+        }
+    }
+
+    /**
+     * The affinity, favorite tags, copies and dismissals of the account describe a person who is gone.
+     */
+    private function deleteFeedData(User $user): void
+    {
+        foreach (['user_tag_affinities', 'user_favorite_tags', 'user_copied_copypastas', 'copypasta_dismissals'] as $table) {
+            DB::table($table)->where('user_id', $user->getKey())->delete();
         }
     }
 

@@ -27,4 +27,7 @@ enum EventType: string
     case ThemeChange = 'theme_change';
     case NotificationOpen = 'notification_open';
     case TitleChange = 'title_change';
+    case FavoriteTagsUpdate = 'favorite_tags_update';
+    case Dismiss = 'dismiss';
+    case DismissUndo = 'dismiss_undo';
 }

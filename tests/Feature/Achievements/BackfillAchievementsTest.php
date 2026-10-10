@@ -55,7 +55,7 @@ function seedLegacyData(): array
 test('el backfill calcula el progreso con las reglas de cada métrica', function (): void {
     $data = seedLegacyData();
 
-    Artisan::call('app:backfill-achievements');
+    Artisan::call('app:backfill-achievements', ['--force' => true]);
 
     expect(achievementProgress($data['author'], AchievementMetric::Published))->toBe(4)
         ->and(achievementProgress($data['author'], AchievementMetric::UpvotesReceived))->toBe(1)
@@ -69,7 +69,7 @@ test('el backfill calcula el progreso con las reglas de cada métrica', function
 test('el backfill concede los logros que salen del progreso, también Veterano', function (): void {
     $data = seedLegacyData();
 
-    Artisan::call('app:backfill-achievements');
+    Artisan::call('app:backfill-achievements', ['--force' => true]);
 
     expect(holdsAchievement($data['author'], Achievement::FirstPaste))->toBeTrue()
         ->and(holdsAchievement($data['author'], Achievement::HabitualPaster))->toBeFalse()
@@ -83,7 +83,7 @@ test('el backfill concede los logros que salen del progreso, también Veterano',
 test('el backfill no crea ninguna notificación', function (): void {
     seedLegacyData();
 
-    Artisan::call('app:backfill-achievements');
+    Artisan::call('app:backfill-achievements', ['--force' => true]);
 
     expect(UserAchievement::query()->count())->toBeGreaterThan(0)
         ->and(DB::table('notifications')->count())->toBe(0);
@@ -92,7 +92,7 @@ test('el backfill no crea ninguna notificación', function (): void {
 test('ejecutar el backfill dos veces no cambia nada', function (): void {
     seedLegacyData();
 
-    Artisan::call('app:backfill-achievements');
+    Artisan::call('app:backfill-achievements', ['--force' => true]);
     $snapshot = fn (): array => [
         DB::table('user_achievement_progress')->orderBy('user_id')->orderBy('metric')->get()->toArray(),
         DB::table('user_achievements')->orderBy('user_id')->orderBy('achievement_key')->get()->toArray(),
@@ -100,7 +100,7 @@ test('ejecutar el backfill dos veces no cambia nada', function (): void {
     ];
     $first = $snapshot();
 
-    Artisan::call('app:backfill-achievements');
+    Artisan::call('app:backfill-achievements', ['--force' => true]);
 
     expect($snapshot())->toEqual($first);
 });
@@ -109,7 +109,7 @@ test('el backfill no vuelve a conceder un logro revocado', function (): void {
     $data = seedLegacyData();
     UserAchievement::factory()->for($data['author'])->ofAchievement(Achievement::FirstPaste)->revoked()->create();
 
-    Artisan::call('app:backfill-achievements');
+    Artisan::call('app:backfill-achievements', ['--force' => true]);
 
     expect(holdsAchievement($data['author'], Achievement::FirstPaste))->toBeFalse()
         ->and(UserAchievement::query()->where('user_id', $data['author']->id)->where('achievement_key', 'first_paste')->count())->toBe(1);
@@ -119,7 +119,7 @@ test('el backfill no concede nada a cuentas baneadas o anonimizadas', function (
     $banned = User::factory()->banned()->create();
     Copypasta::factory()->for($banned, 'user')->create();
 
-    Artisan::call('app:backfill-achievements');
+    Artisan::call('app:backfill-achievements', ['--force' => true]);
 
     expect(achievementProgress($banned, AchievementMetric::Published))->toBe(1)
         ->and(holdsAchievement($banned, Achievement::FirstPaste))->toBeFalse();
@@ -133,7 +133,7 @@ test('el backfill detecta Dinamita en la ventana de 24 horas y no en 48', functi
     TrackedEvent::factory()->forCopypasta($spread)->ofType(EventType::Copy)->count(50)->at(now()->subHours(40))->create();
     TrackedEvent::factory()->forCopypasta($spread)->ofType(EventType::Copy)->count(50)->at(now()->subHours(5))->create();
 
-    Artisan::call('app:backfill-achievements');
+    Artisan::call('app:backfill-achievements', ['--force' => true]);
 
     expect(holdsAchievement($dynamite->user, Achievement::Dynamite))->toBeTrue()
         ->and(holdsAchievement($spread->user, Achievement::Dynamite))->toBeFalse();
@@ -152,8 +152,31 @@ test('el backfill clasifica los upvotes antiguos por la edad de la cuenta al vot
         'updated_at' => now()->subDays(2),
     ]);
 
-    Artisan::call('app:backfill-achievements');
+    Artisan::call('app:backfill-achievements', ['--force' => true]);
 
     expect($verifiedOld->refresh()->counts_for_achievements)->toBeTrue()
         ->and($tooYoungAtTheTime->refresh()->counts_for_achievements)->toBeFalse();
+});
+
+test('el comando se niega a correr si la app no está en mantenimiento, salvo con --force', function (): void {
+    $data = seedLegacyData();
+
+    $this->artisan('app:backfill-achievements')->assertFailed();
+    expect(DB::table('user_achievement_progress')->count())->toBe(0);
+
+    $this->artisan('app:backfill-achievements', ['--force' => true])->assertSuccessful();
+    expect(achievementProgress($data['author'], AchievementMetric::Published))->toBe(4);
+});
+
+test('el comando corre sin --force con la app en mantenimiento', function (): void {
+    $data = seedLegacyData();
+    Artisan::call('down');
+
+    try {
+        $this->artisan('app:backfill-achievements')->assertSuccessful();
+    } finally {
+        Artisan::call('up');
+    }
+
+    expect(achievementProgress($data['author'], AchievementMetric::Published))->toBe(4);
 });

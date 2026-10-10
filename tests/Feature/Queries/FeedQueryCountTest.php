@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\GetFeaturedCopypasta;
 use App\Models\Copypasta;
 use App\Models\Tag;
 use App\Models\User;
@@ -10,8 +11,10 @@ use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Counts the SQL statements a request runs before its response, so the home feed must stay within five, for guests and
- * members alike. The feed impression counter writes after the response is sent and is not part of that budget.
+ * Counts the SQL statements a request runs before its response. The home feed stays within five for guests, and within
+ * seven for members, who also pay for their default tab and the favorite tags panel. The caches of the bell's counter
+ * and of the copy-pasta of the day are warm, as they are in steady state. The feed impression counter writes after the
+ * response is sent and is not part of that budget.
  */
 function queriesFor(string $uri): int
 {
@@ -28,6 +31,8 @@ function queriesFor(string $uri): int
 }
 
 beforeEach(function (): void {
+    app(GetFeaturedCopypasta::class)->handle(null);
+
     $tags = Tag::factory()->count(3)->create();
 
     foreach (range(1, 12) as $_) {
@@ -39,18 +44,18 @@ test('el feed de la home ejecuta cinco consultas como máximo para un invitado',
     expect(queriesFor('/'))->toBeLessThanOrEqual(5);
 });
 
-test('el feed de la home ejecuta cinco consultas como máximo para un miembro', function (): void {
+test('el feed de la home ejecuta siete consultas como máximo para un miembro', function (): void {
     $member = User::factory()->create();
     $this->actingAs($member);
 
     // The bell's counter is served from the cache in steady state; this budget is about the feed itself.
     app(UnreadNotificationCount::class)->get($member);
 
-    expect(queriesFor('/'))->toBeLessThanOrEqual(5);
+    expect(queriesFor('/'))->toBeLessThanOrEqual(7);
 });
 
 test('con la caché de la campana fría, la cabecera añade una sola consulta', function (): void {
     $this->actingAs(User::factory()->create());
 
-    expect(queriesFor('/'))->toBeLessThanOrEqual(6);
+    expect(queriesFor('/'))->toBeLessThanOrEqual(8);
 });

@@ -28,4 +28,5 @@ enum ModerationActionType: string
     case VerificationResent = 'verification_resent';
     case RevokeAchievement = 'revoke_achievement';
     case RestoreAchievement = 'restore_achievement';
+    case ReplaceFeatured = 'replace_featured';
 }

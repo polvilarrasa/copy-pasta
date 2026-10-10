@@ -3,6 +3,7 @@
 use App\Actions\PrepareEventPartition;
 use App\Enums\Achievement;
 use App\Enums\AchievementMetric;
+use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -104,4 +105,14 @@ function achievementProgress(User $user, AchievementMetric $metric): int
 function holdsAchievement(User $user, Achievement $achievement): bool
 {
     return $user->achievements()->where('achievement_key', $achievement->value)->whereNull('revoked_at')->exists();
+}
+
+/**
+ * The stored affinity score of the member with the tag, or null when there is no row.
+ */
+function storedAffinity(User $user, Tag $tag): ?float
+{
+    $score = DB::table('user_tag_affinities')->where('user_id', $user->getKey())->where('tag_id', $tag->getKey())->value('score');
+
+    return $score === null ? null : (float) $score;
 }

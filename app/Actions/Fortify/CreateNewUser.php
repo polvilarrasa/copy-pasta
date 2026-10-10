@@ -33,10 +33,11 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
+        // Refreshed so the model carries the column defaults (theme, ...) the rest of the request reads.
         return User::create([
             'username' => $input['username'],
             'email' => $input['email'],
             'password' => $input['password'],
-        ]);
+        ])->refresh();
     }
 }
