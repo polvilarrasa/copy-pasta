@@ -13,30 +13,28 @@ test('publicar desbloquea un logro, avisa en la campana, se elige su título en 
 
     signInInBrowser($user);
 
-    visit('/publicar')
-        ->wait(1)
+    visitInteractive('/publicar')
         ->fill('title', 'Carta de amor a mi router')
         ->fill('body', 'Querido router, sé que no hablamos mucho pero siempre estás ahí.')
         ->click('#tag-humor')
+        ->assertAriaAttribute('#tag-humor', 'pressed', 'true')
         ->press('@publish-submit-button')
-        ->wait(2)
         ->assertPathBeginsWith('/c/');
 
     expect(holdsAchievement($user, Achievement::FirstPaste))->toBeTrue();
 
-    visit('/')->wait(1)
+    visitInteractive('/')
         ->assertSeeIn('@notification-count', '1')
         ->click('@notification-bell')
         ->assertSee('Has conseguido el logro «Primera pegada».');
 
-    visit(route('title.edit'))->wait(1)
+    visitInteractive(route('title.edit'))
         ->click('Recién pegado')
-        ->wait(1)
         ->assertSee(__('achievements.settings.saved'));
 
     expect($user->refresh()->title_key)->toBe('first_paste');
 
-    visit('/')->wait(1)->assertSee('Recién pegado');
+    visit('/')->assertSee('Recién pegado');
 });
 
 test('en el perfil propio se ven los pendientes con su progreso y los secretos como ???', function (): void {
@@ -45,7 +43,7 @@ test('en el perfil propio se ven los pendientes con su progreso y los secretos c
 
     signInInBrowser($user);
 
-    visit('/u/paco_nocturno')->wait(1)
+    visit('/u/paco_nocturno')
         ->assertSee('Primera pegada')
         ->assertSee(__('achievements.profile.pending'))
         ->assertSee(__('achievements.profile.secret_name'));
@@ -55,7 +53,7 @@ test('un visitante en el perfil de otro no ve pendientes', function (): void {
     $owner = User::factory()->create(['username' => 'paco_nocturno']);
     UserAchievement::factory()->for($owner)->ofAchievement(Achievement::FirstPaste)->create();
 
-    visit('/u/paco_nocturno')->wait(1)
+    visit('/u/paco_nocturno')
         ->assertSee('Primera pegada')
         ->assertDontSee(__('achievements.profile.pending'));
 });

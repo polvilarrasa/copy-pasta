@@ -7,6 +7,7 @@ use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Pest\Browser\Execution;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
@@ -136,18 +137,36 @@ function signInInBrowser(User $user): void
 }
 
 /**
- * Opens a page and returns once Alpine has bound every component on it, and Livewire is loaded when the page has
- * components of its own. Playwright only waits for an element to be actionable, not for the scripts that give it
- * behaviour, so a click or a keypress sent earlier can land on markup that does nothing yet. The check retries
- * until the browser timeout, so there is no fixed pause.
+ * The browser-side condition behind visitInteractive(): Alpine has bound every component on the page, and Livewire
+ * has booted each of its own. Use it with assertScript() after a step that loads a new page, such as a redirect.
  */
-function visitInteractive(string $url): mixed
+function interactivePageScript(): string
 {
-    return visit($url)->assertScript(<<<'JS'
+    return <<<'JS'
         () => !!window.Alpine
             && [...document.querySelectorAll('[x-data]')].every((element) => element._x_dataStack !== undefined)
             && [...document.querySelectorAll('[wire\\:id]')].every((element) => !!window.Livewire?.find(element.getAttribute('wire:id')))
-        JS);
+        JS;
+}
+
+/**
+ * Opens a page and returns once it is interactive. Playwright only waits for an element to be actionable, not for
+ * the scripts that give it behaviour, so a click or a keypress sent earlier can land on markup that does nothing yet.
+ * The check retries until the browser timeout, so there is no fixed pause.
+ */
+function visitInteractive(string $url): mixed
+{
+    return visit($url)->assertScript(interactivePageScript());
+}
+
+/**
+ * Retries the expectations until they hold or the browser timeout runs out, for server state that a page action
+ * changes after the page has already updated, such as a row written by a request that is still in flight. It must
+ * not block: the application served to the browser runs in this same process.
+ */
+function eventually(callable $expectations): void
+{
+    Execution::instance()->waitForExpectation($expectations);
 }
 
 /**

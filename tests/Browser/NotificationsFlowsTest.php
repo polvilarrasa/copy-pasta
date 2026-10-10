@@ -16,7 +16,7 @@ test('la campana muestra el contador, abre el desplegable, lleva al destino y el
 
     signInInBrowser($member);
 
-    $page = visit('/')->wait(1);
+    $page = visitInteractive('/');
 
     $page->assertSeeIn('@notification-count', '2')
         ->click('@notification-bell')
@@ -34,10 +34,11 @@ test('"Ver todas" lleva a /notificaciones y "Marcar todas como leídas" deja la 
 
     signInInBrowser($member);
 
-    visit('/')->wait(1)
+    visitInteractive('/')
         ->click('@notification-bell')
         ->click(__('notifications.bell.view_all'))
         ->assertPathIs('/notificaciones')
+        ->assertScript(interactivePageScript())
         ->assertSee(__('notifications.trusted_promotion'))
         ->press('@notifications-mark-all')
         ->assertMissing('@notification-count');
