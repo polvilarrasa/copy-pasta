@@ -16,14 +16,15 @@ test('publicar un copy-pasta desde /publicar lo deja visible en mis copy-pastas'
     // The submit button's own label ("Publicar") matches the header's "Publicar" CTA exactly, so a
     // text-based press() is ambiguous between the two — @publish-submit-button targets the form's
     // own button precisely, the same data-test convention used by @folders-save-button.
-    visit('/publicar')
-        ->wait(1)
+    // The tag button re-renders with aria-pressed once the server has toggled it, so waiting for that state
+    // guarantees the selection is saved before the form is submitted.
+    visitInteractive('/publicar')
         ->fill('title', 'Carta de amor a mi router')
         ->fill('body', 'Querido router, sé que no hablamos mucho pero siempre estás ahí.')
         ->click('#tag-humor')
+        ->assertAriaAttribute('#tag-humor', 'pressed', 'true')
         ->press('@publish-submit-button')
         // The title is also in the live preview, so wait for the redirect to the detail page before leaving.
-        ->wait(2)
         ->assertPathBeginsWith('/c/')
         ->assertSee('Carta de amor a mi router');
 
@@ -33,13 +34,19 @@ test('publicar un copy-pasta desde /publicar lo deja visible en mis copy-pastas'
 test('editar un copy-pasta propio actualiza su título', function (): void {
     $user = User::factory()->create();
     $copypasta = Copypasta::factory()->create(['user_id' => $user->id, 'title' => 'Título original']);
+    // The form needs between one and five tags to save, and the factory publishes without any.
+    $copypasta->tags()->attach(Tag::factory()->create());
 
     signInInBrowser($user);
 
-    visit(route('copypastas.edit', $copypasta))
+    // The new title is already in the live preview, so the saved state is the redirect away from the edit form.
+    visitInteractive(route('copypastas.edit', $copypasta))
         ->fill('title', 'Título corregido')
         ->press(__('public.publish.submit_edit'))
+        ->assertPathIsNot(parse_url(route('copypastas.edit', $copypasta), PHP_URL_PATH))
         ->assertSee('Título corregido');
+
+    expect($copypasta->refresh()->title)->toBe('Título corregido');
 });
 
 test('crear una carpeta desde /carpetas la deja disponible', function (): void {
@@ -47,7 +54,7 @@ test('crear una carpeta desde /carpetas la deja disponible', function (): void {
 
     signInInBrowser($user);
 
-    visit('/carpetas')
+    visitInteractive('/carpetas')
         ->press(__('app.folders.create'))
         ->fill('name', 'Para el grupo')
         ->press(__('public.folders.create'))
@@ -61,7 +68,7 @@ test('añadir un copy-pasta a una carpeta y luego quitarlo desde su detalle', fu
 
     signInInBrowser($member);
 
-    visit('/')
+    visitInteractive('/')
         ->assertSee($copypasta->title)
         ->click('article button[aria-haspopup="menu"]')
         ->click(__('public.folders.button'))
@@ -71,7 +78,7 @@ test('añadir un copy-pasta a una carpeta y luego quitarlo desde su detalle', fu
 
     expect($copypasta->folders()->whereKey($folder->getKey())->exists())->toBeTrue();
 
-    visit(route('folders.show', $folder))
+    visitInteractive(route('folders.show', $folder))
         ->assertSee($copypasta->title)
         ->press(__('app.folders.remove'))
         ->waitForText(__('app.folders.empty'));
@@ -87,7 +94,7 @@ test('copiar un copy-pasta desde el detalle de una carpeta registra la copia', f
 
     signInInBrowser($member);
 
-    $page = visit(route('folders.show', $folder))->assertSee('Copia desde una carpeta');
+    $page = visitInteractive(route('folders.show', $folder))->assertSee('Copia desde una carpeta');
 
     $page->script('navigator.clipboard.writeText = async () => {}');
 
@@ -104,14 +111,14 @@ test('el selector de carpetas se maneja solo con teclado', function (): void {
 
     signInInBrowser($member);
 
-    // The first interaction can arrive before Alpine has bound its directives (same wait as in the publish test).
-    $page = visit('/')->wait(1)->assertSee($copypasta->title);
+    $page = visitInteractive('/')->assertSee($copypasta->title);
 
     $page->keys('article button[aria-haspopup="menu"]', 'Enter')
         ->assertAriaAttribute('article button[aria-haspopup="menu"]', 'expanded', 'true');
 
-    // "Añadir a carpeta" is the first item in the menu; Alpine focuses it on the next tick, so Enter must not arrive earlier.
-    $page->wait(0.5)->keys('article [role="menu"]', 'Enter')
+    // Alpine moves the focus to the first item on the next tick; Enter sent before that goes nowhere.
+    $page->assertScript('() => document.activeElement?.closest(\'[role="menu"]\') !== null')
+        ->keys('article [role="menu"]', 'Enter')
         ->waitForText(__('public.folders.title'));
 
     $page->waitForText('Recetas con teclado')

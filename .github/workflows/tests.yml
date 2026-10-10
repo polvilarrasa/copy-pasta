@@ -67,7 +67,18 @@ jobs:
           node-version: '22'
 
       - name: Setup Application
-        run: composer setup
+        run: |
+          composer install --no-interaction --prefer-dist
+          cp -n .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Build the frontend assets
+        # The browser tests render real pages, so the Vite manifest must exist before they run.
+        run: npm run build
 
       - name: Install the browser for browser tests
         run: npx playwright install --with-deps chromium

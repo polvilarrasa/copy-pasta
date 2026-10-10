@@ -27,6 +27,63 @@ pest()->extend(TestCase::class)
 
 /*
 |--------------------------------------------------------------------------
+| Browser tests teardown
+|--------------------------------------------------------------------------
+|
+| Pest Browser starts `playwright run-server` through `sh -c`, and when the run ends it only terminates that
+| shell: the Node server survives as an orphan of init, one more per run. The servers started by this run are
+| remembered while the tests execute and terminated when the process shuts down.
+|
+*/
+
+pest()->afterEach(fn () => rememberPlaywrightServers())->in('Browser');
+
+/**
+ * Remembers the Playwright servers that descend from this process, and stops them when it shuts down. The graceful
+ * SIGTERM is not enough on its own: a server whose parent shell is already gone can keep running after it.
+ */
+function rememberPlaywrightServers(): void
+{
+    static $servers = [];
+    static $registered = false;
+
+    if (! $registered) {
+        $registered = true;
+
+        register_shutdown_function(function () use (&$servers): void {
+            if ($servers !== []) {
+                $pids = implode(' ', $servers);
+
+                shell_exec("kill -TERM {$pids} 2>/dev/null; sleep 0.3; kill -KILL {$pids} 2>/dev/null");
+            }
+        });
+    }
+
+    $children = [];
+    $commands = [];
+
+    foreach (explode("\n", (string) shell_exec('ps -eo pid=,ppid=,args=')) as $line) {
+        if (preg_match('/^\s*(\d+)\s+(\d+)\s+(.*)$/', $line, $matches) === 1) {
+            $children[(int) $matches[2]][] = (int) $matches[1];
+            $commands[(int) $matches[1]] = $matches[3];
+        }
+    }
+
+    $pending = [getmypid()];
+
+    while ($pending !== []) {
+        foreach ($children[array_pop($pending)] ?? [] as $pid) {
+            $pending[] = $pid;
+
+            if (str_contains($commands[$pid], 'playwright run-server') && ! str_starts_with($commands[$pid], 'sh ')) {
+                $servers[$pid] = $pid;
+            }
+        }
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
 | Expectations
 |--------------------------------------------------------------------------
 |
@@ -76,6 +133,21 @@ function signInInBrowser(User $user): void
     }
 
     $page->assertPathIsNot('/login')->assertPathIsNot('/two-factor-challenge');
+}
+
+/**
+ * Opens a page and returns once Alpine has bound every component on it, and Livewire is loaded when the page has
+ * components of its own. Playwright only waits for an element to be actionable, not for the scripts that give it
+ * behaviour, so a click or a keypress sent earlier can land on markup that does nothing yet. The check retries
+ * until the browser timeout, so there is no fixed pause.
+ */
+function visitInteractive(string $url): mixed
+{
+    return visit($url)->assertScript(<<<'JS'
+        () => !!window.Alpine
+            && [...document.querySelectorAll('[x-data]')].every((element) => element._x_dataStack !== undefined)
+            && [...document.querySelectorAll('[wire\\:id]')].every((element) => !!window.Livewire?.find(element.getAttribute('wire:id')))
+        JS);
 }
 
 /**

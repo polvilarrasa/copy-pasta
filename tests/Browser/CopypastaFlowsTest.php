@@ -11,7 +11,7 @@ use App\Models\User;
 test('copiar desde el feed registra la copia y confirma en pantalla', function (): void {
     $copypasta = Copypasta::factory()->create(['title' => 'Copia de prueba del navegador']);
 
-    $page = visit('/')->assertSee($copypasta->title);
+    $page = visitInteractive('/')->assertSee($copypasta->title);
 
     // Headless Chromium denies clipboard writes without a granted permission; the rest of the flow stays real.
     $page->script('navigator.clipboard.writeText = async () => {}');
@@ -29,7 +29,7 @@ test('votar a favor desde el feed suma un punto y deja marcado el voto', functio
 
     signInInBrowser($member);
 
-    visit('/')
+    visitInteractive('/')
         ->assertSee($copypasta->title)
         ->click('button[aria-label="'.__('ui.card.vote_up').'"]')
         ->assertAttribute('button[aria-label="'.__('ui.card.vote_up').'"]', 'aria-pressed', 'true');
@@ -44,7 +44,7 @@ test('guardar en una carpeta desde el feed la añade a esa carpeta', function ()
 
     signInInBrowser($member);
 
-    visit('/')
+    visitInteractive('/')
         ->assertSee($copypasta->title)
         ->click('article button[aria-haspopup="menu"]')
         ->click(__('public.folders.button'))
@@ -61,7 +61,7 @@ test('reportar un copy-pasta envía el motivo y confirma el envío', function ()
 
     signInInBrowser($reporter);
 
-    visit('/')
+    visitInteractive('/')
         ->assertSee($copypasta->title)
         ->click('article button[aria-haspopup="menu"]')
         ->click(__('public.report.button'))
