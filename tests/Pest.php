@@ -163,6 +163,11 @@ function visitInteractive(string $url): mixed
  * Retries the expectations until they hold or the browser timeout runs out, for server state that a page action
  * changes after the page has already updated, such as a row written by a request that is still in flight. It must
  * not block: the application served to the browser runs in this same process.
+ *
+ * It depends on Pest\Browser\Execution::waitForExpectation(), a class the plugin marks @internal, so a plugin update
+ * can change it without notice. If it breaks, check in vendor/pestphp/pest-plugin-browser/src/Execution.php that the
+ * method still exists, takes a callable and retries on PHPUnit's ExpectationFailedException without blocking the
+ * event loop; if not, adapt this wrapper (the tests only call eventually()).
  */
 function eventually(callable $expectations): void
 {
