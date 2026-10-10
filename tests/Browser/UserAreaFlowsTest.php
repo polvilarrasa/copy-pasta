@@ -13,13 +13,15 @@ test('publicar un copy-pasta desde /publicar lo deja visible en mis copy-pastas'
 
     signInInBrowser($user);
 
-    // Title and body sync to the server on blur, so moving focus to the next field (and then to
-    // the tag button) is what commits each one — not a fixed wait on a debounced live update.
+    // The submit button's own label ("Publicar") matches the header's "Publicar" CTA exactly, so a
+    // text-based press() is ambiguous between the two — @publish-submit-button targets the form's
+    // own button precisely, the same data-test convention used by @folders-save-button.
     visit('/publicar')
+        ->wait(1)
         ->fill('title', 'Carta de amor a mi router')
         ->fill('body', 'Querido router, sé que no hablamos mucho pero siempre estás ahí.')
         ->click('#tag-humor')
-        ->press(__('public.publish.submit_create'))
+        ->press('@publish-submit-button')
         ->assertSee('Carta de amor a mi router');
 
     visit('/mis-copypastas')->assertSee('Carta de amor a mi router');

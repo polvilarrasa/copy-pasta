@@ -36,16 +36,15 @@
 
     <div class="flex flex-col items-start gap-10 lg:flex-row">
         <form wire:submit="save" class="flex w-full min-w-0 flex-col gap-6 lg:flex-1">
-            <div class="grid gap-2" x-data="{ len: {{ mb_strlen($title) }} }">
+            <div class="grid gap-2">
                 <label for="field-title" class="flex items-center justify-between text-sm font-semibold text-ink">
                     <span>{{ __('app.fields.title') }}</span>
-                    <span class="font-semibold tabular-nums text-muted" x-text="len + '/120'"></span>
+                    <span class="font-semibold tabular-nums text-muted" x-text="$wire.title.length + '/120'"></span>
                 </label>
                 <input
                     id="field-title"
                     name="title"
                     wire:model.live="title"
-                    x-on:input="len = $event.target.value.length"
                     type="text"
                     maxlength="120"
                     class="h-12 w-full rounded-lg border border-border bg-surface px-3.5 text-md text-ink placeholder:text-muted focus-visible:outline-none focus-visible:shadow-focus"
@@ -92,7 +91,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
-                <x-ui.button type="submit" variant="primary" size="lg" class="flex-1">
+                <x-ui.button type="submit" variant="primary" size="lg" class="flex-1" data-test="publish-submit-button">
                     {{ $copypasta ? __('public.publish.submit_edit') : __('public.publish.submit_create') }}
                 </x-ui.button>
 
