@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -19,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string|null $description
  * @property bool $is_public
  * @property string|null $public_id
+ * @property Carbon|null $public_locked_at
+ * @property string|null $public_lock_reason
  * @property bool $is_default
  * @property int $position
  */
@@ -42,6 +45,7 @@ class Folder extends Model
         return [
             'is_default' => 'boolean',
             'is_public' => 'boolean',
+            'public_locked_at' => 'datetime',
             'position' => 'integer',
         ];
     }
@@ -63,6 +67,14 @@ class Folder extends Model
     public function scopePublic(Builder $query): void
     {
         $query->where('is_public', true);
+    }
+
+    /**
+     * Whether the staff made the folder private and its owner cannot make it public again.
+     */
+    public function isPublicLocked(): bool
+    {
+        return $this->public_locked_at !== null;
     }
 
     /**

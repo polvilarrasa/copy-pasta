@@ -118,7 +118,8 @@ test('recalcular no toca las impresiones, que no salen de los eventos', function
         'date' => now()->toDateString(),
         'impressions' => 12,
     ]);
-    TrackedEvent::factory()->forCopypasta($copypasta)->ofType(EventType::DetailView)->at(now()->subHour())->create();
+    // Today's own first second: an hour back would land on yesterday between 00:00 and 01:00.
+    TrackedEvent::factory()->forCopypasta($copypasta)->ofType(EventType::DetailView)->at(now()->startOfDay()->addSecond())->create();
 
     app(AggregateCopypastaDailyStats::class)->handle(now()->subDay(), now());
 

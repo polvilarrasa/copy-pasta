@@ -39,16 +39,26 @@
                     name="is_public"
                     :label="__('public.public_folder.public_label')"
                     :checked="$isPublic"
+                    :disabled="$folder->isPublicLocked()"
                     wire:change="togglePublic"
                     data-test="folder-public-switch"
                 />
-                <p class="text-sm text-muted">{{ __('public.public_folder.public_hint') }}</p>
+                @if ($folder->isPublicLocked())
+                    <p class="text-sm font-semibold text-warn" data-test="folder-locked-notice">
+                        {{ __('public.public_folder.locked') }}.
+                        {{ __('public.public_folder.locked_reason', ['reason' => $folder->public_lock_reason]) }}
+                    </p>
+                @else
+                    <p class="text-sm text-muted">{{ __('public.public_folder.public_hint') }}</p>
+                @endif
             </div>
 
-            <x-ui.button variant="primary" x-on:click="share()" data-test="folder-share-button">
-                <x-lucide-share-2 class="size-5" aria-hidden="true" />
-                {{ __('public.public_folder.share') }}
-            </x-ui.button>
+            @unless ($folder->isPublicLocked())
+                <x-ui.button variant="primary" x-on:click="share()" data-test="folder-share-button">
+                    <x-lucide-share-2 class="size-5" aria-hidden="true" />
+                    {{ __('public.public_folder.share') }}
+                </x-ui.button>
+            @endunless
         </div>
 
         @if ($isPublic && $folder->publicUrl())

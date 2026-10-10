@@ -208,6 +208,8 @@ return [
         'profile_count' => '{0} Sin copy-pastas visibles|{1} 1 copy-pasta|[2,*] :count copy-pastas',
         'public_badge' => 'Pública',
         'public_label' => 'Carpeta pública',
+        'locked' => 'El equipo de moderación ha hecho privada esta carpeta',
+        'locked_reason' => 'Motivo: :reason',
         'public_hint' => 'Cualquiera con el enlace puede verla: nombre, descripción y los copy-pastas visibles.',
         'public_url' => 'Enlace público',
         'make_public' => 'Hacer pública',

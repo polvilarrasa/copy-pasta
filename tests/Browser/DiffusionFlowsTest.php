@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\MakeFolderPrivate;
 use App\Enums\EventType;
 use App\Models\Copypasta;
 use App\Models\Folder;
@@ -117,4 +118,20 @@ test('compartir como imagen un NSFW pide confirmación antes de dibujar nada', f
         ->assertScript("() => document.querySelector('canvas').width !== 1080")
         ->click('@share-image-confirm')
         ->assertScript(shareCanvasIsDrawnScript('0e0d1a'));
+});
+
+test('una carpeta que moderación hizo privada muestra el interruptor deshabilitado con el motivo y sin compartir', function (): void {
+    $owner = User::factory()->create();
+    $folder = Folder::factory()->public()->for($owner)->create(['name' => 'Carpeta moderada']);
+    app(MakeFolderPrivate::class)->handle(User::factory()->moderator()->create(), $folder, 'Contenido que incumple las normas');
+
+    signInInBrowser($owner);
+
+    visitInteractive(route('folders.show', $folder))
+        ->assertSee('El equipo de moderación ha hecho privada esta carpeta')
+        ->assertSee('Contenido que incumple las normas')
+        ->assertScript("() => document.querySelector('[data-test=folder-public-switch]').disabled === true")
+        ->assertNotPresent('@folder-share-button');
+
+    expect($folder->refresh()->is_public)->toBeFalse();
 });

@@ -3,8 +3,11 @@
 declare(strict_types=1);
 
 use App\Actions\CreateFolder;
+use App\Actions\MakeFolderPrivate;
 use App\Actions\RenameFolder;
 use App\Actions\SetFolderVisibility;
+use App\Actions\ShareFolder;
+use App\Actions\UnlockFolder;
 use App\Actions\UpdateFolderDescription;
 use App\Enums\EventType;
 use App\Livewire\FolderDetail;
@@ -131,4 +134,86 @@ test('nadie más abre la vista de dueño de una carpeta', function (): void {
     $folder = Folder::factory()->public()->create();
 
     Livewire::actingAs(User::factory()->create())->test(FolderDetail::class, ['folder' => $folder])->assertNotFound();
+});
+
+function lockedFolder(?User $owner = null): Folder
+{
+    $folder = Folder::factory()->public()->for($owner ?? User::factory()->create())->create(['name' => 'Carpeta moderada']);
+
+    return app(MakeFolderPrivate::class)->handle(User::factory()->moderator()->create(), $folder, 'Contenido que incumple las normas');
+}
+
+test('hacerla privada desde moderación la bloquea y el dueño no puede volver a publicarla con la Action', function (): void {
+    $folder = lockedFolder();
+
+    expect($folder->refresh())->is_public->toBeFalse()->public_locked_at->not->toBeNull()
+        ->and(fn () => app(SetFolderVisibility::class)->handle($folder->user, $folder, true))->toThrow(AuthorizationException::class)
+        ->and(fn () => app(ShareFolder::class)->handle($folder->user, $folder))->toThrow(AuthorizationException::class);
+
+    expect($folder->refresh()->is_public)->toBeFalse();
+});
+
+test('el bloqueo se comprueba sobre la fila actual aunque el modelo en memoria esté desfasado', function (): void {
+    $owner = User::factory()->create();
+    $folder = Folder::factory()->public()->for($owner)->create();
+    $stale = Folder::query()->find($folder->id);
+
+    app(MakeFolderPrivate::class)->handle(User::factory()->moderator()->create(), $folder, 'Motivo');
+
+    expect(fn () => app(SetFolderVisibility::class)->handle($owner, $stale, true))->toThrow(AuthorizationException::class);
+});
+
+test('el dueño sigue pudiendo hacer privada una carpeta bloqueada y no registra nada', function (): void {
+    $folder = lockedFolder();
+
+    app(SetFolderVisibility::class)->handle($folder->user, $folder, false);
+
+    expect($folder->refresh()->is_public)->toBeFalse()
+        ->and(TrackedEvent::query()->where('type', EventType::FolderVisibility)->count())->toBe(0);
+});
+
+test('en la interfaz el interruptor sale deshabilitado con el aviso y el motivo, sin botón de compartir', function (): void {
+    $folder = lockedFolder();
+
+    Livewire::actingAs($folder->user)->test(FolderDetail::class, ['folder' => $folder])
+        ->assertSee('El equipo de moderación ha hecho privada esta carpeta')
+        ->assertSee('Motivo: Contenido que incumple las normas')
+        ->assertSeeHtml('data-test="folder-public-switch"')
+        ->assertDontSeeHtml('data-test="folder-share-button"')
+        ->assertSeeHtml('disabled');
+});
+
+test('el dueño no la publica por la interfaz: ni con el interruptor ni compartiéndola', function (): void {
+    $folder = lockedFolder();
+
+    Livewire::actingAs($folder->user)->test(FolderDetail::class, ['folder' => $folder])
+        ->call('togglePublic')
+        ->assertForbidden();
+
+    Livewire::actingAs($folder->user)->test(FolderDetail::class, ['folder' => $folder])
+        ->call('shareFolder')
+        ->assertForbidden();
+
+    expect($folder->refresh()->is_public)->toBeFalse()->and($folder->public_id)->not->toBeNull();
+    $this->get(route('folders.public', $folder->public_id))->assertNotFound();
+});
+
+test('desbloquearla no la hace pública y el dueño puede volver a decidir', function (): void {
+    $folder = lockedFolder();
+
+    app(UnlockFolder::class)->handle(User::factory()->moderator()->create(), $folder, 'Revisada');
+
+    expect($folder->refresh())->is_public->toBeFalse()->public_locked_at->toBeNull()->public_lock_reason->toBeNull();
+
+    Livewire::actingAs($folder->user)->test(FolderDetail::class, ['folder' => $folder])
+        ->assertDontSee('El equipo de moderación ha hecho privada esta carpeta')
+        ->call('togglePublic')
+        ->assertSet('isPublic', true);
+});
+
+test('un usuario normal no desbloquea una carpeta', function (): void {
+    $folder = lockedFolder();
+
+    expect(fn () => app(UnlockFolder::class)->handle($folder->user, $folder, 'Quiero publicarla'))->toThrow(AuthorizationException::class);
+    expect($folder->refresh()->isPublicLocked())->toBeTrue();
 });

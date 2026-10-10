@@ -35,8 +35,11 @@ class FolderDetail extends Component
 
     public function togglePublic(): void
     {
+        $this->folder->refresh();
+
         app(SetFolderVisibility::class)->handle($this->user(), $this->folder, ! (bool) $this->folder->is_public);
 
+        $this->folder->refresh();
         $this->isPublic = (bool) $this->folder->is_public;
     }
 
@@ -47,6 +50,7 @@ class FolderDetail extends Component
     {
         $url = app(ShareFolder::class)->handle($this->user(), $this->folder);
 
+        $this->folder->refresh();
         $this->isPublic = (bool) $this->folder->is_public;
 
         return $url;

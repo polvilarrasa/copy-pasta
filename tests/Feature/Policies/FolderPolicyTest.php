@@ -84,3 +84,25 @@ test('solo el staff vuelve privada una carpeta pública, y no una que ya es priv
         ->and(Gate::forUser(User::factory()->admin()->create())->allows('makePrivate', $public))->toBeTrue()
         ->and(Gate::forUser(User::factory()->admin()->create())->allows('makePrivate', $private))->toBeFalse();
 });
+
+test('el dueño publica su carpeta salvo que el staff la haya bloqueado como privada', function (): void {
+    $folder = Folder::factory()->create();
+    $locked = Folder::factory()->create();
+    $locked->forceFill(['public_locked_at' => now(), 'public_lock_reason' => 'Motivo'])->save();
+
+    expect(Gate::forUser($folder->user)->allows('publish', $folder))->toBeTrue()
+        ->and(Gate::forUser(User::factory()->create())->allows('publish', $folder))->toBeFalse()
+        ->and(Gate::forUser($locked->user)->allows('publish', $locked))->toBeFalse();
+});
+
+test('solo el staff desbloquea, y solo una carpeta bloqueada', function (): void {
+    $locked = Folder::factory()->create();
+    $locked->forceFill(['public_locked_at' => now(), 'public_lock_reason' => 'Motivo'])->save();
+    $free = Folder::factory()->create();
+
+    expect(Gate::forUser($locked->user)->allows('unlock', $locked))->toBeFalse()
+        ->and(Gate::forUser(User::factory()->create())->allows('unlock', $locked))->toBeFalse()
+        ->and(Gate::forUser(User::factory()->moderator()->create())->allows('unlock', $locked))->toBeTrue()
+        ->and(Gate::forUser(User::factory()->admin()->create())->allows('unlock', $locked))->toBeTrue()
+        ->and(Gate::forUser(User::factory()->moderator()->create())->allows('unlock', $free))->toBeFalse();
+});

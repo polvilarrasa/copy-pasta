@@ -534,8 +534,14 @@ Aceptación: la imagen de un copy-pasta con emojis se genera sin cuadros vacíos
 - **Carpeta de una cuenta baneada, anonimizada o borrada: 404.** La página pública muestra nombre, descripción, autor y las tarjetas normales (`PublicFolderCopypastas`, 20 más cada vez); los ocultos y borrados no aparecen, ni siquiera para el dueño y sin placeholder. NSFW: un miembro según `canSeeNsfw()` y un invitado solo con la cookie de confirmación de edad.
 - **"Compartir carpeta"** en una privada abre una confirmación y, al aceptar, la hace pública y comparte (`ShareFolder`); en una pública comparte el enlace.
 - **Limpieza Unicode del nombre y la descripción** como los títulos (`cleanName()` y `UnicodeText::cleanTitle()`). Se corrige un hueco: los 280 caracteres de la descripción solo se limitaban en el cliente, y una más larga provocaba un error de base de datos; ahora se valida en `UpdateFolderDescription`. Un nombre que queda vacío tras limpiarlo se rechaza.
-- **`/admin` → Carpetas públicas** (`PublicFolderResource`, solo staff) con "Hacer privada", con motivo obligatorio y registro `make_folder_private` en `moderation_actions` (con dueño, nombre y `public_id` en `meta`). **Queda abierto:** el dueño puede volver a hacerla pública después de que el staff la haga privada; el plan no pide bloquearlo y no se ha añadido.
+- **`/admin` → Carpetas públicas** (`PublicFolderResource`, solo staff) con "Hacer privada", con motivo obligatorio y registro `make_folder_private` en `moderation_actions` (con dueño, nombre y `public_id` en `meta`). Hacerla privada la **bloquea** (ver "Carpetas moderadas" abajo).
 - **Perfil:** sección "Carpetas públicas" con el número de copy-pastas visibles de cada una.
+
+*Carpetas moderadas (cierre del hueco, commit posterior)*
+
+- **Bloqueo.** `MakeFolderPrivate` guarda `folders.public_locked_at` y `public_lock_reason` (migración nueva). Mientras esté bloqueada, el dueño no puede hacerla pública: `FolderPolicy::publish` lo deniega y `SetFolderVisibility` lo comprueba en servidor sobre la fila releída con `lockForUpdate` (un modelo en memoria desfasado no lo salta), y `ShareFolder` también, porque pasa por ella. Volver a hacerla privada sigue permitido. En la vista de carpeta el interruptor sale deshabilitado con «El equipo de moderación ha hecho privada esta carpeta» y el motivo, y no hay botón de compartir.
+- **Desbloqueo** (`UnlockFolder`, `FolderPolicy::unlock`, solo staff y solo si está bloqueada): motivo obligatorio y registro `unlock_folder` en `moderation_actions` (con dueño, nombre y el motivo del bloqueo en `meta`). La carpeta sigue privada: solo permite al dueño volver a decidir. En `/admin` el listado incluye ahora las carpetas públicas y las bloqueadas, con columna de estado y motivo; "Hacer privada" solo aparece en las públicas y "Desbloquear" en las bloqueadas.
+- **Notificación obligatoria** `FolderMadePrivate` (`FolderMadePrivateNotification`, con candado como icono): guarda `folder_id`, el nombre que tenía y el motivo, y enlaza a la carpeta mientras exista. No se crea para cuentas baneadas, borradas o anonimizadas, como el resto. Desbloquear no notifica.
 
 *Entorno*
 
@@ -634,3 +640,4 @@ Ideas aparcadas, ordenadas por valor estimado.
 | Resúmenes por email | Las notificaciones dentro de la app cubren lo básico |
 | API pública de lectura | Para bots de Discord o Telegram, cuando haya demanda |
 | Multidioma (catalán, inglés) | Los textos ya están en ficheros de idioma |
+| Atribución de visitas a carpetas públicas | Hoy `?ref=` solo se atribuye en el detalle de un copy-pasta (evento `detail_view`). Contar las visitas a `/col/{public_id}` pide un evento nuevo de visita a carpeta, su métrica y su consulta en el backfill, y que el enlace de "Compartir carpeta" lleve `?ref=`. |

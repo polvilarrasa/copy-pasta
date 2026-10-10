@@ -49,6 +49,22 @@ class FolderPolicy
     }
 
     /**
+     * Making a folder public needs it to be the owner's and not locked as private by the staff.
+     */
+    public function publish(User $user, Folder $folder): bool
+    {
+        return $user->getKey() === $folder->user_id && ! $folder->isPublicLocked();
+    }
+
+    /**
+     * Staff lift the lock of a folder they made private. It stays private; its owner decides again.
+     */
+    public function unlock(User $user, Folder $folder): bool
+    {
+        return $user->isStaff() && $folder->isPublicLocked();
+    }
+
+    /**
      * Staff take a public folder back to private; a private one has nothing to take back.
      */
     public function makePrivate(User $user, Folder $folder): bool

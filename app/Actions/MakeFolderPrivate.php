@@ -8,6 +8,7 @@ use App\Enums\ModerationActionType;
 use App\Models\Folder;
 use App\Models\ModerationAction;
 use App\Models\User;
+use App\Notifications\FolderMadePrivateNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -15,8 +16,9 @@ use Illuminate\Validation\ValidationException;
 class MakeFolderPrivate
 {
     /**
-     * Staff take a public folder back to private, with a mandatory reason. The change is logged with the owner and the
-     * name the folder had, since the owner can rename it afterwards.
+     * Staff take a public folder back to private, with a mandatory reason, and lock it: its owner cannot make it public
+     * again until the staff unlock it. The change is logged with the owner and the name the folder had, since the owner
+     * can rename it afterwards, and the owner gets the mandatory moderation notification with the reason.
      */
     public function handle(User $actor, Folder $folder, string $reason): Folder
     {
@@ -30,7 +32,11 @@ class MakeFolderPrivate
         );
 
         DB::transaction(function () use ($actor, $folder, $reason): void {
-            $folder->forceFill(['is_public' => false])->save();
+            $folder->forceFill([
+                'is_public' => false,
+                'public_locked_at' => now(),
+                'public_lock_reason' => $reason,
+            ])->save();
 
             ModerationAction::query()->create([
                 'actor_id' => $actor->getKey(),
@@ -41,6 +47,9 @@ class MakeFolderPrivate
                 'meta' => ['owner_id' => $folder->user_id, 'name' => $folder->name, 'public_id' => $folder->public_id],
             ]);
         });
+
+        $folder->loadMissing('user');
+        $folder->user?->notify(new FolderMadePrivateNotification($folder, $reason));
 
         return $folder;
     }

@@ -47,13 +47,17 @@ class PublicFolderResource extends Resource
     }
 
     /**
-     * Only the folders that are public right now: a folder made private leaves the list.
+     * The folders that are public right now and those the staff made private and locked, so that the lock can be lifted.
+     * A folder the staff unlocked, or its owner made private, leaves the list.
      *
      * @return Builder<Folder>
      */
     public static function getEloquentQuery(): Builder
     {
-        return Folder::query()->public()->with('user:id,username')->withCount('copypastas');
+        return Folder::query()
+            ->where(fn (Builder $query) => $query->where('is_public', true)->orWhereNotNull('public_locked_at'))
+            ->with('user:id,username')
+            ->withCount('copypastas');
     }
 
     public static function table(Table $table): Table
