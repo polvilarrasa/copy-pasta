@@ -165,7 +165,7 @@ return [
         'index_empty_title' => 'Aún no tienes carpetas',
         'index_empty_body' => 'Crea una carpeta para guardar tus copy-pastas favoritos.',
         'description_label' => 'Descripción',
-        'description_hint' => 'Hasta 280 caracteres. Solo tú la ves.',
+        'description_hint' => 'Hasta 280 caracteres. La ve quien abra la carpeta si es pública.',
         'edit' => 'Editar',
         'back' => 'Mis carpetas',
         'search_label' => 'Buscar en la carpeta',
@@ -175,6 +175,52 @@ return [
         'count' => '{0} Sin copy-pastas|{1} 1 copy-pasta|[2,*] :count copy-pastas',
         'move_up' => 'Subir',
         'move_down' => 'Bajar',
+    ],
+
+    'share_image' => [
+        'toggle' => 'Compartir como imagen',
+        'hint' => 'Para stories, chats y hilos donde el texto no cabe.',
+        'canvas_label' => 'Vista previa de la imagen',
+        'style' => 'Estilo',
+        'styles' => [
+            'midnight' => 'Medianoche',
+            'light' => 'Claro',
+            'lime' => 'Lima',
+        ],
+        'download' => 'Descargar imagen',
+        'share' => 'Compartir imagen',
+        'nsfw_title' => 'Este copy-pasta es para mayores de 18 años',
+        'nsfw_body' => 'La imagen incluirá su título y sus primeras líneas, sin difuminar. Genérala solo si quieres compartirlo así.',
+        'nsfw_confirm' => 'Generar la imagen',
+        'shared' => 'Imagen compartida.',
+        'downloaded' => 'Imagen descargada.',
+        'failed' => 'No se pudo generar la imagen.',
+        'deleted_author' => 'Usuario eliminado',
+        'brand' => 'copy-pastas',
+    ],
+
+    'public_folder' => [
+        'by' => 'Carpeta de',
+        'default_description' => 'Una carpeta de copy-pastas de :name.',
+        'empty_title' => 'Esta carpeta no tiene nada que mostrar',
+        'empty_body' => 'Todavía no hay copy-pastas visibles en ella.',
+        'profile_title' => 'Carpetas públicas',
+        'profile_count' => '{0} Sin copy-pastas visibles|{1} 1 copy-pasta|[2,*] :count copy-pastas',
+        'public_badge' => 'Pública',
+        'public_label' => 'Carpeta pública',
+        'locked' => 'El equipo de moderación ha hecho privada esta carpeta',
+        'locked_reason' => 'Motivo: :reason',
+        'public_hint' => 'Cualquiera con el enlace puede verla: nombre, descripción y los copy-pastas visibles.',
+        'public_url' => 'Enlace público',
+        'make_public' => 'Hacer pública',
+        'make_private' => 'Hacer privada',
+        'now_public' => 'La carpeta es pública.',
+        'now_private' => 'La carpeta vuelve a ser privada y su enlace deja de funcionar.',
+        'share' => 'Compartir carpeta',
+        'share_title' => 'Para compartirla, hay que hacerla pública',
+        'share_body' => 'Cualquiera con el enlace podrá ver el nombre, la descripción y los copy-pastas visibles de «:name». Puedes volver a hacerla privada cuando quieras.',
+        'share_confirm' => 'Hacerla pública y compartir',
+        'link_copied' => 'Enlace de la carpeta copiado.',
     ],
 
     'profile' => [
@@ -209,6 +255,8 @@ return [
         'readout_total' => 'Total: :value :unit',
         'readout_day' => ':day · :value :unit',
         'visits' => 'Visitas',
+        'referred_visits' => 'Visitas traídas por tus enlaces',
+        'referred_visits_hint' => 'En los últimos 30 días. Cuenta una por visitante y día; no cuentan las tuyas.',
         'top_tags_title' => 'Etiquetas con más copias',
         'top_tags_empty' => 'Todavía no hay copias etiquetadas.',
         'best_title' => 'Mejor copy-pasta',
@@ -270,6 +318,7 @@ return [
 
     'og' => [
         'nsfw_description' => 'Contenido para mayores de 18 años.',
+        'tagline' => 'Descubre, copia y comparte los copy-pastas de internet.',
     ],
 
     'rules' => [

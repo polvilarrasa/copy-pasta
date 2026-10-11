@@ -22,7 +22,7 @@ class ComputeUserStats
     /**
      * Everything the private stats page shows, cached per user for 10 minutes. Includes the user's own hidden
      * copy-pastas (the owner already sees those) and excludes deleted ones; never reads the raw `events` table,
-     * only `copypasta_daily_stats` and the denormalized counters.
+     * only `copypasta_daily_stats`, `user_daily_referrals` and the denormalized counters.
      *
      * @return array<string, mixed>
      */
@@ -84,6 +84,11 @@ class ComputeUserStats
             ->selectRaw("count(*) filter (where status = 'accepted') as accepted, count(*) filter (where status = 'rejected') as rejected")
             ->first();
 
+        $referredVisits = (int) DB::table('user_daily_referrals')
+            ->where('user_id', $user->getKey())
+            ->where('date', '>=', $currentFrom->toDateString())
+            ->sum('visits');
+
         $lastAggregatedAt = Cache::get(AggregateEventStats::LAST_RUN_CACHE_KEY);
 
         return [
@@ -99,6 +104,7 @@ class ComputeUserStats
             'kpis' => $this->kpis($daily, $currentFrom, $today, $previousFrom, $previousTo),
             'series' => $this->series($daily, $currentFrom, $today),
             'visits' => $this->sumColumn($daily, $currentFrom, $today, 'views'),
+            'referredVisits' => $referredVisits,
             'topTags' => $topTags->map(fn (object $tag): array => [
                 'name' => $tag->name,
                 'color' => $tag->color,

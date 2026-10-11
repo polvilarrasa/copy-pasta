@@ -18,6 +18,7 @@ use App\Http\Controllers\Public\MyCopypastasController;
 use App\Http\Controllers\Public\NotificationController;
 use App\Http\Controllers\Public\NsfwConfirmationController;
 use App\Http\Controllers\Public\ProfileController;
+use App\Http\Controllers\Public\PublicFolderController;
 use App\Http\Controllers\Public\PublishCopypastaController;
 use App\Http\Controllers\Public\RobotsController;
 use App\Http\Controllers\Public\SitemapController;
@@ -91,6 +92,10 @@ Route::post('/aviso/{copypasta}', [AnonymousNoticeController::class, 'store'])
 Route::view('/normas', 'public.normas')->name('normas');
 Route::view('/privacidad', 'public.privacidad')->name('privacy');
 Route::view('/cookies', 'public.cookies')->name('cookies');
+
+Route::get('/col/{publicId}', [PublicFolderController::class, 'show'])
+    ->where('publicId', '[0-9A-Za-z]{26}')
+    ->name('folders.public');
 
 Route::get('/u/{username}', [ProfileController::class, 'show'])->name('profile.show');
 

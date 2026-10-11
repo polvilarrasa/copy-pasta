@@ -9,6 +9,7 @@ use App\Notifications\AppNotification;
 use App\Notifications\CopypastaHiddenNotification;
 use App\Notifications\CopypastaMilestoneNotification;
 use App\Notifications\CopypastaRestoredNotification;
+use App\Notifications\FolderMadePrivateNotification;
 use App\Notifications\ReportAcceptedNotification;
 use App\Notifications\TrustedPromotionNotification;
 
@@ -25,6 +26,7 @@ enum NotificationType: string
     case ReportAccepted = 'report_accepted';
     case TrustedPromotion = 'trusted_promotion';
     case AchievementUnlocked = 'achievement_unlocked';
+    case FolderMadePrivate = 'folder_made_private';
 
     /**
      * @return class-string<AppNotification>
@@ -38,6 +40,7 @@ enum NotificationType: string
             self::ReportAccepted => ReportAcceptedNotification::class,
             self::TrustedPromotion => TrustedPromotionNotification::class,
             self::AchievementUnlocked => AchievementUnlockedNotification::class,
+            self::FolderMadePrivate => FolderMadePrivateNotification::class,
         };
     }
 
@@ -46,7 +49,7 @@ enum NotificationType: string
      */
     public function isMandatory(): bool
     {
-        return in_array($this, [self::CopypastaHidden, self::CopypastaRestored], true);
+        return in_array($this, [self::CopypastaHidden, self::CopypastaRestored, self::FolderMadePrivate], true);
     }
 
     /**
@@ -61,6 +64,7 @@ enum NotificationType: string
             self::ReportAccepted => 'shield-check',
             self::TrustedPromotion => 'badge-check',
             self::AchievementUnlocked => 'trophy',
+            self::FolderMadePrivate => 'lock',
         };
     }
 
@@ -76,6 +80,7 @@ enum NotificationType: string
             self::ReportAccepted => 't3',
             self::TrustedPromotion => 't4',
             self::AchievementUnlocked => 't4',
+            self::FolderMadePrivate => 't2',
         };
     }
 

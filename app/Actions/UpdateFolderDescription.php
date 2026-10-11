@@ -7,7 +7,9 @@ namespace App\Actions;
 use App\Concerns\LimitsFolderChanges;
 use App\Models\Folder;
 use App\Models\User;
+use App\Support\UnicodeText;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class UpdateFolderDescription
 {
@@ -22,7 +24,14 @@ class UpdateFolderDescription
         Gate::forUser($user)->authorize('view', $folder);
         $this->ensureFolderChangeIsAllowed($user);
 
-        $folder->update(['description' => $description !== null && $description !== '' ? $description : null]);
+        $description = UnicodeText::cleanTitle((string) $description);
+
+        throw_if(
+            mb_strlen($description) > Folder::MAX_DESCRIPTION_LENGTH,
+            ValidationException::withMessages(['description' => __('app.folders.errors.description_too_long', ['max' => Folder::MAX_DESCRIPTION_LENGTH])]),
+        );
+
+        $folder->update(['description' => $description !== '' ? $description : null]);
 
         return $folder;
     }

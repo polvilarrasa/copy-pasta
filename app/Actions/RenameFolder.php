@@ -23,7 +23,7 @@ class RenameFolder
         Gate::forUser($user)->authorize('update', $folder);
         $this->ensureFolderChangeIsAllowed($user);
 
-        $name = trim($name);
+        $name = $this->cleanName($name);
 
         $nameTaken = Folder::query()
             ->where('user_id', $folder->user_id)

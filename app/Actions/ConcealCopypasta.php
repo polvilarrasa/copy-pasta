@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\ModerationActionType;
+use App\Jobs\SyncCopypastaOgImageJob;
 use App\Mail\CopypastaHiddenMail;
 use App\Models\Copypasta;
 use App\Models\ModerationAction;
@@ -55,6 +56,8 @@ class ConcealCopypasta
         });
 
         GetFeaturedCopypasta::forgetIfFeatured($copypasta);
+
+        SyncCopypastaOgImageJob::dispatch($copypasta->getKey());
 
         // Reload: callers may hold a copy loaded with a partial user select that has no email.
         $copypasta->load('user');

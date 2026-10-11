@@ -68,6 +68,8 @@ return [
         'errors' => [
             'limit' => 'Puedes tener hasta :max carpetas.',
             'name_taken' => 'Ya tienes una carpeta con ese nombre.',
+            'name_empty' => 'El nombre de la carpeta no puede quedar vacío.',
+            'description_too_long' => 'La descripción puede tener hasta :max caracteres.',
         ],
     ],
 

@@ -13,6 +13,7 @@ enum AchievementFamily: string
     case Collector = 'collector';
     case Guardian = 'guardian';
     case Voter = 'voter';
+    case Diffusion = 'diffusion';
     case Veteran = 'veteran';
     case Secret = 'secret';
 }

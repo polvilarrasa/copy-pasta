@@ -11,8 +11,13 @@
         <meta property="og:type" content="article">
         <meta property="og:title" content="{{ $copypasta->title }}">
         <meta property="og:description" content="{{ $description }}">
+        <link rel="canonical" href="{{ $shareUrl }}">
         <meta property="og:url" content="{{ $shareUrl }}">
-        <meta name="twitter:card" content="summary">
+        <meta property="og:image" content="{{ $copypasta->ogImageUrl() }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{ $copypasta->ogImageUrl() }}">
         <meta name="twitter:title" content="{{ $copypasta->title }}">
         <meta name="twitter:description" content="{{ $description }}">
         @if ($copypasta->isHidden() || $copypasta->published_at === null)
@@ -32,6 +37,10 @@
         @endif
 
         <x-copypasta-card :copypasta="$copypasta" :context="$context" :full="true" />
+
+        @if (! $copypasta->isHidden() && $copypasta->published_at !== null)
+            <x-share-image-panel :copypasta="$copypasta" :context="$context" />
+        @endif
 
         <div class="flex flex-wrap items-center gap-3 px-1 text-sm text-muted">
             @if ($copypasta->revisions->count() > 1)

@@ -46,3 +46,4 @@ yarn-error.log
 /tests/Browser/Screenshots
 
 .DS_Store
+/storage/framework/og

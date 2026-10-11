@@ -2,7 +2,17 @@
 
 # PHP base with the extensions the app needs and Composer for the dependency stage.
 FROM dunglas/frankenphp:1-php8.4-bookworm AS base
-RUN install-php-extensions pdo_pgsql intl pcntl opcache zip
+RUN install-php-extensions pdo_pgsql intl pcntl opcache zip gd
+
+# Open Graph images: pango-view draws the text, Noto Color Emoji the emojis and Noto Sans CJK the Japanese, Chinese and
+# Korean. The CJK package ships every weight and style; only the regular one is kept. The app's own fonts live in
+# resources/fonts/og and are added through a fontconfig file the renderer writes. Keep this block in step with
+# docker/8.5/Dockerfile (Sail) and the CI workflow.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends pango1.0-tools fonts-noto-color-emoji fonts-noto-cjk \
+    && find /usr/share/fonts/opentype/noto -type f ! -name NotoSansCJK-Regular.ttc -delete \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 
@@ -38,7 +48,7 @@ RUN composer dump-autoload --optimize --no-dev --no-interaction \
     && php artisan package:discover --ansi \
     && php artisan filament:assets \
     && chmod +x /usr/local/bin/entrypoint \
-    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/framework/og storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
 USER www-data

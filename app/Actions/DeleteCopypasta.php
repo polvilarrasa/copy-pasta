@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Jobs\SyncCopypastaOgImageJob;
 use App\Models\Copypasta;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -30,5 +31,7 @@ class DeleteCopypasta
         });
 
         GetFeaturedCopypasta::forgetIfFeatured($copypasta);
+
+        SyncCopypastaOgImageJob::dispatch($copypasta->getKey());
     }
 }

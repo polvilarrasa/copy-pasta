@@ -39,7 +39,15 @@ class ProfileController extends Controller
             ->selectRaw('count(*) as published, coalesce(sum(copies_count), 0) as copies, coalesce(sum(upvotes_count), 0) as upvotes')
             ->first();
 
+        $publicFolders = $profileUser->folders()
+            ->public()
+            ->withCount(['copypastas as visible_count' => fn ($query) => $query->visible()])
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get();
+
         return response()->view('public.profile', [
+            'publicFolders' => $publicFolders,
             'profileUser' => $profileUser,
             'counters' => $counters,
             'achievements' => $listAchievements->handle($profileUser, $request->user()),

@@ -23,6 +23,8 @@ enum EventType: string
     case FolderCreate = 'folder_create';
     case FolderRename = 'folder_rename';
     case FolderDelete = 'folder_delete';
+    case FolderVisibility = 'folder_visibility';
+    case FolderShare = 'folder_share';
     case UsernameChange = 'username_change';
     case ThemeChange = 'theme_change';
     case NotificationOpen = 'notification_open';

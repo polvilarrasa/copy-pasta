@@ -66,10 +66,16 @@ jobs:
             bash .github/scripts/check-large-files.sh "$BASE_SHA" "$GITHUB_SHA"
           fi
 
+      - name: Install the tools that draw the Open Graph images
+        # pango-view draws their text and the Noto emoji font their emojis. The CJK font is left out: the tests check
+        # the size of the image, not its glyphs. Keep this in step with the Dockerfile.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pango1.0-tools fonts-noto-color-emoji
+
       - name: Setup PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
           php-version: '8.4'
+          extensions: gd
           tools: composer:v2
           coverage: none
 

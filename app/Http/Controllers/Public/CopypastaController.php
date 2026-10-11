@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Public;
 
-use App\Actions\RecordEvent;
-use App\Enums\EventType;
+use App\Actions\RecordCopypastaVisit;
 use App\Http\Controllers\Controller;
 use App\Models\Copypasta;
 use App\Models\User;
@@ -24,14 +23,14 @@ class CopypastaController extends Controller
     public function show(
         Request $request,
         Copypasta $copypasta,
-        RecordEvent $recordEvent,
+        RecordCopypastaVisit $recordVisit,
         CrawlerDetector $crawlerDetector,
         ?string $slug = null,
     ): RedirectResponse|Response {
         abort_unless(Gate::allows('view', $copypasta), 404);
 
         if ($slug !== $copypasta->slug) {
-            return redirect()->route('copypastas.show', [$copypasta, $copypasta->slug], 301);
+            return redirect()->route('copypastas.show', [$copypasta, $copypasta->slug, ...$request->query()], 301);
         }
 
         $viewer = $request->user();
@@ -44,12 +43,7 @@ class CopypastaController extends Controller
         $context = EventContext::fromRequest($request);
 
         if (! $crawlerDetector->isBot($request)) {
-            $recordEvent->handle(
-                EventType::DetailView,
-                $viewer instanceof User ? $viewer : null,
-                $copypasta,
-                $context,
-            );
+            $recordVisit->handle($copypasta, $viewer instanceof User ? $viewer : null, $context);
         }
 
         return response()->view('public.copypasta', ['copypasta' => $copypasta, 'context' => $context]);

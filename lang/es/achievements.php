@@ -77,6 +77,18 @@ return [
             'name' => 'Crítico',
             'description' => 'Tener 100 votos emitidos activos. Los votos retirados no cuentan.',
         ],
+        'messenger' => [
+            'name' => 'Mensajero',
+            'description' => 'Conseguir 1 visita por tus enlaces compartidos. Cuenta una por visitante y día, y nunca las tuyas ni las de bots.',
+        ],
+        'loudspeaker' => [
+            'name' => 'Altavoz',
+            'description' => 'Conseguir 100 visitas por tus enlaces compartidos. Cuenta una por visitante y día, y nunca las tuyas ni las de bots.',
+        ],
+        'megaphone' => [
+            'name' => 'Megáfono',
+            'description' => 'Conseguir 1.000 visitas por tus enlaces compartidos. Cuenta una por visitante y día, y nunca las tuyas ni las de bots.',
+        ],
         'veteran' => [
             'name' => 'Veterano',
             'description' => 'Tener la cuenta desde hace 365 días.',
@@ -104,6 +116,8 @@ return [
         'collector' => 'Coleccionista',
         'guardian' => 'Guardián',
         'sentinel' => 'Centinela',
+        'loudspeaker' => 'Altavoz',
+        'megaphone' => 'Megáfono',
         'veteran' => 'Veterano',
         'night_owl' => 'Noctámbulo',
         'dynamite' => 'Dinamita',

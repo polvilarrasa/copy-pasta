@@ -43,6 +43,9 @@ enum AchievementMetric: string
     /** Flag: 1 once one of the member's copy-pastas got 100 copies from others within 24 hours. */
     case Dynamite = 'dynamite';
 
+    /** Visits that came through the member's shared links: one per visitor, link owner and day, never the member's own. Never goes down. */
+    case AttributedVisits = 'attributed_visits';
+
     /** Days since the account was created. Derived from users.created_at, so it is not stored. */
     case AccountDays = 'account_days';
 

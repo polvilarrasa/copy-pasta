@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Enums\EventType;
+use App\Jobs\SyncCopypastaOgImageJob;
 use App\Models\Copypasta;
 use App\Models\User;
 use App\Support\UnicodeText;
@@ -52,6 +53,8 @@ class UpdateCopypasta
 
             return $copypasta;
         });
+
+        SyncCopypastaOgImageJob::dispatch($updated->getKey());
 
         app(RecordEvent::class)->handle(EventType::Update, $editor, $updated);
 

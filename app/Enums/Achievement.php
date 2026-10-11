@@ -10,7 +10,7 @@ namespace App\Enums;
  * progress needs no per-achievement code.
  *
  * Adding one is a case here plus its lines in lang/es/achievements.php (name, description and, with a title, the
- * title). Difusion (Fase 20) and Variantes and Plantillas (Fase 21) are added the same way.
+ * title). Variantes and Plantillas (Fase 21) are added the same way.
  */
 enum Achievement: string
 {
@@ -38,6 +38,10 @@ enum Achievement: string
 
     case Critic = 'critic';
 
+    case Messenger = 'messenger';
+    case Loudspeaker = 'loudspeaker';
+    case Megaphone = 'megaphone';
+
     case Veteran = 'veteran';
 
     case NightOwl = 'night_owl';
@@ -53,6 +57,7 @@ enum Achievement: string
             self::FirstFolder, self::Collector => AchievementFamily::Collector,
             self::Vigilante, self::Guardian, self::Sentinel => AchievementFamily::Guardian,
             self::Critic => AchievementFamily::Voter,
+            self::Messenger, self::Loudspeaker, self::Megaphone => AchievementFamily::Diffusion,
             self::Veteran => AchievementFamily::Veteran,
             self::NightOwl, self::Dynamite => AchievementFamily::Secret,
         };
@@ -69,6 +74,7 @@ enum Achievement: string
             self::Collector => AchievementMetric::Saved,
             self::Vigilante, self::Guardian, self::Sentinel => AchievementMetric::ReportsAccepted,
             self::Critic => AchievementMetric::VotesCast,
+            self::Messenger, self::Loudspeaker, self::Megaphone => AchievementMetric::AttributedVisits,
             self::Veteran => AchievementMetric::AccountDays,
             self::NightOwl => AchievementMetric::NightPublications,
             self::Dynamite => AchievementMetric::Dynamite,
@@ -82,11 +88,11 @@ enum Achievement: string
     {
         return match ($this) {
             self::FirstPaste, self::FirstApplause, self::Trending, self::FirstFolder, self::Vigilante,
-            self::NightOwl, self::Dynamite => 1,
+            self::NightOwl, self::Dynamite, self::Messenger => 1,
             self::HabitualPaster, self::WellReceived, self::Copied, self::Guardian => 10,
             self::Collector, self::Sentinel => 50,
-            self::PasteFactory, self::PublicFavorite, self::Viral, self::Critic => 100,
-            self::Legend, self::InternetHeritage => 1000,
+            self::PasteFactory, self::PublicFavorite, self::Viral, self::Critic, self::Loudspeaker => 100,
+            self::Legend, self::InternetHeritage, self::Megaphone => 1000,
             self::Veteran => 365,
         };
     }
@@ -98,7 +104,7 @@ enum Achievement: string
     public function titleKey(): ?string
     {
         return match ($this) {
-            self::FirstApplause, self::Copied, self::FirstFolder, self::Vigilante, self::Critic => null,
+            self::FirstApplause, self::Copied, self::FirstFolder, self::Vigilante, self::Critic, self::Messenger => null,
             default => $this->value,
         };
     }
@@ -134,6 +140,9 @@ enum Achievement: string
             self::Guardian => 'shield-check',
             self::Sentinel => 'shield-alert',
             self::Critic => 'vote',
+            self::Messenger => 'send',
+            self::Loudspeaker => 'volume-2',
+            self::Megaphone => 'megaphone',
             self::Veteran => 'medal',
             self::NightOwl => 'moon',
             self::Dynamite => 'bomb',
@@ -153,6 +162,7 @@ enum Achievement: string
             AchievementFamily::Collector => 't3',
             AchievementFamily::Guardian => 't1',
             AchievementFamily::Voter => 't3',
+            AchievementFamily::Diffusion => 't2',
             AchievementFamily::Veteran => 't4',
             AchievementFamily::Secret => 't2',
         };
