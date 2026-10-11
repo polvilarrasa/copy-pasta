@@ -39,6 +39,7 @@
         $detailUrl = $detailQuery === [] ? $shareUrl : $shareUrl.'?'.http_build_query($detailQuery);
         $canReport = auth()->check() && auth()->id() !== $copypasta->user_id;
         $canDismiss = $canReport;
+        $templateModalId = 'template-copy-'.$copypasta->getKey();
     }
 @endphp
 
@@ -68,6 +69,8 @@
             dismissedMessage: @js(__('public.dismiss.done')),
             undoLabel: @js(__('public.dismiss.undo')),
             undoneMessage: @js(__('public.dismiss.undone')),
+            isTemplate: @js($template),
+            templateModalId: @js($templateModalId),
         })"
         x-on:copypasta-folders-saved="applyFolderState($event.detail)"
     @else
@@ -178,7 +181,7 @@
                     >
                         @if ($copypasta)
                             <h3 class="text-lg text-balance text-ink">
-                                <a href="{{ $detailUrl }}" class="hover:underline">{{ $title }}</a>
+                                <a href="{{ $detailUrl }}" wire:navigate class="hover:underline">{{ $title }}</a>
                             </h3>
                         @else
                             <h3 class="text-lg text-balance text-ink">{{ $title }}</h3>
@@ -217,6 +220,7 @@
 
         <button
             type="button"
+            data-test="card-copy"
             @if ($copypasta)
                 x-on:click="copy()"
                 @if ($nsfw) x-bind:disabled="! revealed" @endif
@@ -294,6 +298,37 @@
             @endif
         </div>
     </div>
+
+    @if ($copypasta && $template)
+        <x-ui.modal :id="$templateModalId" :title="__('public.template.copy_title')" data-test="template-modal">
+            <p>{{ __('public.template.copy_intro') }}</p>
+
+            <div class="mt-4 flex flex-col gap-3">
+                <template x-for="field in templateFields" :key="field.key">
+                    <label class="grid gap-1.5 text-sm font-semibold text-ink">
+                        <span x-text="field.label" class="bidi-isolate"></span>
+                        <input
+                            type="text"
+                            maxlength="{{ \App\Support\TemplateVariables::MAX_VALUE_LENGTH }}"
+                            x-model="templateValues[field.key]"
+                            :data-test="'template-field-' + field.key"
+                            class="h-12 w-full rounded-lg border border-border bg-surface px-3.5 text-md font-normal text-ink focus-visible:outline-none focus-visible:shadow-focus"
+                        >
+                    </label>
+                </template>
+            </div>
+
+            <h3 class="mt-5 text-sm font-bold text-ink">{{ __('public.template.preview') }}</h3>
+            <p x-text="templatePreview" data-test="template-preview" class="mt-1.5 max-h-48 overflow-y-auto rounded-lg bg-surface-2 p-3 text-base whitespace-pre-wrap text-ink bidi-isolate"></p>
+
+            <x-slot:actions>
+                <x-ui.button variant="primary" data-test="template-copy-button" x-on:click="copyTemplate(); open = false">
+                    <x-lucide-copy class="size-5" aria-hidden="true" />
+                    {{ __('ui.card.copy') }}
+                </x-ui.button>
+            </x-slot:actions>
+        </x-ui.modal>
+    @endif
 
     @if ($copypasta)
         @include('components.copypasta-folder-selector')

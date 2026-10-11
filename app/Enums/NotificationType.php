@@ -9,6 +9,7 @@ use App\Notifications\AppNotification;
 use App\Notifications\CopypastaHiddenNotification;
 use App\Notifications\CopypastaMilestoneNotification;
 use App\Notifications\CopypastaRestoredNotification;
+use App\Notifications\CopypastaVariantNotification;
 use App\Notifications\FolderMadePrivateNotification;
 use App\Notifications\ReportAcceptedNotification;
 use App\Notifications\TrustedPromotionNotification;
@@ -27,6 +28,7 @@ enum NotificationType: string
     case TrustedPromotion = 'trusted_promotion';
     case AchievementUnlocked = 'achievement_unlocked';
     case FolderMadePrivate = 'folder_made_private';
+    case VariantPublished = 'variant_published';
 
     /**
      * @return class-string<AppNotification>
@@ -41,6 +43,7 @@ enum NotificationType: string
             self::TrustedPromotion => TrustedPromotionNotification::class,
             self::AchievementUnlocked => AchievementUnlockedNotification::class,
             self::FolderMadePrivate => FolderMadePrivateNotification::class,
+            self::VariantPublished => CopypastaVariantNotification::class,
         };
     }
 
@@ -65,6 +68,7 @@ enum NotificationType: string
             self::TrustedPromotion => 'badge-check',
             self::AchievementUnlocked => 'trophy',
             self::FolderMadePrivate => 'lock',
+            self::VariantPublished => 'git-fork',
         };
     }
 
@@ -81,6 +85,7 @@ enum NotificationType: string
             self::TrustedPromotion => 't4',
             self::AchievementUnlocked => 't4',
             self::FolderMadePrivate => 't2',
+            self::VariantPublished => 't5',
         };
     }
 

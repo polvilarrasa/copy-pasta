@@ -32,4 +32,5 @@ enum EventType: string
     case FavoriteTagsUpdate = 'favorite_tags_update';
     case Dismiss = 'dismiss';
     case DismissUndo = 'dismiss_undo';
+    case AppInstall = 'app_install';
 }

@@ -36,7 +36,13 @@
             </div>
         @endif
 
-        <x-copypasta-card :copypasta="$copypasta" :context="$context" :full="true" />
+        <x-copypasta-variants
+            :copypasta="$copypasta"
+            :parent="$parent"
+            :variants="$variants"
+            :variants-total="$variantsTotal"
+            :context="$context"
+        />
 
         @if (! $copypasta->isHidden() && $copypasta->published_at !== null)
             <x-share-image-panel :copypasta="$copypasta" :context="$context" />

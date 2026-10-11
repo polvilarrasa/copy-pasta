@@ -23,6 +23,7 @@ class CastVote
         private AdjustAchievementProgress $adjustProgress,
         private QueueAchievementEvaluation $queueEvaluation,
         private AdjustTagAffinity $adjustAffinity,
+        private DetectOutscoringVariant $detectOutscoringVariant,
     ) {}
 
     /**
@@ -83,6 +84,8 @@ class CastVote
 
         $this->queueEvaluation->handle($voter, [AchievementMetric::VotesCast]);
         $this->queueEvaluation->handle($copypasta->user_id, [AchievementMetric::UpvotesReceived]);
+
+        $this->detectOutscoringVariant->handle($copypasta);
 
         if ($result === 1) {
             DB::afterCommit(fn () => $this->detectMilestones->handle($copypasta, MilestoneMetric::Upvotes));

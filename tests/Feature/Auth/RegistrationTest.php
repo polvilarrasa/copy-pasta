@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
@@ -26,6 +27,8 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register(): void
     {
+        Tag::factory()->count(3)->create();
+
         $response = $this->post(route('register.store'), [
             'username' => 'johndoe',
             'email' => 'test@example.com',

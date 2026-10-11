@@ -8,6 +8,7 @@ use App\Http\Middleware\EndExpiredImpersonation;
 use App\Http\Middleware\EnsureStaffHasTwoFactor;
 use App\Http\Middleware\EnsureUserIsNotBanned;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetCacheHeaders;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -63,6 +64,7 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 SecurityHeaders::class,
+                SetCacheHeaders::class,
             ])
             ->renderHook(
                 PanelsRenderHook::BODY_START,

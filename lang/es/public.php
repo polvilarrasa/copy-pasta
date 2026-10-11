@@ -21,6 +21,8 @@ return [
 
     'errors' => [
         'back_home' => 'Volver al inicio',
+        'reload' => 'Recargar la página',
+        'retry' => 'Reintentar',
         '403' => [
             'title' => 'No tienes acceso a esta página',
             'body' => 'Puede que necesites iniciar sesión o que tu cuenta no tenga permiso para verla.',
@@ -28,6 +30,22 @@ return [
         '404' => [
             'title' => 'Página no encontrada',
             'body' => 'La página que buscas no existe o se ha movido.',
+        ],
+        '419' => [
+            'title' => 'La sesión ha caducado',
+            'body' => 'Ha pasado demasiado tiempo desde que abriste esta página. Recárgala y vuelve a intentarlo.',
+        ],
+        '429' => [
+            'title' => 'Vas demasiado rápido',
+            'body' => 'Has hecho muchas peticiones seguidas. Espera un momento y vuelve a intentarlo.',
+        ],
+        '500' => [
+            'title' => 'Algo ha fallado',
+            'body' => 'Ha habido un error por nuestra parte. Prueba otra vez en un momento.',
+        ],
+        '503' => [
+            'title' => 'Volvemos enseguida',
+            'body' => 'Estamos haciendo mantenimiento. Prueba otra vez en unos minutos.',
         ],
     ],
 
@@ -76,6 +94,8 @@ return [
         'skip' => 'Saltar por ahora',
         'hint' => 'Podrás editar tus favoritas desde el feed.',
         'min_tags' => 'Elige al menos :min etiquetas.',
+        'empty_title' => 'Todavía no hay etiquetas',
+        'empty_body' => 'Cuando haya etiquetas podrás elegir tus favoritas desde aquí.',
     ],
 
     'dismiss' => [
@@ -144,6 +164,28 @@ return [
         'view' => 'Ver',
         'edit' => 'Editar',
         'delete' => 'Borrar',
+    ],
+
+    'template' => [
+        'copy_title' => 'Rellena la plantilla',
+        'copy_intro' => 'Escribe un valor para cada variable. Las que dejes vacías se copian tal cual. Lo que escribas no sale de tu navegador.',
+        'preview' => 'Vista previa',
+    ],
+
+    'variants' => [
+        'create' => 'Crear variante',
+        'heading' => 'Variantes',
+        'tabs_label' => 'Variantes de este copy-pasta',
+        'original' => 'Original',
+        'this_version' => 'Esta versión',
+        'deleted_author' => 'usuario eliminado',
+        'more' => '{1} y 1 variante más|[2,*] y :count variantes más',
+        'variant_of' => 'Variante de',
+        'removed' => 'Contenido retirado',
+        'title_create' => 'Crear variante',
+        'submit' => 'Publicar variante',
+        'intro' => 'Parte del texto de «:title». Cambia lo que quieras: tiene que quedar distinto del original.',
+        'unverified_title' => 'Verifica tu email para crear variantes',
     ],
 
     'publish' => [

@@ -17,8 +17,14 @@
     <div class="flex flex-col gap-3.5">
         <div class="flex items-center justify-between text-sm font-bold">
             <span data-test="welcome-count" class="rounded-full bg-surface-2 px-3 py-1 text-ink">{{ trans_choice('public.welcome.chosen', count($selected), ['count' => count($selected)]) }}</span>
-            <span class="text-muted">{{ __('public.welcome.minimum', ['min' => $minimum]) }}</span>
+            @if ($minimum > 0)
+                <span class="text-muted">{{ __('public.welcome.minimum', ['min' => $minimum]) }}</span>
+            @endif
         </div>
+
+        @if ($tags->isEmpty())
+            <x-ui.empty-state :title="__('public.welcome.empty_title')">{{ __('public.welcome.empty_body') }}</x-ui.empty-state>
+        @endif
 
         <div class="flex flex-wrap gap-2.5" role="group" aria-label="{{ __('public.welcome.tags_label') }}">
             @foreach ($tags as $tag)

@@ -73,4 +73,25 @@ class CopypastaFactory extends Factory
             'published_at' => null,
         ]);
     }
+
+    /**
+     * Indicate that the copy-pasta is a template, with two variables in its body.
+     */
+    public function template(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_template' => true,
+            'body' => 'Hola {{nombre}}, te escribo desde {{ciudad}}. '.fake()->sentence(),
+        ]);
+    }
+
+    /**
+     * Indicate that the copy-pasta is a variant of the given one.
+     */
+    public function variantOf(Copypasta $parent): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'parent_id' => $parent->getKey(),
+        ]);
+    }
 }

@@ -24,17 +24,20 @@ use Illuminate\Support\Str;
 /**
  * @property string $id
  * @property int $user_id
+ * @property string|null $parent_id
  * @property string $title
  * @property string $slug
  * @property string $body
  * @property string $body_hash
  * @property string|null $og_image_path
  * @property bool $is_nsfw
+ * @property bool $is_template
  * @property int $upvotes_count
  * @property int $downvotes_count
  * @property int $score
  * @property int $favorites_count
  * @property int $copies_count
+ * @property int $template_copies_by_others
  * @property Carbon|null $published_at
  * @property Carbon|null $edited_at
  * @property Carbon|null $hidden_at
@@ -42,7 +45,7 @@ use Illuminate\Support\Str;
  * @property string|null $hidden_reason
  * @property Carbon|null $deleted_at
  */
-#[Fillable(['user_id', 'title', 'slug', 'body', 'is_nsfw', 'published_at'])]
+#[Fillable(['user_id', 'parent_id', 'title', 'slug', 'body', 'is_nsfw', 'is_template', 'published_at'])]
 class Copypasta extends Model
 {
     /** @use HasFactory<CopypastaFactory> */
@@ -53,12 +56,21 @@ class Copypasta extends Model
     public $incrementing = false;
 
     /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'is_template' => false,
+        'template_copies_by_others' => 0,
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
             'is_nsfw' => 'boolean',
+            'is_template' => 'boolean',
             'my_vote' => 'integer',
             'is_favorite' => 'boolean',
             'upvotes_count' => 'integer',
@@ -66,6 +78,7 @@ class Copypasta extends Model
             'score' => 'integer',
             'favorites_count' => 'integer',
             'copies_count' => 'integer',
+            'template_copies_by_others' => 'integer',
             'published_at' => 'datetime',
             'edited_at' => 'datetime',
             'hidden_at' => 'datetime',
@@ -123,6 +136,29 @@ class Copypasta extends Model
     }
 
     /**
+     * The copy-pasta this one is a variant of, deleted ones included so the page can tell "removed" from "none".
+     *
+     * @return BelongsTo<Copypasta, $this>
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id')->withTrashed();
+    }
+
+    /**
+     * The direct variants, best score first. Callers add `visible()` for what other members may see.
+     *
+     * @return HasMany<Copypasta, $this>
+     */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id')
+            ->orderByDesc('score')
+            ->orderByDesc('published_at')
+            ->orderByDesc('id');
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function hiddenBy(): BelongsTo
@@ -173,6 +209,14 @@ class Copypasta extends Model
     public function isHidden(): bool
     {
         return $this->hidden_at !== null;
+    }
+
+    /**
+     * Published, not hidden by moderation and not deleted: what other members can see and build on.
+     */
+    public function isAvailable(): bool
+    {
+        return $this->published_at !== null && ! $this->isHidden() && $this->deleted_at === null;
     }
 
     /**

@@ -57,6 +57,7 @@
     </footer>
 
     <x-ui.toast />
+    <x-request-errors />
 
     <div
         x-data="{ open: false, message: '' }"

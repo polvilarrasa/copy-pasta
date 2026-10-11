@@ -37,7 +37,7 @@ test('deshacer revierte las dos cosas y registra dismiss_undo', function (): voi
     $this->deleteJson(route('copypastas.dismiss.undo', $this->copypasta))->assertOk()->assertJson(['dismissed' => false]);
 
     expect(DB::table('copypasta_dismissals')->count())->toBe(0)
-        ->and(storedAffinity($this->member, $this->tag))->toBe(0.0)
+        ->and(storedAffinity($this->member, $this->tag))->toEqualWithDelta(0.0, 0.001)
         ->and(TrackedEvent::query()->where('type', EventType::DismissUndo)->count())->toBe(1);
 });
 

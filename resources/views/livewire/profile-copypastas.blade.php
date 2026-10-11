@@ -14,6 +14,9 @@
         >{{ __('public.profile.tab_new') }}</button>
     </div>
 
+    <x-ui.card-skeleton :count="3" wire:loading.delay wire:target="selectTab" />
+
+    <div wire:loading.remove.delay wire:target="selectTab" class="flex flex-col gap-4">
     @if ($copypastas->isEmpty())
         <x-ui.empty-state :title="__('public.profile.empty_title')">
             {{ __('public.profile.empty_body') }}
@@ -25,10 +28,13 @@
             @endforeach
         </div>
 
+        <x-ui.card-skeleton :count="2" wire:loading wire:target="loadMore" />
+
         @if ($hasMore)
             <div class="flex justify-center">
-                <x-ui.button variant="secondary" wire:click="loadMore">{{ __('public.feed.load_more') }}</x-ui.button>
+                <x-ui.button variant="secondary" wire:click="loadMore" wire:loading.attr="disabled" wire:target="loadMore">{{ __('public.feed.load_more') }}</x-ui.button>
             </div>
         @endif
     @endif
+    </div>
 </section>

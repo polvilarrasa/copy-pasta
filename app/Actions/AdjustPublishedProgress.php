@@ -24,7 +24,8 @@ class AdjustPublishedProgress
 
     /**
      * Moves the author's "published" progress by the difference between how the copy-pasta counted before the change
-     * and how it counts now. Call it inside the transaction that changed it, after saving.
+     * and how it counts now, and their "variants published" progress too when it is a variant. Call it inside the
+     * transaction that changed it, after saving.
      */
     public function handle(Copypasta $copypasta, bool $countedBefore): void
     {
@@ -32,8 +33,16 @@ class AdjustPublishedProgress
 
         $this->adjustProgress->add($copypasta->user_id, AchievementMetric::Published, $delta);
 
+        $isVariant = $copypasta->parent_id !== null;
+
+        if ($isVariant) {
+            $this->adjustProgress->add($copypasta->user_id, AchievementMetric::VariantsPublished, $delta);
+        }
+
         if ($delta > 0) {
-            $this->queueEvaluation->handle($copypasta->user_id, [AchievementMetric::Published]);
+            $this->queueEvaluation->handle($copypasta->user_id, $isVariant
+                ? [AchievementMetric::Published, AchievementMetric::VariantsPublished]
+                : [AchievementMetric::Published]);
         }
     }
 }

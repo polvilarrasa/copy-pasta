@@ -13,6 +13,7 @@ use App\Models\Copypasta;
 use App\Models\Tag;
 use App\Models\User;
 use App\Support\AvatarColor;
+use App\Support\TemplateVariables;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -22,11 +23,18 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 /**
- * Shared by /publicar and /c/{ulid}/editar: `copypasta` is null when creating, set when editing.
+ * Shared by /publicar, /c/{ulid}/editar and /c/{ulid}/variante: `copypasta` is null when creating and set when
+ * editing; `parent` is set when creating a variant, and the form starts as a copy of it.
  */
 class CopypastaForm extends Component
 {
+    public const MAX_TITLE_LENGTH = 120;
+
+    public const MAX_BODY_LENGTH = 10000;
+
     public ?Copypasta $copypasta = null;
+
+    public ?Copypasta $parent = null;
 
     public string $title = '';
 
@@ -37,8 +45,27 @@ class CopypastaForm extends Component
 
     public bool $isNsfw = false;
 
-    public function mount(?Copypasta $copypasta = null): void
+    public bool $isTemplate = false;
+
+    /**
+     * `prefillTitle` and `prefillBody` only apply when creating from scratch (the web share target); they are cut to
+     * the limits of the fields.
+     */
+    public function mount(?Copypasta $copypasta = null, ?Copypasta $parent = null, ?string $prefillTitle = null, ?string $prefillBody = null): void
     {
+        if ($parent instanceof Copypasta) {
+            abort_unless(Gate::allows('createVariant', $parent), 404);
+
+            $this->parent = $parent;
+            $this->title = $parent->title;
+            $this->body = $parent->body;
+            $this->isNsfw = $parent->is_nsfw;
+            $this->isTemplate = $parent->is_template;
+            $this->tagIds = $parent->tags()->where('is_active', true)->pluck('tags.id')->all();
+
+            return;
+        }
+
         if ($copypasta instanceof Copypasta) {
             abort_unless(Gate::allows('update', $copypasta), 404);
 
@@ -46,12 +73,16 @@ class CopypastaForm extends Component
             $this->title = $copypasta->title;
             $this->body = $copypasta->body;
             $this->isNsfw = $copypasta->is_nsfw;
+            $this->isTemplate = $copypasta->is_template;
             $this->tagIds = $copypasta->tags()->where('is_active', true)->pluck('tags.id')->all();
 
             return;
         }
 
         Gate::authorize('create', Copypasta::class);
+
+        $this->title = mb_substr(trim((string) $prefillTitle), 0, self::MAX_TITLE_LENGTH);
+        $this->body = mb_substr(trim((string) $prefillBody), 0, self::MAX_BODY_LENGTH);
     }
 
     public function toggleTag(int $tagId): void
@@ -64,20 +95,21 @@ class CopypastaForm extends Component
     public function save(): void
     {
         $this->validate([
-            'title' => ['required', 'string', 'min:5', 'max:120'],
-            'body' => ['required', 'string', 'min:10', 'max:10000'],
+            'title' => ['required', 'string', 'min:5', 'max:'.self::MAX_TITLE_LENGTH],
+            'body' => ['required', 'string', 'min:10', 'max:'.self::MAX_BODY_LENGTH],
         ]);
 
         $data = [
             'title' => $this->title,
             'body' => $this->body,
             'is_nsfw' => $this->isNsfw,
+            'is_template' => $this->isTemplate,
             'tag_ids' => $this->tagIds,
         ];
 
         $copypasta = $this->copypasta instanceof Copypasta
             ? app(UpdateCopypasta::class)->handle($this->user(), $this->copypasta, $data)
-            : app(PublishCopypasta::class)->handle($this->user(), $data);
+            : app(PublishCopypasta::class)->handle($this->user(), $data, $this->parent);
 
         $this->redirectRoute('copypastas.show', [$copypasta, $copypasta->slug], navigate: true);
     }
@@ -116,7 +148,21 @@ class CopypastaForm extends Component
             return null;
         }
 
-        return app(FindDuplicateCopypasta::class)->handle($this->body, $this->copypasta);
+        return app(FindDuplicateCopypasta::class)->handle($this->body, $this->copypasta ?? $this->parent);
+    }
+
+    /**
+     * The variables found in the body as they are written in it, one per distinct name.
+     *
+     * @return list<string>
+     */
+    #[Computed]
+    public function templateTokens(): array
+    {
+        return array_map(
+            fn (string $name): string => '{{'.$name.'}}',
+            TemplateVariables::extract($this->body),
+        );
     }
 
     public function render(): View
