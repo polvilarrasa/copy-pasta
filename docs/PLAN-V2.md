@@ -42,7 +42,7 @@ El MVP funciona pero parece una herramienta interna: estética básica, área de
 **Decisiones tomadas**
 
 1. El área de usuario sale de Filament. El panel `/app` desaparece y sus URLs redirigen a las nuevas.
-2. Tras el login, el staff va a `/admin` y el resto a la página que pedía o al feed.
+2. Tras el login, todos vuelven a la página que pedían; sin página pedida, el staff va a `/admin` y el resto al feed.
 3. La señal más fuerte de interés es copiar, por delante de votar.
 4. Los logros son reconocimiento: ningún logro da permisos.
 5. Los avatares se generan (iniciales y color); no hay subida de imágenes, que requeriría moderar imágenes.
@@ -233,7 +233,7 @@ Aceptación: tests de redirección por rol; un título con U+202E se guarda sin 
 **Desviaciones de la Fase 13:**
 
 - **Eventos nuevos (completa la lista de 12.5).** `EventType` suma `publish`, `update`, `folder_create`, `folder_rename`, `folder_delete` y `username_change`. Las acciones de publicar, editar, carpetas y cambio de usuario no registraban nada. La columna es `varchar`, así que no hay migración. La cuenta borrada sigue sin evento.
-- **Redirección tras el login.** El staff va siempre a `/admin` (decisión 2), aunque pidiera otra página. Fortify usa `TwoFactorLoginResponse` tras el reto de 2FA, así que la misma clase `LoginResponse` implementa los dos contratos. Un test de navegador cubre el staff sin 2FA: pasa por `/admin` y termina en la confirmación de contraseña previa a `/settings/security`.
+- **Redirección tras el login.** ~~El staff va siempre a `/admin`, aunque pidiera otra página.~~ **Cambiado en la Fase 22 (decisión 2):** la URL pedida (`intended`) gana siempre, también para el staff; el staff va a `/admin` solo cuando no hay URL pedida. Motivo: compartir texto desde otra app a `/publicar` sin sesión tiene que acabar en el formulario. Fortify usa `TwoFactorLoginResponse` tras el reto de 2FA, así que la misma clase `LoginResponse` implementa los dos contratos. Un test de navegador cubre el staff sin 2FA: pasa por `/admin` y termina en la confirmación de contraseña previa a `/settings/security`.
 - **Test de login actualizado.** `AuthenticationTest` esperaba `dashboard`; ahora espera el feed (`route('home')`), que es lo que decide la fase.
 - **`/u/{username}` provisional.** La página de perfil es de la Fase 16. Hasta entonces el nombre actual responde 404 y un nombre antiguo redirige con 301 durante 90 días. Un nombre que otra cuenta ocupa ahora no redirige.
 - **Historial y anonimización.** `AnonymizeUser` borra el historial de la cuenta anonimizada: así no reserva el nombre ni redirige a una cuenta eliminada. Un cambio hecho por un admin desde Filament se guarda en el historial, pero no consume el cupo de 30 días del usuario.
@@ -592,11 +592,93 @@ Aceptación: copiar una plantilla devuelve el texto con las variables sustituida
 
 ### Fase 22 — PWA y pulido
 
-- [ ] Manifest, iconos, color de tema, service worker con página sin conexión.
-- [ ] Revisión de estados vacíos, cargas y errores en todas las pantallas nuevas.
-- [ ] Lighthouse sobre producción: rendimiento y accesibilidad de 90 o más.
+- [x] Manifest, iconos, color de tema, service worker con página sin conexión.
+- [x] Revisión de estados vacíos, cargas y errores en todas las pantallas nuevas.
+- [x] Lighthouse: rendimiento y accesibilidad de 90 o más. **Medido sobre la imagen de producción en local**, no sobre producción (no existe hasta la Fase 24); se repite allí.
 
 Aceptación: la app se puede instalar en Android y en escritorio; sin conexión aparece la página offline; Lighthouse cumple los umbrales.
+
+**Estado de la aceptación:** el manifest pasa la comprobación de instalabilidad de Chrome (`Page.getInstallabilityErrors`, la de DevTools > Application) y una navegación sin conexión muestra la página offline, ambas con `scripts/check-pwa.mjs` contra el entorno de desarrollo y contra la imagen de producción por HTTPS. **Pendiente de comprobación manual, con dispositivo:** instalar en un Android real y en Chrome de escritorio con el botón "Instalar app", y compartir un texto desde otra app de Android a copy-pastas (el share target solo lo ofrece Android con la app instalada).
+
+**Comprobaciones manuales y scripts**
+
+- `vendor/bin/sail node scripts/check-pwa.mjs [dirección]`: manifest válido, instalabilidad según Chrome, `/sw.js` como JavaScript, worker con control de la página y página offline sin red. Hay que usarlo también en la Fase 24 sobre el servidor real. La instalabilidad solo se comprueba bien con el nuevo modo headless (`channel: 'chromium'`); el antiguo contesta una lista vacía aunque no haya manifest.
+- `vendor/bin/sail node scripts/generate-icons.mjs [--sheet ruta.png]`: regenera los PNG desde `resources/icons/*.svg` con el Chromium de Playwright y, con `--sheet`, una hoja de contacto para revisarlos a ojo. `public/favicon.svg` se edita a mano: cambia de colores con el esquema de color.
+- Los tests de navegador simulan la falta de red con `context.setOffline`, que el plugin no expone: `tests/Browser/PwaFlowsTest.php` envía el mensaje del protocolo por el cliente del plugin (marcado como interno). Si una actualización lo rompe, esas comprobaciones pasan a `scripts/check-pwa.mjs`.
+
+**Kill switch del service worker**
+
+Un service worker defectuoso se queda en los navegadores aunque se corrija el servidor, así que hay una salida que no requiere reconstruir la imagen:
+
+1. En el entorno de producción, `PWA_KILL_SWITCH=true` y reiniciar la app (`docker compose up -d app`, o `php artisan config:clear` si la configuración no está en caché).
+2. `/sw.js` pasa a servir un worker que borra todas las cachés, se desregistra y no hace nada más. Los navegadores revalidan `/sw.js` en cada navegación dentro del alcance (la respuesta no se cachea), así que lo instalan en lugar del defectuoso la próxima vez que alguien abra la web.
+3. Las páginas dejan de anunciar el worker (`<meta name="service-worker">`): `resources/js/pwa.js` no lo registra y, si encuentra uno registrado, lo desregistra y vacía las cachés. Así no se reinstala en bucle y las personas que abren la web se limpian al instante.
+4. Cuando se despliegue la corrección, volver a `PWA_KILL_SWITCH=false`.
+
+El worker de kill switch no recarga las pestañas abiertas: lo haría en bucle con las páginas que lo registran. Los tests (`PwaTest`) comprueban el contenido del worker y que las páginas dejan de anunciarlo.
+
+**Qué hace el service worker**
+
+- Sale de `/sw.js`, servido por Laravel (`ServiceWorkerController`) porque necesita la versión del build y la lista de precarga; con `Cache-Control: no-cache` y `Service-Worker-Allowed: /`.
+- Precarga solo la página offline, `/favicon.svg`, la hoja de estilos y las dos fuentes latinas que usa (`config/pwa.php`, `precache_fonts`). El nombre de la caché es `copypastas-<hash del manifest de Vite>`; en `activate` se borran las cachés `copypastas-*` antiguas y solo esas.
+- Navegaciones: siempre red; si falla, la página offline. No guarda HTML nunca. `/build/*` va caché primero. No toca nada que no sea GET, ni `/livewire*`, `/admin*`, `/notificaciones*` (esas peticiones ni siquiera pasan por `respondWith`), ni otro origen.
+- `manifest.webmanifest`, `sw.js` y `/sin-conexion` viven en `routes/pwa.php`, **fuera del grupo `web`** (solo con `SecurityHeaders`): sin sesión, sin cookies y sin base de datos. `POST /pwa/instalada` sí está en el grupo web (sesión, CSRF y `throttle:5,1`).
+- CSP: `manifest-src 'self'` y `worker-src 'self'`.
+
+**Auditoría de estados (antes de tocar nada) y lo que se hizo**
+
+| Pantalla | Faltaba | Hecho |
+| --- | --- | --- |
+| Feed (inicio, tops, nuevos, etiqueta, Para ti) | Carga en pestañas, búsqueda, barajar, actualizar y "Cargar más" | `x-ui.card-skeleton` con `wire:loading.delay` (la lista cede el sitio) y, en "Cargar más", placeholders debajo y botón desactivado |
+| Detalle | Fallo de red en la tarjeta y en los modales de carpetas y reporte | Ver "Fallos de red" |
+| Publicar, editar, variante | El botón no indicaba que guardaba | `wire:loading.attr="disabled"` en Guardar |
+| Mis copy-pastas, carpeta pública, perfil | Carga en "Cargar más" y, en el perfil, en las pestañas | Skeleton |
+| Estadísticas | Carga al cambiar de métrica | Skeleton del gráfico |
+| Notificaciones | La campana usaba el texto "Cargando…"; la página no mostraba nada al cambiar de pestaña, paginar o marcar todo | Filas de skeleton en ambas |
+| Bienvenida | Sin estado vacío si no hay etiquetas; el mínimo de 3 era inalcanzable con menos | Ver "Bienvenida" |
+| Errores | Solo existían 403 y 404, con el layout público | 419, 429, 500 y 503; 403 y 404 con el arte de `Vacios-*` |
+
+*Fallos de red.* `postJson` y `sendJson` solo trataban una respuesta no 2xx: con `fetch` rechazando (sin red) la excepción escapaba y no se revertía nada. Ahora ambas devuelven fallo (`null` / `status: 0`) y las acciones de la tarjeta (votar, guardar, descartar) revierten el estado optimista y muestran el toast `public.copy.action_failed`; copiar muestra el toast si el portapapeles falla (y no cuenta la copia); abrir, guardar y crear en carpetas añaden el toast al mensaje del modal. **Arreglo de paso:** `sendJson` no devolvía el `status`, así que la rama de 422 del reporte nunca se ejecutaba; ahora sí.
+
+*Livewire.* Un hook `Livewire.interceptRequest` (en `app.js`) sustituye el `confirm()` en inglés y el modal HTML crudo: un **419** abre el modal `session-expired` en español con un botón "Recargar" (`<x-request-errors />`, en los layouts público y de autenticación), un **429** muestra el toast "Vas demasiado rápido, prueba en un momento" y una petición que no llega al servidor muestra el toast de error.
+
+*Páginas de error.* 404, 403, 419 y 429 usan el layout público; **500 y 503 usan `layouts/standalone`**, sin base de datos, sesión, CSRF ni Livewire, igual que la página offline (los tests comprueban que no consultan la base de datos ni la sesión). El 419 ofrece volver a la página anterior (`url()->previous()`), no `location.reload()`, porque recargar un POST lo reenviaría. El 503 es la del modo mantenimiento (`php artisan down`) de la Fase 24.
+
+**Desviaciones y decisiones de la Fase 22**
+
+*Caché y volver atrás*
+
+- **Livewire ya ponía `no-store` en casi todas las páginas.** Su middleware (`DisableBackButtonCacheMiddleware`, global del kernel) añade `Cache-Control: no-store` y `Pragma` a toda respuesta que renderiza un componente Livewire, y la campana lo es en cada página con sesión. Por eso volver atrás en el feed ya perdía lo cargado antes de esta fase, y la política pedida (`private, no-cache`) no se cumplía. `SetCacheHeaders` (nuevo, en el grupo `web` y en el panel de Filament) pone `no-store` solo en `/settings/*`, `/estadisticas`, `/notificaciones` y la invitación, `private, no-cache` en el resto de respuestas con sesión, y **apaga el flag de Livewire** (`SupportDisablingBackButtonCache::$disableBackButtonCache = false`) antes de que su middleware lo lea. Si Livewire cambia ese mecanismo, `CacheHeadersTest` lo detecta.
+- **Volver atrás en el feed lo resuelve `wire:navigate`, no la caché HTTP.** Sin él, el test "Cargar más → detalle → atrás" falla aunque no haya `no-store`: el navegador vuelve a pedir el feed y trae los 20 primeros. El título de la tarjeta (`ui.copypasta-card`) lleva ahora `wire:navigate`, que restaura la página tal como se dejó. Con Chromium y bfcache activado (script puntual contra la imagen de producción) también se restaura una navegación normal, cosa que con `no-store` no pasaba.
+- **Cerrar sesión y volver atrás:** la respuesta del logout (Fortify y Filament) lleva `Clear-Site-Data: "cache"`. El test de navegador falla sin esa cabecera (muestra la página en caché) y pasa con ella; con Chromium y bfcache activado, volver atrás tras el logout lleva al login. Se pasó **sin ampliar `no-store`**.
+- **Sin precarga al pasar el ratón.** Ningún enlace de la app lleva el modificador `wire:navigate.hover` (revisados todos los `wire:navigate`): el único enlace a un detalle con `wire:navigate` es el título de la tarjeta, y Livewire solo precarga al pulsar (`mousedown`, y la navegación sigue al soltar), no al pasar el ratón. Una precarga por hover contaría como `detail_view`. El test de navegador del feed lo comprueba (reposa el puntero sobre un título y exige que no haya ninguna petición a `/c/…`) y falla si se añade `.hover`. Tras volver atrás, el mismo test vota una tarjeta, pulsa "Cargar más" otra vez y exige que no haya errores de JavaScript ni mensajes en la consola.
+- Los tests de Playwright no activan bfcache; esa parte se comprobó con un script puntual (no está en el repositorio).
+- **El clic de Playwright sobre un enlace `wire:navigate` se queda esperando** una navegación que Livewire no notifica; los tests de navegador lo hacen por script, como ya hacían con el cierre de sesión.
+
+*Otros*
+
+- **Bienvenida con pocas etiquetas.** Con menos etiquetas activas que `affinity.onboarding_min_tags` (3) no se redirige a `/bienvenida` (ni `RedirectToOnboarding` ni `RegisterResponse`) y el usuario no queda marcado como visto, y el mínimo para guardar es `min(3, etiquetas activas)` (`ListActiveTags::onboardingMinimum()`). Sin ninguna etiqueta la pantalla lo explica y se puede guardar. Tests ajustados: los que esperaban la redirección crean ahora 3 etiquetas, y el de "las etiquetas inactivas no cuentan" crea una activa más.
+- **Instrument Sans fuera.** `vite.config.js` seguía declarando la fuente por Bunny (`laravel-vite-plugin/fonts`) y el `@fonts` del `<head>` la precargaba, aunque el diseño usa Bricolage Grotesque y JetBrains Mono. Se quitan las dos cosas. Revisado: no queda ningún recurso externo en vistas, CSS ni JS (Filament usa su proveedor de fuentes local).
+- **Iconos (provisionales).** El SVG de origen y el script de generación están en el repositorio (`resources/icons/`, `scripts/`). **El logo actual (`x-app-logo-icon`) es la marca de Laravel del starter kit**, no un logo de copy-pastas, y **sustituirlo es bloqueante de lanzamiento** (ver Fase 24); los iconos reproducen ese logo tal cual (casilla `accent` con el logo `on-accent`). Cuando haya logo propio, basta cambiar el `path` de los tres SVG y de `favicon.svg` y ejecutar el script.
+- **Compartir (share target).** Solo `title` y `text`; Android suele mandar la URL en `url`, que se ignora. `CopypastaForm` recibe `prefillTitle`/`prefillBody` (solo al publicar de cero), recorta por caracteres (no bytes) a `MAX_TITLE_LENGTH` (120) y `MAX_BODY_LENGTH` (10000) y descarta parámetros que no sean texto. Sin sesión, el middleware `auth` conserva la dirección completa con sus parámetros y tras el login se vuelve a ella. El staff también vuelve al formulario: con una URL pedida (`intended`) gana ella y `/admin` solo es el destino sin URL pedida (`LoginResponse`, con test también para el reto de 2FA).
+- **Instalar app.** La entrada "Instalar app" del menú de usuario (solo con sesión; sin sesión el navegador tiene su propia entrada) aparece cuando el navegador lanza `beforeinstallprompt` (que `pwa.js` captura al cargar, antes de que arranque Alpine) y desaparece al instalar. Al recibir `appinstalled`, `POST /pwa/instalada` registra el evento `app_install` con `RecordAppInstall` (también anónimos, con el hash de visitante).
+- **`compose.staging.yaml` no arrancaba.** Montaba el volumen de Postgres en `/var/lib/postgresql/data`, y desde la imagen 18 hay que montar `/var/lib/postgresql` (el contenedor se reiniciaba en bucle). Corregido, igual que `compose.yaml` de Sail.
+
+**Lighthouse** (v12.8.2, `npx lighthouse@12`, sin añadirlo a `package.json`; configuración móvil por defecto, Chrome del sistema)
+
+Se midió sobre la imagen de producción (`APP_ENV=production`) del compose de staging, con la compresión del Caddyfile (CSS de 77 KB a 14 KB), detrás de un proxy TLS local (`frankenphp reverse-proxy`, `https://localhost:8443`) porque en producción `URL::forceScheme('https')` hace que los assets se pidan por HTTPS. Los datos salen de un volcado de la base de desarrollo (306 copy-pastas), porque la imagen de producción no lleva Faker. El `.env.staging` local (ignorado por git) lleva valores de prueba.
+
+| Página | Rendimiento | Accesibilidad | FCP | LCP | TBT | CLS |
+| --- | --- | --- | --- | --- | --- | --- |
+| Inicio, sin sesión | 100 | 100 | 1,2 s | 1,7 s | 50 ms | 0 |
+| Detalle | 100 | 100 | 1,2 s | 1,7 s | 0 ms | 0,001 |
+| Perfil | 100 | 100 | 1,2 s | 1,7 s | 40 ms | 0 |
+
+Repetir en la Fase 24 sobre el servidor real (la simulación de móvil de Lighthouse no mide la latencia real de red hasta ese servidor).
+
+*CI.* El script de Composer que usa CI (`types:check`, desde `ci:check`) lleva `--memory-limit=1G`: con el límite por defecto de PHP (128 MB) Larastan se cae con el análisis en paralelo. **Test existente arreglado de paso:** `DismissCopypastaTest` ("deshacer revierte las dos cosas") comparaba la afinidad con `toBe(0.0)`, pero el decaimiento temporal deja un residuo si pasa un segundo entre descartar y deshacer; ahora usa `toEqualWithDelta(0.0, 0.001)`.
+
+*Tests nuevos:* `tests/Feature/Public/PwaTest.php`, `CacheHeadersTest.php`, `ShareTargetTest.php`, `ErrorPagesTest.php` (ampliado), `tests/Feature/Actions/RecordAppInstallTest.php`, `tests/Feature/Support/ServiceWorkerAssetsTest.php` y `tests/Browser/PwaFlowsTest.php` (17 tests: volver atrás, logout, worker, offline, cachés, instalación, share target, fallos de red, 419, 429 y skeleton). `Livewire` recuerda entre peticiones, dentro de un proceso de test, que renderizó un componente; el test de la página offline lo reinicia con `\Livewire\trigger('flush-state')` (una petición real empieza limpia).
 
 ### Fase 23 — Unicode avanzado (prioridad baja)
 
@@ -611,6 +693,11 @@ Aceptación: un ASCII art de 120 columnas se muestra sin romperse; un emoji de f
 
 Pendiente de la Fase 12.4. El despliegue a producción lo ejecuta el propietario del proyecto: Claude Code prepara los ficheros y los tests, pero no despliega.
 
+- [ ] **BLOQUEANTE DE LANZAMIENTO: sustituir la marca de Laravel por el logo propio.** El logo actual (`x-app-logo-icon`) y todos los iconos de la Fase 22 son la marca del starter kit de Laravel y son provisionales. Hay que cambiar el `path` en `resources/views/components/app-logo-icon.blade.php`, `public/favicon.svg` y los tres SVG de `resources/icons/` (`icon.svg`, `icon-maskable.svg`, `icon-apple.svg`), y regenerar con `vendor/bin/sail node scripts/generate-icons.mjs` (`public/icons/*.png`, `public/apple-touch-icon.png`, `public/favicon.ico`). Después, enseñar la hoja de contacto (`--sheet`) y repetir `scripts/check-pwa.mjs`. Revisado con grep en la Fase 22 (lo que sigue es lo que hay que cubrir):
+  - **Usan el path de la marca de Laravel:** `app-logo-icon.blade.php`, que pintan `x-app-logo` (cabecera del layout público), el layout de autenticación (`layouts/auth/simple`) y `layouts/standalone` (página offline y errores 500 y 503; las de 404, 403, 419 y 429 llevan la cabecera pública); `public/favicon.svg`; `resources/icons/*.svg`; y los PNG derivados: `public/icons/*.png`, `public/apple-touch-icon.png` y `public/favicon.ico`. No está en emails, en las vistas de error propiamente dichas ni en el panel `/admin` (Filament solo pone `brandName`, sin logo).
+  - **Ya tienen marca propia, distinta de los iconos:** la imagen OG genérica `public/images/og-generic.png` y las de cada copy-pasta (`OgImageRenderer`), y la imagen para compartir (`drawMark` en `resources/js/share-image.js`) dibujan un glifo de "copiar" (dos cuadrados) sobre la casilla `accent`. Decidir si ese glifo es el logo y, entonces, usarlo también en los iconos; si no, igualar los dos.
+  - **El nombre "Laravel":** `APP_NAME=Laravel` en `.env` (se cambia en `.env.example` a `copy-pastas`, falta el `.env` real y el de producción) lo usan el `<title>` (`config('app.name')`), el texto de `x-app-logo`, el `sr-only` del layout de autenticación, el nombre del remitente de los emails (`MAIL_FROM_NAME`) y el panel `/admin`. **Los tres emails** (`copypasta-hidden`, `reported-minor`, `user-invitation`) usan la cabecera del tema de correo de Laravel, que con `APP_NAME=Laravel` muestra la imagen `laravel.com/img/notification-logo` (un recurso externo con el logo de Laravel); con otro nombre muestra el texto. Con un logo propio, publicar la plantilla de correo (`vendor:publish --tag=laravel-mail`) para ponerlo en la cabecera.
+  - Vuelve a pasar el grep al terminar (`grep -rn "M17.2 5.633" resources public`, y `grep -rniE "laravel" resources/views resources/js lang app/Mail config/app.php`).
 - [ ] VPS en la UE con Ubuntu LTS: acceso solo por clave SSH, cortafuegos con 22, 80 y 443 abiertos, actualizaciones de seguridad automáticas.
 - [ ] `compose.production.yaml` a partir del de staging.
 - [ ] Workflow de despliegue apuntando al VPS con una variable de host de producción.

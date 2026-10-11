@@ -33,6 +33,20 @@
         @endforeach
     </div>
 
+    <div role="status" wire:loading.delay wire:target="setTab,previousPage,nextPage,markAllRead" class="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface" data-test="notifications-skeleton">
+        <span class="sr-only">{{ __('ui.loading') }}</span>
+        @foreach (range(1, 4) as $row)
+            <div aria-hidden="true" class="flex gap-3 p-4">
+                <x-ui.skeleton class="size-10 shrink-0 rounded-full" />
+                <div class="flex-1 space-y-2">
+                    <x-ui.skeleton class="h-4 w-3/4" />
+                    <x-ui.skeleton class="h-4 w-1/3" />
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <div class="space-y-5" wire:loading.remove.delay wire:target="setTab,previousPage,nextPage,markAllRead">
     @if ($items->isEmpty())
         <x-ui.empty-state :title="$tab === 'unread' ? __('notifications.bell.empty_unread') : __('notifications.bell.empty')">
             {{ __('notifications.page.description') }}
@@ -58,4 +72,5 @@
             </nav>
         @endif
     @endif
+    </div>
 </section>

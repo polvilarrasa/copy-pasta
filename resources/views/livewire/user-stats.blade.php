@@ -43,13 +43,20 @@
         {{-- wire:key changes with the metric, so Livewire replaces this element instead of morphing it: the chart's
              Alpine state (the hover readout) is built once from the server data when x-data initializes, and a morph
              would leave that initial data stale after switching metrics. --}}
-        <x-ui.daily-chart
-            wire:key="daily-chart-{{ $metric }}"
-            :series="$series"
-            :unit="$unit"
-            :title="__('public.stats.chart_title', ['metric' => $metricLabel])"
-            :description="__('public.stats.chart_description', ['metric' => $metricLabel, 'from' => $stats['range']['longFrom'], 'to' => $stats['range']['longTo']])"
-        />
+        <div role="status" wire:loading.delay wire:target="selectMetric">
+            <span class="sr-only">{{ __('ui.loading') }}</span>
+            <x-ui.skeleton class="h-64 w-full" />
+        </div>
+
+        <div wire:loading.remove.delay wire:target="selectMetric">
+            <x-ui.daily-chart
+                wire:key="daily-chart-{{ $metric }}"
+                :series="$series"
+                :unit="$unit"
+                :title="__('public.stats.chart_title', ['metric' => $metricLabel])"
+                :description="__('public.stats.chart_description', ['metric' => $metricLabel, 'from' => $stats['range']['longFrom'], 'to' => $stats['range']['longTo']])"
+            />
+        </div>
     </section>
 
     <div class="grid gap-4 sm:grid-cols-2">

@@ -113,7 +113,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
-                <x-ui.button type="submit" variant="primary" size="lg" class="flex-1" data-test="publish-submit-button">
+                <x-ui.button type="submit" variant="primary" size="lg" class="flex-1" data-test="publish-submit-button" wire:loading.attr="disabled" wire:target="save">
                     {{ $copypasta ? __('public.publish.submit_edit') : ($parent ? __('public.variants.submit') : __('public.publish.submit_create')) }}
                 </x-ui.button>
 

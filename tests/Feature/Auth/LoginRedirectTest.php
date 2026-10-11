@@ -29,10 +29,36 @@ test('un admin con 2FA entra a /admin tras el login', function (): void {
     signInWith($this, $admin)->assertRedirect('/admin');
 });
 
-test('un moderador con 2FA entra a /admin tras el login, aunque pidiera otra página', function (): void {
+test('un moderador con 2FA entra a /admin tras el login cuando no pidió ninguna página', function (): void {
     $moderator = User::factory()->moderator()->withTwoFactor()->create();
 
-    signInWith($this, $moderator, url('/nuevos'))->assertRedirect('/admin');
+    signInWith($this, $moderator)->assertRedirect('/admin');
+});
+
+test('el staff vuelve a la página que pedía, igual que cualquiera: la URL pedida gana siempre', function (): void {
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
+
+    signInWith($this, $moderator, url('/nuevos'))->assertRedirect(url('/nuevos'));
+});
+
+test('el staff que pidió una página de administración vuelve a ella', function (): void {
+    $admin = User::factory()->admin()->withTwoFactor()->create();
+
+    signInWith($this, $admin, url('/admin/users'))->assertRedirect(url('/admin/users'));
+});
+
+test('un moderador que comparte texto a /publicar sin sesión vuelve al formulario con los datos tras el 2FA', function (): void {
+    $moderator = User::factory()->moderator()->withTwoFactor()->create();
+    $shared = ['title' => 'Título compartido', 'text' => 'Texto compartido desde otra app'];
+
+    $this->get('/publicar?'.http_build_query($shared))->assertRedirect(route('login'));
+
+    $location = (string) signInWith($this, $moderator)->assertRedirect()->headers->get('Location');
+
+    parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+
+    expect(parse_url($location, PHP_URL_PATH))->toBe('/publicar')
+        ->and($query)->toEqual($shared);
 });
 
 test('un miembro sin página pedida acaba en el feed', function (): void {

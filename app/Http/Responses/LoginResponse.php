@@ -17,8 +17,9 @@ use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseCo
 class LoginResponse implements LoginResponseContract, TwoFactorLoginResponseContract
 {
     /**
-     * Staff go to the admin panel, whatever page they asked for. Everyone else returns to the page they asked for, or
-     * to the feed. Staff without two-factor authentication are sent to set it up by the panel's own middleware.
+     * Everyone returns to the page they asked for, staff included (a shared text that sent them to log in, for
+     * instance). Without one, staff go to the admin panel and everyone else to the feed. Staff without two-factor
+     * authentication are sent to set it up by the panel's own middleware.
      */
     public function toResponse($request): JsonResponse|RedirectResponse
     {
@@ -28,10 +29,8 @@ class LoginResponse implements LoginResponseContract, TwoFactorLoginResponseCont
 
         $user = $request->user();
 
-        if ($user instanceof User && $user->isStaff()) {
-            return redirect()->to(Filament::getPanel('admin')->getUrl());
-        }
-
-        return redirect()->intended(route('home'));
+        return redirect()->intended(
+            $user instanceof User && $user->isStaff() ? Filament::getPanel('admin')->getUrl() : route('home'),
+        );
     }
 }

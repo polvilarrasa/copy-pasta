@@ -14,6 +14,8 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 test('tras el registro se redirige a /bienvenida y queda marcada como ofrecida', function (): void {
+    Tag::factory()->count(3)->create();
+
     $this->post(route('register.store'), [
         'username' => 'recien_llegado',
         'email' => 'nuevo@example.com',
@@ -25,6 +27,7 @@ test('tras el registro se redirige a /bienvenida y queda marcada como ofrecida',
 });
 
 test('un usuario existente sin onboarded_at va a /bienvenida al entrar en el feed, una sola vez', function (): void {
+    Tag::factory()->count(3)->create();
     $member = User::factory()->notOnboarded()->create();
 
     $this->actingAs($member)->get(route('home'))->assertRedirect(route('welcome'));
@@ -35,10 +38,60 @@ test('un usuario existente sin onboarded_at va a /bienvenida al entrar en el fee
 });
 
 test('lo mismo en cualquiera de las páginas del feed', function (string $uri): void {
+    Tag::factory()->count(3)->create();
     $member = User::factory()->notOnboarded()->create();
 
     $this->actingAs($member)->get($uri)->assertRedirect(route('welcome'));
 })->with(['/', '/nuevos', '/top', '/top/semana', '/top/mes']);
+
+test('con menos etiquetas activas que el mínimo no se ofrece la bienvenida y el usuario no queda marcado', function (): void {
+    Tag::factory()->count(2)->create();
+    Tag::factory()->create(['is_active' => false]);
+    $member = User::factory()->notOnboarded()->create();
+
+    $this->actingAs($member)->get(route('home'))->assertOk();
+
+    expect($member->refresh()->onboarded_at)->toBeNull();
+});
+
+test('tras el registro con pocas etiquetas se va al feed sin pasar por la bienvenida', function (): void {
+    Tag::factory()->count(2)->create();
+
+    $this->post(route('register.store'), [
+        'username' => 'recien_llegado',
+        'email' => 'nuevo@example.com',
+        'password' => 'Correct-Horse-Battery-9',
+        'password_confirmation' => 'Correct-Horse-Battery-9',
+    ])->assertRedirect(route('home', absolute: false));
+
+    expect(User::query()->where('username', 'recien_llegado')->sole()->onboarded_at)->toBeNull();
+});
+
+test('con pocas etiquetas activas la edición de favoritas guarda con las que haya', function (): void {
+    $tags = Tag::factory()->count(2)->create();
+    $member = User::factory()->create();
+
+    Livewire::actingAs($member)->test(Welcome::class, ['editing' => true])
+        ->assertSee('Elige 2 más')
+        ->call('toggle', $tags[0]->id)
+        ->assertSee('Elige 1 más')
+        ->call('toggle', $tags[1]->id)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('home'));
+
+    expect(DB::table('user_favorite_tags')->where('user_id', $member->id)->count())->toBe(2);
+});
+
+test('sin ninguna etiqueta activa la pantalla lo explica y se puede guardar', function (): void {
+    $member = User::factory()->create();
+
+    Livewire::actingAs($member)->test(Welcome::class)
+        ->assertSee(__('public.welcome.empty_title'))
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('home'));
+});
 
 test('no hay redirección para el staff, ni en /admin, ni para anónimos', function (): void {
     $moderator = User::factory()->moderator()->notOnboarded()->withTwoFactor()->create();
@@ -140,6 +193,7 @@ test('guardar registra favorite_tags_update con las etiquetas', function (): voi
 
 test('las etiquetas inactivas o inexistentes no cuentan para el mínimo', function (): void {
     $active = Tag::factory()->count(2)->create();
+    Tag::factory()->create();
     $inactive = Tag::factory()->create(['is_active' => false]);
 
     expect(fn () => app(UpdateFavoriteTags::class)->handle(User::factory()->create(), [...$active->pluck('id')->all(), $inactive->id, 9999]))

@@ -27,6 +27,19 @@
         {{ __('ui.settings') }}
     </x-ui.menu-item>
 
+    {{-- Only when the browser offered the install prompt (beforeinstallprompt); resources/js/pwa.js keeps the state. --}}
+    <div
+        x-data="{ available: window.copypastasInstall?.available() ?? false }"
+        x-on:pwa-install-state.window="available = window.copypastasInstall.available()"
+        x-show="available"
+        x-cloak
+    >
+        <x-ui.menu-item x-on:click="window.copypastasInstall.prompt()" data-test="install-app">
+            <x-lucide-download class="size-4" aria-hidden="true" />
+            {{ __('pwa.install.menu') }}
+        </x-ui.menu-item>
+    </div>
+
     <form method="POST" action="{{ route('logout') }}" class="w-full">
         @csrf
         <x-ui.menu-item type="submit" class="w-full" data-test="logout-button">

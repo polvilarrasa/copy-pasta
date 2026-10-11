@@ -181,7 +181,7 @@
                     >
                         @if ($copypasta)
                             <h3 class="text-lg text-balance text-ink">
-                                <a href="{{ $detailUrl }}" class="hover:underline">{{ $title }}</a>
+                                <a href="{{ $detailUrl }}" wire:navigate class="hover:underline">{{ $title }}</a>
                             </h3>
                         @else
                             <h3 class="text-lg text-balance text-ink">{{ $title }}</h3>

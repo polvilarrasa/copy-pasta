@@ -23,6 +23,8 @@ class SecurityHeaders
         ."object-src 'none'; "
         ."base-uri 'self'; "
         ."form-action 'self'; "
+        ."manifest-src 'self'; "
+        ."worker-src 'self'; "
         ."frame-ancestors 'none'";
 
     public function handle(Request $request, Closure $next): Response

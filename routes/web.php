@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Impersonation\LeaveImpersonationController;
 use App\Http\Controllers\Public\AnonymousNoticeController;
+use App\Http\Controllers\Public\AppInstallController;
 use App\Http\Controllers\Public\CopypastaController;
 use App\Http\Controllers\Public\CopypastaCopyController;
 use App\Http\Controllers\Public\CopypastaEditController;
@@ -77,6 +78,10 @@ Route::post('/c/{copypasta}/reporte', CopypastaReportController::class)
     ->name('copypastas.report');
 
 Route::post('/nsfw/confirmar', NsfwConfirmationController::class)->name('nsfw.confirm');
+
+Route::post('/pwa/instalada', AppInstallController::class)
+    ->middleware('throttle:5,1')
+    ->name('pwa.installed');
 
 Route::post('/tema', ThemeController::class)
     ->middleware('throttle:60,1')

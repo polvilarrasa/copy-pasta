@@ -67,10 +67,21 @@
 
         <ul class="divide-y divide-border border-t border-border">
             @if (! $loaded)
-                <li class="px-4 py-6 text-center text-base text-muted">{{ __('notifications.bell.loading') }}</li>
+                <li role="status" class="space-y-3 px-4 py-4" data-test="bell-skeleton">
+                    <span class="sr-only">{{ __('notifications.bell.loading') }}</span>
+                    @foreach (range(1, 3) as $row)
+                        <div aria-hidden="true" class="flex gap-3">
+                            <x-ui.skeleton class="size-10 shrink-0 rounded-full" />
+                            <div class="flex-1 space-y-2">
+                                <x-ui.skeleton class="h-4 w-3/4" />
+                                <x-ui.skeleton class="h-4 w-1/3" />
+                            </div>
+                        </div>
+                    @endforeach
+                </li>
             @else
                 @forelse ($items as $item)
-                    <li wire:key="bell-{{ $item->id }}">
+                    <li wire:key="bell-{{ $item->id }}" wire:loading.class="opacity-50" wire:target="setTab,markAllRead">
                         <x-notification-item :item="$item" />
                     </li>
                 @empty

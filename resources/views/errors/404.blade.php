@@ -1,8 +1,17 @@
+@php
+    $art = <<<'ART'
+  /\_/\
+ ( ?.? )
+  > ^ <
+ART;
+@endphp
+
 <x-layouts::public :title="__('public.errors.404.title')">
-    <section class="mx-auto max-w-xl px-4 py-16 text-center">
-        <p class="text-sm font-bold text-muted">404</p>
-        <h1 class="mt-2 text-2xl text-ink">{{ __('public.errors.404.title') }}</h1>
-        <p class="mt-4 text-base text-muted">{{ __('public.errors.404.body') }}</p>
-        <a href="{{ route('home') }}" class="mt-8 inline-block text-ink underline">{{ __('public.errors.back_home') }}</a>
-    </section>
+    <x-state-card :art="$art" :code="'404'" :title="__('public.errors.404.title')">
+        {{ __('public.errors.404.body') }}
+
+        <x-slot:actions>
+            <a href="{{ route('home') }}" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 text-md font-bold text-on-accent focus-visible:outline-none focus-visible:shadow-focus">{{ __('public.errors.back_home') }}</a>
+        </x-slot:actions>
+    </x-state-card>
 </x-layouts::public>

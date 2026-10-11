@@ -101,7 +101,11 @@
         @endif
     </div>
 
-    <div class="space-y-4">
+    {{-- Everything but "Cargar más" replaces the list, so the list gives way to placeholders while it loads. The delay
+         keeps fast answers from flashing them. --}}
+    <x-ui.card-skeleton :count="3" wire:loading.delay wire:target.except="loadMore" data-test="feed-skeleton" />
+
+    <div class="space-y-4" wire:loading.remove.delay wire:target.except="loadMore">
         @if ($forYou !== null)
             @forelse ($forYou->items as $item)
                 <x-copypasta-card
@@ -128,9 +132,11 @@
         @endif
     </div>
 
+    <x-ui.card-skeleton :count="2" wire:loading wire:target="loadMore" data-test="load-more-skeleton" />
+
     @if ($hasMore)
         <div class="flex justify-center">
-            <x-ui.button type="button" variant="secondary" wire:click="loadMore">
+            <x-ui.button type="button" variant="secondary" wire:click="loadMore" wire:loading.attr="disabled" wire:target="loadMore">
                 {{ __('public.feed.load_more') }}
             </x-ui.button>
         </div>

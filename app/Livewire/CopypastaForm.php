@@ -28,6 +28,10 @@ use Livewire\Component;
  */
 class CopypastaForm extends Component
 {
+    public const MAX_TITLE_LENGTH = 120;
+
+    public const MAX_BODY_LENGTH = 10000;
+
     public ?Copypasta $copypasta = null;
 
     public ?Copypasta $parent = null;
@@ -43,7 +47,11 @@ class CopypastaForm extends Component
 
     public bool $isTemplate = false;
 
-    public function mount(?Copypasta $copypasta = null, ?Copypasta $parent = null): void
+    /**
+     * `prefillTitle` and `prefillBody` only apply when creating from scratch (the web share target); they are cut to
+     * the limits of the fields.
+     */
+    public function mount(?Copypasta $copypasta = null, ?Copypasta $parent = null, ?string $prefillTitle = null, ?string $prefillBody = null): void
     {
         if ($parent instanceof Copypasta) {
             abort_unless(Gate::allows('createVariant', $parent), 404);
@@ -72,6 +80,9 @@ class CopypastaForm extends Component
         }
 
         Gate::authorize('create', Copypasta::class);
+
+        $this->title = mb_substr(trim((string) $prefillTitle), 0, self::MAX_TITLE_LENGTH);
+        $this->body = mb_substr(trim((string) $prefillBody), 0, self::MAX_BODY_LENGTH);
     }
 
     public function toggleTag(int $tagId): void
@@ -84,8 +95,8 @@ class CopypastaForm extends Component
     public function save(): void
     {
         $this->validate([
-            'title' => ['required', 'string', 'min:5', 'max:120'],
-            'body' => ['required', 'string', 'min:10', 'max:10000'],
+            'title' => ['required', 'string', 'min:5', 'max:'.self::MAX_TITLE_LENGTH],
+            'body' => ['required', 'string', 'min:10', 'max:'.self::MAX_BODY_LENGTH],
         ]);
 
         $data = [

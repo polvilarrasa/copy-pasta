@@ -17,10 +17,10 @@ class UpdateFavoriteTags
 {
     public const MAX_UPDATES_PER_HOUR = 30;
 
-    public function __construct(private RecordEvent $recordEvent, private ForYouCache $forYouCache) {}
+    public function __construct(private RecordEvent $recordEvent, private ForYouCache $forYouCache, private ListActiveTags $activeTags) {}
 
     /**
-     * Sets the member's favorite tags to the given active ones (at least three), which also marks the welcome screen as
+     * Sets the member's favorite tags to the given active ones (at least three, or all of them when fewer are active), which also marks the welcome screen as
      * done and drops their cached "Para ti" list. Editing is adding and removing rows: scores are not rebuilt.
      *
      * @param  array<int, int|string>  $tagIds
@@ -39,9 +39,11 @@ class UpdateFavoriteTags
             ->map(fn (mixed $id): int => (int) $id)
             ->all();
 
+        $minimum = $this->activeTags->onboardingMinimum();
+
         throw_if(
-            count($ids) < (int) config('affinity.onboarding_min_tags'),
-            ValidationException::withMessages(['tags' => __('public.welcome.min_tags', ['min' => config('affinity.onboarding_min_tags')])]),
+            count($ids) < $minimum,
+            ValidationException::withMessages(['tags' => __('public.welcome.min_tags', ['min' => $minimum])]),
         );
 
         DB::transaction(function () use ($user, $ids): void {

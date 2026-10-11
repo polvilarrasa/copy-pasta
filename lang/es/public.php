@@ -21,6 +21,8 @@ return [
 
     'errors' => [
         'back_home' => 'Volver al inicio',
+        'reload' => 'Recargar la página',
+        'retry' => 'Reintentar',
         '403' => [
             'title' => 'No tienes acceso a esta página',
             'body' => 'Puede que necesites iniciar sesión o que tu cuenta no tenga permiso para verla.',
@@ -28,6 +30,22 @@ return [
         '404' => [
             'title' => 'Página no encontrada',
             'body' => 'La página que buscas no existe o se ha movido.',
+        ],
+        '419' => [
+            'title' => 'La sesión ha caducado',
+            'body' => 'Ha pasado demasiado tiempo desde que abriste esta página. Recárgala y vuelve a intentarlo.',
+        ],
+        '429' => [
+            'title' => 'Vas demasiado rápido',
+            'body' => 'Has hecho muchas peticiones seguidas. Espera un momento y vuelve a intentarlo.',
+        ],
+        '500' => [
+            'title' => 'Algo ha fallado',
+            'body' => 'Ha habido un error por nuestra parte. Prueba otra vez en un momento.',
+        ],
+        '503' => [
+            'title' => 'Volvemos enseguida',
+            'body' => 'Estamos haciendo mantenimiento. Prueba otra vez en unos minutos.',
         ],
     ],
 
@@ -76,6 +94,8 @@ return [
         'skip' => 'Saltar por ahora',
         'hint' => 'Podrás editar tus favoritas desde el feed.',
         'min_tags' => 'Elige al menos :min etiquetas.',
+        'empty_title' => 'Todavía no hay etiquetas',
+        'empty_body' => 'Cuando haya etiquetas podrás elegir tus favoritas desde aquí.',
     ],
 
     'dismiss' => [

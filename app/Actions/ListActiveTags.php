@@ -33,6 +33,23 @@ class ListActiveTags
         return Tag::hydrate($rows);
     }
 
+    /**
+     * How many tags a member has to pick on the welcome screen: the configured minimum, or every active tag when there
+     * are fewer than that.
+     */
+    public function onboardingMinimum(): int
+    {
+        return min((int) config('affinity.onboarding_min_tags'), $this->handle()->count());
+    }
+
+    /**
+     * The welcome screen is only offered when there are as many active tags as the configured minimum.
+     */
+    public function canOfferOnboarding(): bool
+    {
+        return $this->handle()->count() >= (int) config('affinity.onboarding_min_tags');
+    }
+
     public static function forget(): void
     {
         Cache::forget(self::CACHE_KEY);

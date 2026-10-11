@@ -1,4 +1,5 @@
 import focus from '@alpinejs/focus';
+import './pwa';
 import { SHARE_IMAGE_STYLES, canvasToBlob, drawShareImage, loadShareImageFonts } from './share-image';
 
 /**
@@ -6,35 +7,55 @@ import { SHARE_IMAGE_STYLES, canvasToBlob, drawShareImage, loadShareImageFonts }
  */
 const contribution = (vote) => vote ?? 0;
 
-async function postJson(url, body = {}) {
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
-        },
-        body: JSON.stringify(body),
-    });
-
-    return response.ok ? response.json() : null;
+/**
+ * The toast every action shares: window.dispatchEvent(ui-toast) is what <x-ui.toast /> listens to.
+ */
+function showToast(message) {
+    window.dispatchEvent(new CustomEvent('ui-toast', { detail: { message } }));
 }
 
 /**
- * Sends a JSON request and reports the status and body, so callers can show server validation messages.
+ * Posts JSON and returns the decoded body, or null when the request fails: a non-2xx answer and no network at all
+ * (fetch rejecting) are the same to the callers, who put their optimistic state back.
+ */
+async function postJson(url, body = {}) {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+            },
+            body: JSON.stringify(body),
+        });
+
+        return response.ok ? await response.json() : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
+ * Sends a JSON request and reports the status and body, so callers can show server validation messages. Without a
+ * network the status is 0.
  */
 async function sendJson(url, method, body = null) {
-    const response = await fetch(url, {
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
-        },
-        body: body === null ? null : JSON.stringify(body),
-    });
+    try {
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+            },
+            body: body === null ? null : JSON.stringify(body),
+        });
 
-    return { ok: response.ok, data: await response.json().catch(() => ({})) };
+        return { ok: response.ok, status: response.status, data: await response.json().catch(() => ({})) };
+    } catch (error) {
+        return { ok: false, status: 0, data: {} };
+    }
 }
 
 /**
@@ -73,6 +94,29 @@ function fillTemplate(body, values) {
         return value === '' ? whole : value;
     });
 }
+
+/**
+ * Livewire's own handling of a failed request is an English confirm() box for an expired session and a raw HTML
+ * modal for anything else. Here a 419 opens the Spanish "session expired" modal, a 429 says to slow down, and a
+ * request that never reached the server (no network) says the action failed.
+ */
+document.addEventListener('livewire:init', () => {
+    const messages = () => document.querySelector('[data-request-errors]')?.dataset ?? {};
+
+    Livewire.interceptRequest(({ onError, onFailure }) => {
+        onError(({ response, preventDefault }) => {
+            if (response.status === 419) {
+                preventDefault();
+                window.dispatchEvent(new CustomEvent('open-modal', { detail: 'session-expired' }));
+            } else if (response.status === 429) {
+                preventDefault();
+                showToast(messages().rateLimited);
+            }
+        });
+
+        onFailure(() => showToast(messages().failed));
+    });
+});
 
 document.addEventListener('alpine:init', () => {
     Alpine.plugin(focus);
@@ -145,6 +189,7 @@ document.addEventListener('alpine:init', () => {
 
             if (! response.ok) {
                 this.error = messages.failed;
+                this.toast(messages.failed);
                 return;
             }
 
@@ -161,6 +206,7 @@ document.addEventListener('alpine:init', () => {
 
             if (! response.ok) {
                 this.error = response.data.errors?.folder_ids?.[0] ?? messages.failed;
+                this.failedWithoutMessage(response);
                 return;
             }
 
@@ -180,6 +226,7 @@ document.addEventListener('alpine:init', () => {
 
             if (! response.ok) {
                 this.error = response.data.errors?.name?.[0] ?? messages.failed;
+                this.failedWithoutMessage(response);
                 return;
             }
 
@@ -188,6 +235,16 @@ document.addEventListener('alpine:init', () => {
             this.newName = '';
             this.error = '';
             this.$dispatch('copypasta-folders-saved', response.data);
+        },
+
+        /**
+         * A validation answer (422) explains itself inside the modal; any other failure, like having no network, also
+         * gets the error toast.
+         */
+        failedWithoutMessage(response) {
+            if (response.status !== 422) {
+                this.toast(messages.failed);
+            }
         },
 
         toast(message) {
@@ -401,10 +458,27 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            await navigator.clipboard.writeText(body);
+            if (! await this.writeToClipboard(body)) {
+                return;
+            }
 
             this.countCopy();
             this.toast(copiedMessage);
+        },
+
+        /**
+         * The clipboard can refuse (permissions, an insecure page); the toast says the copy did not happen.
+         */
+        async writeToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+
+                return true;
+            } catch (error) {
+                this.toast(actionFailedMessage);
+
+                return false;
+            }
         },
 
         /**
@@ -416,7 +490,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         async copyTemplate() {
-            await navigator.clipboard.writeText(this.templatePreview);
+            if (! await this.writeToClipboard(this.templatePreview)) {
+                return;
+            }
 
             this.countCopy();
             this.toast(copiedMessage);
@@ -445,8 +521,9 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            await navigator.clipboard.writeText(url);
-            this.toast(linkCopiedMessage);
+            if (await this.writeToClipboard(url)) {
+                this.toast(linkCopiedMessage);
+            }
         },
 
         countCopy() {

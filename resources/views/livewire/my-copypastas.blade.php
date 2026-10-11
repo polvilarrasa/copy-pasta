@@ -55,9 +55,11 @@
             @endforeach
         </div>
 
+        <x-ui.card-skeleton :count="2" wire:loading wire:target="loadMore" />
+
         @if ($hasMore)
             <div class="flex justify-center">
-                <x-ui.button variant="secondary" wire:click="loadMore">{{ __('public.feed.load_more') }}</x-ui.button>
+                <x-ui.button variant="secondary" wire:click="loadMore" wire:loading.attr="disabled" wire:target="loadMore">{{ __('public.feed.load_more') }}</x-ui.button>
             </div>
         @endif
     @endif

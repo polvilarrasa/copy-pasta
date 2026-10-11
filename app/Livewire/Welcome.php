@@ -16,7 +16,7 @@ use Livewire\Component;
 
 /**
  * The welcome screen and, in editing mode, the screen to change the favorite tags: the same picker with different
- * copy. Saving needs at least three tags.
+ * copy. Saving needs at least three tags, or every active tag when there are fewer.
  */
 class Welcome extends Component
 {
@@ -56,7 +56,7 @@ class Welcome extends Component
 
     public function render(): View
     {
-        $minimum = (int) config('affinity.onboarding_min_tags');
+        $minimum = app(ListActiveTags::class)->onboardingMinimum();
 
         return view('livewire.welcome', [
             'tags' => app(ListActiveTags::class)->handle(),

@@ -20,6 +20,7 @@
         </main>
 
         <x-ui.toast />
+        <x-request-errors />
 
         @livewireScripts
     </body>
