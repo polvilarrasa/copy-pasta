@@ -62,6 +62,7 @@ class NotificationPresenter
             NotificationType::TrustedPromotion => [__('notifications.trusted_promotion'), route('stats.show')],
             NotificationType::AchievementUnlocked => $this->achievementUnlocked($data),
             NotificationType::FolderMadePrivate => $this->folderMadePrivate($data, $folders),
+            NotificationType::VariantPublished => $this->variantPublished($data, $copypasta),
         };
 
         return new NotificationItem(
@@ -102,6 +103,27 @@ class NotificationPresenter
         return [
             __('notifications.milestone.text', ['title' => $copypasta->title, 'milestones' => implode(__('notifications.milestone.and'), $parts)]),
             $this->urlFor($copypasta),
+        ];
+    }
+
+    /**
+     * Links to the original, where its variants are listed.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{0: string, 1: string|null}
+     */
+    private function variantPublished(array $data, ?Copypasta $copypasta): array
+    {
+        if (! $this->isPubliclyAvailable($copypasta)) {
+            return [__('notifications.removed'), null];
+        }
+
+        return [
+            trans_choice('notifications.variant_published', max(1, (int) ($data['count'] ?? 1)), [
+                'title' => $copypasta->title,
+                'count' => number_format(max(1, (int) ($data['count'] ?? 1)), 0, ',', '.'),
+            ]),
+            $this->urlFor($copypasta).'#variantes',
         ];
     }
 

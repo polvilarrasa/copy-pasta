@@ -146,6 +146,28 @@ return [
         'delete' => 'Borrar',
     ],
 
+    'template' => [
+        'copy_title' => 'Rellena la plantilla',
+        'copy_intro' => 'Escribe un valor para cada variable. Las que dejes vacías se copian tal cual. Lo que escribas no sale de tu navegador.',
+        'preview' => 'Vista previa',
+    ],
+
+    'variants' => [
+        'create' => 'Crear variante',
+        'heading' => 'Variantes',
+        'tabs_label' => 'Variantes de este copy-pasta',
+        'original' => 'Original',
+        'this_version' => 'Esta versión',
+        'deleted_author' => 'usuario eliminado',
+        'more' => '{1} y 1 variante más|[2,*] y :count variantes más',
+        'variant_of' => 'Variante de',
+        'removed' => 'Contenido retirado',
+        'title_create' => 'Crear variante',
+        'submit' => 'Publicar variante',
+        'intro' => 'Parte del texto de «:title». Cambia lo que quieras: tiene que quedar distinto del original.',
+        'unverified_title' => 'Verifica tu email para crear variantes',
+    ],
+
     'publish' => [
         'title_create' => 'Publicar copy-pasta',
         'title_edit' => 'Editar copy-pasta',

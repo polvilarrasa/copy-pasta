@@ -37,6 +37,43 @@ async function sendJson(url, method, body = null) {
     return { ok: response.ok, data: await response.json().catch(() => ({})) };
 }
 
+/**
+ * The `{{name}}` variables of a template: letters (accents included), digits and underscores, up to 30 characters,
+ * spaces allowed inside the braces. It is the same rule as App\Support\TemplateVariables, so keep both in step.
+ */
+const TEMPLATE_VARIABLE = /\{\{[ \t]*([\p{L}\p{N}_]{1,30})[ \t]*\}\}/gu;
+
+const TEMPLATE_MAX_VALUE_LENGTH = 200;
+
+/**
+ * The distinct variables of a body, in order of first appearance. Names that differ only in case are one variable and
+ * keep the label of their first appearance.
+ */
+function templateVariables(body) {
+    const variables = new Map();
+
+    for (const match of body.matchAll(TEMPLATE_VARIABLE)) {
+        const key = match[1].toLowerCase();
+
+        if (! variables.has(key)) {
+            variables.set(key, match[1]);
+        }
+    }
+
+    return [...variables].map(([key, label]) => ({ key, label }));
+}
+
+/**
+ * Replaces every appearance of every variable that has a value. A variable with an empty value stays as it was written.
+ */
+function fillTemplate(body, values) {
+    return body.replace(TEMPLATE_VARIABLE, (whole, name) => {
+        const value = (values[name.toLowerCase()] ?? '').slice(0, TEMPLATE_MAX_VALUE_LENGTH);
+
+        return value === '' ? whole : value;
+    });
+}
+
 document.addEventListener('alpine:init', () => {
     Alpine.plugin(focus);
 
@@ -331,8 +368,12 @@ document.addEventListener('alpine:init', () => {
         dismissedMessage,
         undoLabel,
         undoneMessage,
+        isTemplate = false,
+        templateModalId = null,
     }) => ({
         revealed: false,
+        templateFields: isTemplate ? templateVariables(body) : [],
+        templateValues: {},
         dismissed: false,
         authenticated,
         context,
@@ -350,8 +391,32 @@ document.addEventListener('alpine:init', () => {
             this.favoritesCount = favorites_count;
         },
 
+        /**
+         * A template opens the modal that asks for its variables; the copy happens from there.
+         */
         async copy() {
+            if (isTemplate) {
+                this.$dispatch('open-modal', templateModalId);
+
+                return;
+            }
+
             await navigator.clipboard.writeText(body);
+
+            this.countCopy();
+            this.toast(copiedMessage);
+        },
+
+        /**
+         * The template with the values typed so far. The values stay in the browser: the server only learns that a
+         * template was copied.
+         */
+        get templatePreview() {
+            return fillTemplate(body, this.templateValues);
+        },
+
+        async copyTemplate() {
+            await navigator.clipboard.writeText(this.templatePreview);
 
             this.countCopy();
             this.toast(copiedMessage);
@@ -392,7 +457,7 @@ document.addEventListener('alpine:init', () => {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
                     Accept: 'application/json',
                 },
-                body: JSON.stringify(context),
+                body: JSON.stringify(isTemplate ? { ...context, template: true } : context),
             }).catch(() => {});
         },
 

@@ -14,6 +14,8 @@ enum AchievementFamily: string
     case Guardian = 'guardian';
     case Voter = 'voter';
     case Diffusion = 'diffusion';
+    case Variants = 'variants';
+    case Templates = 'templates';
     case Veteran = 'veteran';
     case Secret = 'secret';
 }

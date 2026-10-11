@@ -15,6 +15,7 @@
     :my-vote="$copypasta->my_vote"
     :saved="(bool) $copypasta->is_favorite"
     :nsfw="$copypasta->is_nsfw"
+    :template="$copypasta->is_template"
     :tags="$copypasta->tags->map(fn ($tag) => ['name' => $tag->name, 'color' => $tag->color])->all()"
     {{ $attributes }}
 />

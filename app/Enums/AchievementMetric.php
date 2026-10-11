@@ -46,6 +46,15 @@ enum AchievementMetric: string
     /** Visits that came through the member's shared links: one per visitor, link owner and day, never the member's own. Never goes down. */
     case AttributedVisits = 'attributed_visits';
 
+    /** Visible variants the member has published of other members' copy-pastas, as long as they stay visible. */
+    case VariantsPublished = 'variants_published';
+
+    /** Flag: 1 once a visible variant of the member has a score of 10 or more and above its parent's. */
+    case OutscoringVariant = 'outscoring_variant';
+
+    /** The most copies by others any one of the member's copy-pastas got while it was a template. Never goes down. */
+    case TemplateCopies = 'template_copies';
+
     /** Days since the account was created. Derived from users.created_at, so it is not stored. */
     case AccountDays = 'account_days';
 
@@ -62,7 +71,7 @@ enum AchievementMetric: string
      */
     public function isFlag(): bool
     {
-        return in_array($this, [self::TrendingTop, self::Dynamite], true);
+        return in_array($this, [self::TrendingTop, self::Dynamite, self::OutscoringVariant], true);
     }
 
     public function derivedValue(User $user): int

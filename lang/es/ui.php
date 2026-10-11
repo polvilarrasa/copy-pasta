@@ -23,7 +23,7 @@ return [
         'discover' => 'Para que descubras algo nuevo',
         'recent' => 'Recién publicado',
         'template' => 'Plantilla',
-        'template_hint' => 'Rellena los [CAMPOS] antes de pegar.',
+        'template_hint' => 'Al copiar, rellenas las variables antes de pegar.',
         'sensitive' => 'Contenido sensible',
         'reveal' => 'Toca para ver',
         'vote_up' => 'Voto positivo',

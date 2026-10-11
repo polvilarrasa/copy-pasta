@@ -10,7 +10,7 @@ namespace App\Enums;
  * progress needs no per-achievement code.
  *
  * Adding one is a case here plus its lines in lang/es/achievements.php (name, description and, with a title, the
- * title). Variantes and Plantillas (Fase 21) are added the same way.
+ * title).
  */
 enum Achievement: string
 {
@@ -42,6 +42,11 @@ enum Achievement: string
     case Loudspeaker = 'loudspeaker';
     case Megaphone = 'megaphone';
 
+    case Remixer = 'remixer';
+    case StarDisciple = 'star_disciple';
+
+    case Templater = 'templater';
+
     case Veteran = 'veteran';
 
     case NightOwl = 'night_owl';
@@ -58,6 +63,8 @@ enum Achievement: string
             self::Vigilante, self::Guardian, self::Sentinel => AchievementFamily::Guardian,
             self::Critic => AchievementFamily::Voter,
             self::Messenger, self::Loudspeaker, self::Megaphone => AchievementFamily::Diffusion,
+            self::Remixer, self::StarDisciple => AchievementFamily::Variants,
+            self::Templater => AchievementFamily::Templates,
             self::Veteran => AchievementFamily::Veteran,
             self::NightOwl, self::Dynamite => AchievementFamily::Secret,
         };
@@ -75,6 +82,9 @@ enum Achievement: string
             self::Vigilante, self::Guardian, self::Sentinel => AchievementMetric::ReportsAccepted,
             self::Critic => AchievementMetric::VotesCast,
             self::Messenger, self::Loudspeaker, self::Megaphone => AchievementMetric::AttributedVisits,
+            self::Remixer => AchievementMetric::VariantsPublished,
+            self::StarDisciple => AchievementMetric::OutscoringVariant,
+            self::Templater => AchievementMetric::TemplateCopies,
             self::Veteran => AchievementMetric::AccountDays,
             self::NightOwl => AchievementMetric::NightPublications,
             self::Dynamite => AchievementMetric::Dynamite,
@@ -88,8 +98,8 @@ enum Achievement: string
     {
         return match ($this) {
             self::FirstPaste, self::FirstApplause, self::Trending, self::FirstFolder, self::Vigilante,
-            self::NightOwl, self::Dynamite, self::Messenger => 1,
-            self::HabitualPaster, self::WellReceived, self::Copied, self::Guardian => 10,
+            self::NightOwl, self::Dynamite, self::Messenger, self::Remixer, self::StarDisciple => 1,
+            self::HabitualPaster, self::WellReceived, self::Copied, self::Guardian, self::Templater => 10,
             self::Collector, self::Sentinel => 50,
             self::PasteFactory, self::PublicFavorite, self::Viral, self::Critic, self::Loudspeaker => 100,
             self::Legend, self::InternetHeritage, self::Megaphone => 1000,
@@ -143,6 +153,9 @@ enum Achievement: string
             self::Messenger => 'send',
             self::Loudspeaker => 'volume-2',
             self::Megaphone => 'megaphone',
+            self::Remixer => 'git-fork',
+            self::StarDisciple => 'graduation-cap',
+            self::Templater => 'layout-template',
             self::Veteran => 'medal',
             self::NightOwl => 'moon',
             self::Dynamite => 'bomb',
@@ -163,6 +176,8 @@ enum Achievement: string
             AchievementFamily::Guardian => 't1',
             AchievementFamily::Voter => 't3',
             AchievementFamily::Diffusion => 't2',
+            AchievementFamily::Variants => 't5',
+            AchievementFamily::Templates => 't3',
             AchievementFamily::Veteran => 't4',
             AchievementFamily::Secret => 't2',
         };
