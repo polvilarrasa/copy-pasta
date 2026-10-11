@@ -26,7 +26,9 @@ class RecordCopypastaCopy
 
     /**
      * Count a copy at most once per copy-pasta, visitor and hour. Returns whether the counter moved; only a counted
-     * copy is recorded as an event, so the events match the counter.
+     * copy is recorded as an event, so the events match the counter. The server decides whether the event is a
+     * template copy (`template: true`), never the request: only a copy-pasta that is a template now gets it. A copy by
+     * someone else of a template also moves the template's own counter and the author's Plantillero progress.
      *
      * @param  array<string, mixed>  $context
      */
@@ -40,9 +42,28 @@ class RecordCopypastaCopy
         }
 
         $isOwnCopy = $user !== null && $user->getKey() === $copypasta->user_id;
+        $isTemplateCopyByOthers = $copypasta->is_template && ! $isOwnCopy;
 
-        DB::transaction(function () use ($copypasta, $isOwnCopy, $user): void {
-            Copypasta::query()->whereKey($copypasta->getKey())->increment('copies_count');
+        unset($context['template']);
+
+        if ($copypasta->is_template) {
+            $context['template'] = true;
+        }
+
+        DB::transaction(function () use ($copypasta, $isOwnCopy, $isTemplateCopyByOthers, $user): void {
+            Copypasta::query()->whereKey($copypasta->getKey())->increment(
+                'copies_count',
+                1,
+                $isTemplateCopyByOthers ? ['template_copies_by_others' => DB::raw('template_copies_by_others + 1')] : [],
+            );
+
+            if ($isTemplateCopyByOthers) {
+                $this->adjustProgress->raiseTo(
+                    $copypasta->user_id,
+                    AchievementMetric::TemplateCopies,
+                    (int) Copypasta::query()->whereKey($copypasta->getKey())->value('template_copies_by_others'),
+                );
+            }
 
             if ($user !== null) {
                 $this->recordFirstCopy($user, $copypasta);
@@ -59,7 +80,9 @@ class RecordCopypastaCopy
 
         if (! $isOwnCopy) {
             $this->detectDynamite->handle($copypasta);
-            $this->queueEvaluation->handle($copypasta->user_id, [AchievementMetric::CopiesReceived, AchievementMetric::Dynamite]);
+            $this->queueEvaluation->handle($copypasta->user_id, $isTemplateCopyByOthers
+                ? [AchievementMetric::CopiesReceived, AchievementMetric::Dynamite, AchievementMetric::TemplateCopies]
+                : [AchievementMetric::CopiesReceived, AchievementMetric::Dynamite]);
         }
 
         return true;

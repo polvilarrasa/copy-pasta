@@ -179,7 +179,7 @@ Seis tablas nuevas y columnas nuevas en tres existentes. Las FK siguen la regla 
 | `copypasta_dismissals` | Nueva | user\_id, copypasta\_id, created\_at | PK(user\_id, copypasta\_id) |
 | `featured_copypastas` | Nueva | date, copypasta\_id, picked\_by\_id nullable | PK(date); unique(copypasta\_id) |
 | `folders` | Columnas nuevas | is\_public bool, public\_id ULID nullable, description (máximo 280) | unique(public\_id) |
-| `copypastas` | Columnas nuevas | is\_template bool, parent\_id nullable (nullOnDelete), og\_image\_path nullable; en la Fase 23, kind (`text`/`ascii`) | index(parent\_id) |
+| `copypastas` | Columnas nuevas | is\_template bool, parent\_id nullable (nullOnDelete), template\_copies\_by\_others (Fase 21), og\_image\_path nullable; en la Fase 23, kind (`text`/`ascii`) | index(parent\_id) |
 
 Notas:
 
@@ -550,13 +550,45 @@ Aceptación: la imagen de un copy-pasta con emojis se genera sin cuadros vacíos
 
 ### Fase 21 — Plantillas y variantes
 
-- [ ] Casilla "Es plantilla", validación de variables y distintivo en la tarjeta.
-- [ ] Modal de copia con un campo por variable y vista previa.
-- [ ] Crear variante desde el detalle, "Variante de…" y lista de variantes.
-- [ ] Notificación al autor del original (Fase 17).
-- [ ] Logros Remezclador, Discípulo aventajado y Plantillero sobre la infraestructura de la Fase 18: métricas nuevas (variantes publicadas, variantes que superan en score al original, copias de plantillas propias), los casos en `Achievement` con sus claves de lang y su consulta en `BackfillAchievements`.
+- [x] Casilla "Es plantilla", validación de variables y distintivo en la tarjeta.
+- [x] Modal de copia con un campo por variable y vista previa.
+- [x] Crear variante desde el detalle, "Variante de…" y lista de variantes.
+- [x] Notificación al autor del original (Fase 17).
+- [x] Logros Remezclador, Discípulo aventajado y Plantillero sobre la infraestructura de la Fase 18: métricas nuevas (variantes publicadas, variantes que superan en score al original, copias de plantillas propias), los casos en `Achievement` con sus claves de lang y su consulta en `BackfillAchievements`.
 
 Aceptación: copiar una plantilla devuelve el texto con las variables sustituidas; una plantilla sin variables no se puede publicar; borrar el original deja la variante visible con "Contenido retirado".
+
+**Desviaciones y decisiones de la Fase 21:**
+
+*Plantillas*
+
+- **Sintaxis.** `{{nombre}}` o `{{ nombre }}` (espacios y tabuladores dentro de las llaves): letras con acentos, números y `_`, hasta 30 caracteres. Las variables se agrupan **sin distinguir mayúsculas** (`{{Nombre}}` y `{{nombre}}` son un campo) y el campo lleva la etiqueta de la primera aparición; la sustitución cambia todas las apariciones. Un nombre de más de 30 caracteres, las llaves vacías o con otros símbolos son texto normal. La regla vive en `App\Support\TemplateVariables` y se repite en `resources/js/app.js` (`TEMPLATE_VARIABLE`): hay que mantenerlas a la par.
+- **Validación en la Action.** `AssertValidTemplate` (la llaman `PublishCopypasta` y `UpdateCopypasta`): con la casilla, al menos una variable válida y como mucho 10 distintas; error en la clave `is_template`. Sin la casilla no se comprueba nada. Editar una plantilla hasta dejarla sin variables también falla.
+- **Los valores no salen del navegador.** El modal sustituye en el cliente; la petición de copia lleva solo el contexto de la página y `template: true`. **El servidor ignora lo que diga el cliente sobre `template`:** `RecordCopypastaCopy` lo pone en el contexto del evento solo si el copy-pasta es plantilla en ese momento. Un test de navegador comprueba que ni la petición ni el evento guardado contienen los valores. Valores de hasta 200 caracteres (`maxlength` y recorte); un campo vacío deja la variable tal como estaba escrita.
+- **Imagen OG y compartir como imagen** no cambian: dibujan el cuerpo con las variables sin sustituir.
+- **Distintivo.** La tarjeta (`ui.copypasta-card`) ya tenía la variante "Plantilla" de la Fase 14; ahora `x-copypasta-card` la activa con `is_template`. Se cambió el texto de ayuda `ui.card.template_hint`, que hablaba de `[CAMPOS]`.
+
+*Variantes*
+
+- **Datos.** Migración nueva (`is_template`, `parent_id` con `nullOnDelete` e índice, y `template_copies_by_others`). `parent_id` es inmutable: `UpdateCopypasta` no lo lee, aunque llegue en los datos. Si el padre desaparece físicamente la variante queda sin enlace y sin "Variante de…".
+- **Regla en la Action, no en el botón.** `PublishCopypasta` recibe el padre como tercer argumento, autoriza `CopypastaPolicy::createVariant` (miembro verificado, padre publicado, visible y no borrado, y no propio) y compara `body_hash` con el del padre: si coincide, «La variante tiene que cambiar algo». **Extra no pedido:** `UpdateCopypasta` aplica la misma comparación a una variante editada, para que la regla no se salte editando después.
+- **Ruta `/c/{ulid}/variante`**, declarada antes del detalle. Es del grupo `auth`: un miembro sin verificar ve el aviso de verificación (como `/publicar`, ahora en el parcial `partials.verify-email-notice`), y un copy-pasta propio u oculto responde 404. `CopypastaForm` gana el modo variante (parte del título, cuerpo, etiquetas activas, NSFW y plantilla del padre); el aviso de duplicado excluye al padre.
+- **Detalle.** «Variante de «título»» con enlace al padre, o «Contenido retirado» sin enlace si está oculto o borrado. Pestañas con `x-ui.tabs` (se desplazan en horizontal en móvil): la primera es «Original» («Esta versión» si el detalle es de una variante) y las demás llevan el `@username` del autor de cada variante directa («usuario eliminado» si está anonimizado), por score. **Máximo 10 pestañas;** si hay más, «y N variantes más» sin enlace. Cada panel es una tarjeta completa. **Las variantes ocultas, borradas o sin publicar no salen en la lista para nadie, tampoco para su autor** (las sigue viendo en «Mis copy-pastas»). "Compartir como imagen" sigue siendo uno por página, del copy-pasta del detalle, y no cambia con la pestaña (el diseño lo mueve con ella).
+- **Nombres de pestaña:** el diseño usa etiquetas libres («Versión formal»); aquí no existen, por eso el autor.
+
+*Notificación*
+
+- Tipo nuevo `variant_published`, configurable, con `CopypastaVariantNotification` y `NotifyCopypastaVariant`. Avisa al autor del original, nunca al autor de la variante ni a cuentas baneadas, anonimizadas o borradas, ni si desactivó el tipo. Varias variantes del mismo original en menos de una hora, con la notificación aún sin leer, suben el `count` de la misma. El texto no nombra a nadie y enlaza a `#variantes` del original; con el original oculto o borrado dice «Contenido retirado» sin enlace.
+
+*Logros*
+
+- **Remezclador** (1, título «Remezclador»): métrica `variants_published`, contador de variantes visibles de copy-pastas de otras personas; sube al publicar y se mueve con ocultar, borrar y restaurar a través de `AdjustPublishedProgress`. Conserva el logro aunque la variante se retire.
+- **Discípulo aventajado** (1, flag): `outscoring_variant`. `DetectOutscoringVariant`, llamada desde `CastVote`, mira el copy-pasta votado como variante (visible, score ≥ 10 y por encima del padre) y como padre (alguna variante visible en esa situación) y levanta el flag del autor de la variante. `RestoreCopypasta` también lo evalúa (la variante restaurada y las variantes del padre restaurado). No se re-evalúa cuando el score cambia por otra vía; `app:backfill-achievements` lo recoge.
+- **Plantillero** (10, título «Plantillero»): métrica `template_copies`, el **máximo** de copias ajenas de una misma plantilla (así tiene barra de progreso). **Columna nueva `copypastas.template_copies_by_others`:** `copies_count` incluye las copias del autor y contar eventos no sirve porque se purgan. Solo suma las copias de otros usuarios hechas **mientras el copy-pasta es plantilla**: marcar como plantilla uno con copias previas no las cuenta y desmarcarlo no resta.
+- **`app:backfill-achievements`:** las tres consultas nuevas. `template_copies_by_others` se reconstruye desde los eventos `copy` retenidos con `template: true`, sin las copias del autor, y **nunca baja** una columna que ya llevaba más (se queda con el mayor de los dos: los eventos se purgan). El flag de Discípulo se recalcula desde `copypastas`.
+- **`app:recalculate-counters` no toca `template_copies_by_others`**, igual que `copies_count`: no existe tabla de la que recalcularlos (las copias solo están en `events`, que se purga).
+
+*Tests existentes ajustados:* ninguno por cambio de comportamiento. `Copypasta` gana `$attributes` por defecto (`is_template` y `template_copies_by_others`) para que un modelo recién creado tenga el valor sin recargarlo.
 
 ### Fase 22 — PWA y pulido
 

@@ -16,6 +16,7 @@ return [
     'report_accepted' => 'Hemos aceptado tu reporte. Gracias por ayudar a mantener la comunidad.',
     'trusted_promotion' => 'Ya eres usuario de confianza: tus reportes pesan más.',
     'achievement_unlocked' => 'Has conseguido el logro «:name».',
+    'variant_published' => '{1} Alguien ha publicado una variante de tu copy-pasta «:title».|[2,*] Se han publicado :count variantes de tu copy-pasta «:title».',
     'folder_made_private' => 'El equipo de moderación ha hecho privada tu carpeta «:name». Motivo: :reason',
 
     'types' => [
@@ -43,6 +44,10 @@ return [
             'label' => 'Carpeta hecha privada',
             'description' => 'Cuando moderación hace privada una de tus carpetas públicas.',
         ],
+        'variant_published' => [
+            'label' => 'Variantes de tus copy-pastas',
+            'description' => 'Cuando alguien publica una variante de uno de tus copy-pastas.',
+        ],
         'copypasta_restored' => [
             'label' => 'Copy-pasta restaurado',
             'description' => 'Cuando moderación vuelve a mostrar uno de tus copy-pastas.',
@@ -66,7 +71,7 @@ return [
 
     'page' => [
         'title' => 'Notificaciones',
-        'description' => 'Te avisamos de los hitos de tus copy-pastas y de las decisiones de moderación.',
+        'description' => 'Te avisamos de los hitos y las variantes de tus copy-pastas y de las decisiones de moderación.',
         'mark_all' => 'Marcar todas como leídas',
         'previous' => 'Anterior',
         'next' => 'Siguiente',

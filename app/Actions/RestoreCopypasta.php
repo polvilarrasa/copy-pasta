@@ -15,11 +15,15 @@ use Illuminate\Support\Facades\Gate;
 
 class RestoreCopypasta
 {
-    public function __construct(private AdjustPublishedProgress $adjustPublishedProgress) {}
+    public function __construct(
+        private AdjustPublishedProgress $adjustPublishedProgress,
+        private DetectOutscoringVariant $detectOutscoringVariant,
+    ) {}
 
     /**
      * Make a hidden copy-pasta visible again, record the moderation action and notify the author. Every restoration goes
-     * through here, including the one that follows dismissing the reports behind an automatic hide.
+     * through here, including the one that follows dismissing the reports behind an automatic hide. A restored variant
+     * (or the parent of variants) is checked for Discípulo aventajado, as when votes change.
      */
     public function handle(User $actor, Copypasta $copypasta): Copypasta
     {
@@ -45,6 +49,8 @@ class RestoreCopypasta
 
             return $copypasta;
         });
+
+        $this->detectOutscoringVariant->handle($copypasta);
 
         SyncCopypastaOgImageJob::dispatch($copypasta->getKey());
 

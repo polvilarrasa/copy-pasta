@@ -36,6 +36,14 @@ class CopypastaPolicy
         return $user->hasVerifiedEmail();
     }
 
+    /**
+     * A variant needs a verified member and a copy-pasta that others can see and that is not the member's own.
+     */
+    public function createVariant(User $user, Copypasta $parent): bool
+    {
+        return $user->hasVerifiedEmail() && $parent->isAvailable() && $user->getKey() !== $parent->user_id;
+    }
+
     public function update(User $user, Copypasta $copypasta): bool
     {
         return $user->is($copypasta->user);

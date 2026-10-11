@@ -89,6 +89,18 @@ return [
             'name' => 'Megáfono',
             'description' => 'Conseguir 1.000 visitas por tus enlaces compartidos. Cuenta una por visitante y día, y nunca las tuyas ni las de bots.',
         ],
+        'remixer' => [
+            'name' => 'Remezclador',
+            'description' => 'Publicar 1 variante visible de un copy-pasta de otra persona.',
+        ],
+        'star_disciple' => [
+            'name' => 'Discípulo aventajado',
+            'description' => 'Tener una variante visible con un score de 10 o más y por encima del score de su original.',
+        ],
+        'templater' => [
+            'name' => 'Plantillero',
+            'description' => 'Conseguir que una plantilla tuya sea copiada 10 veces por otras personas. Cuentan las copias de un mismo copy-pasta hechas mientras es plantilla, y nunca las tuyas.',
+        ],
         'veteran' => [
             'name' => 'Veterano',
             'description' => 'Tener la cuenta desde hace 365 días.',
@@ -118,6 +130,9 @@ return [
         'sentinel' => 'Centinela',
         'loudspeaker' => 'Altavoz',
         'megaphone' => 'Megáfono',
+        'remixer' => 'Remezclador',
+        'star_disciple' => 'Discípulo aventajado',
+        'templater' => 'Plantillero',
         'veteran' => 'Veterano',
         'night_owl' => 'Noctámbulo',
         'dynamite' => 'Dinamita',

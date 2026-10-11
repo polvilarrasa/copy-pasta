@@ -10,6 +10,7 @@ use App\Http\Controllers\Public\CopypastaFavoriteController;
 use App\Http\Controllers\Public\CopypastaFolderController;
 use App\Http\Controllers\Public\CopypastaReportController;
 use App\Http\Controllers\Public\CopypastaShareController;
+use App\Http\Controllers\Public\CopypastaVariantController;
 use App\Http\Controllers\Public\CopypastaVoteController;
 use App\Http\Controllers\Public\DismissController;
 use App\Http\Controllers\Public\FeedController;
@@ -38,7 +39,7 @@ Route::middleware(RedirectToOnboarding::class)->group(function () {
     Route::get('/etiqueta/{slug}', [FeedController::class, 'tag'])->name('feed.tag');
 });
 
-// Declared before the detail route: its optional slug would otherwise swallow GET /c/{id}/carpetas and /c/{id}/editar.
+// Declared before the detail route: its optional slug would otherwise swallow GET /c/{id}/carpetas, /c/{id}/editar and /c/{id}/variante.
 Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     Route::get('/c/{copypasta}/carpetas', [CopypastaFolderController::class, 'index'])->name('copypastas.folders.index');
     Route::put('/c/{copypasta}/carpetas', [CopypastaFolderController::class, 'update'])->name('copypastas.folders.sync');
@@ -52,6 +53,7 @@ Route::middleware(['auth', 'throttle:120,1'])->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/c/{copypasta}/editar', [CopypastaEditController::class, 'edit'])->name('copypastas.edit');
+    Route::get('/c/{copypasta}/variante', [CopypastaVariantController::class, 'create'])->name('copypastas.variant');
 });
 
 Route::get('/c/{copypasta}/{slug?}', [CopypastaController::class, 'show'])->name('copypastas.show');

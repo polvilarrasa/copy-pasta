@@ -11,9 +11,9 @@
 <section class="mx-auto w-full max-w-5xl space-y-6 px-4 py-6">
     <div class="flex items-center justify-between gap-4">
         <h1 class="text-2xl font-extrabold text-ink">
-            {{ $copypasta ? __('public.publish.title_edit') : __('public.publish.title_create') }}
+            {{ $copypasta ? __('public.publish.title_edit') : ($parent ? __('public.variants.title_create') : __('public.publish.title_create')) }}
         </h1>
-        <a href="{{ $copypasta ? route('copypastas.mine') : route('home') }}" class="text-sm font-bold text-muted hover:text-ink">
+        <a href="{{ $copypasta ? route('copypastas.mine') : ($parent ? route('copypastas.show', [$parent, $parent->slug]) : route('home')) }}" class="text-sm font-bold text-muted hover:text-ink">
             {{ __('public.publish.cancel') }}
         </a>
     </div>
@@ -22,6 +22,12 @@
         <div class="rounded-2xl border border-bad-bg bg-bad-bg p-4 text-sm font-semibold text-bad">
             {{ __('app.show.hidden_notice', ['reason' => $copypasta->hidden_reason]) }}
         </div>
+    @endif
+
+    @if ($parent)
+        <p class="rounded-2xl border border-border bg-surface-2 p-4 text-sm text-ink">
+            {{ __('public.variants.intro', ['title' => $parent->title]) }}
+        </p>
     @endif
 
     @if ($this->duplicate)
@@ -90,9 +96,25 @@
                 <x-ui.switch name="is_nsfw" wire:model="isNsfw" :label="__('app.fields.is_nsfw')" />
             </div>
 
+            <div class="grid gap-2 rounded-2xl border border-border bg-surface px-4 py-3">
+                <x-ui.switch name="is_template" wire:model.live="isTemplate" :label="__('app.fields.is_template')" data-test="template-switch" />
+                <p class="text-sm text-muted">{{ __('app.fields.is_template_helper', ['max' => \App\Support\TemplateVariables::MAX_DISTINCT]) }}</p>
+                <div class="flex flex-wrap items-center gap-1.5 text-sm" data-test="template-variables">
+                    <span class="font-semibold text-ink">{{ __('app.fields.template_variables') }}</span>
+                    @forelse ($this->templateTokens as $token)
+                        <code class="rounded-sm bg-surface-2 px-2 py-0.5 font-mono text-ink bidi-isolate">{{ $token }}</code>
+                    @empty
+                        <span class="text-muted">{{ __('app.fields.template_variables_none') }}</span>
+                    @endforelse
+                </div>
+                @error('is_template')
+                    <p class="text-sm font-semibold text-bad">{{ $message }}</p>
+                @enderror
+            </div>
+
             <div class="flex flex-wrap items-center gap-3">
                 <x-ui.button type="submit" variant="primary" size="lg" class="flex-1" data-test="publish-submit-button">
-                    {{ $copypasta ? __('public.publish.submit_edit') : __('public.publish.submit_create') }}
+                    {{ $copypasta ? __('public.publish.submit_edit') : ($parent ? __('public.variants.submit') : __('public.publish.submit_create')) }}
                 </x-ui.button>
 
                 @if ($copypasta)
@@ -121,6 +143,7 @@
                 :score="$copypasta?->score ?? 0"
                 :tags="$this->previewTags"
                 :nsfw="$isNsfw"
+                :template="$isTemplate"
             />
 
             <p class="text-sm text-muted">{{ __('public.publish.preview_help') }}</p>

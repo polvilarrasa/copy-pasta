@@ -21,11 +21,27 @@ class PublishCopypasta
     public const MAX_PUBLICATIONS_PER_HOUR = 10;
 
     /**
-     * @param  array{title: string, body: string, is_nsfw: bool, tag_ids: array<int, int|string>}  $data
+     * Publishes a copy-pasta, or a variant of `$parent`. A variant needs the policy to allow it (verified member,
+     * visible original that is not theirs) and a body that differs from the original's once normalized.
+     *
+     * @param  array{title: string, body: string, is_nsfw: bool, is_template?: bool, tag_ids: array<int, int|string>}  $data
      */
-    public function handle(User $author, array $data): Copypasta
+    public function handle(User $author, array $data, ?Copypasta $parent = null): Copypasta
     {
         Gate::forUser($author)->authorize('create', Copypasta::class);
+
+        if ($parent instanceof Copypasta) {
+            Gate::forUser($author)->authorize('createVariant', $parent);
+
+            throw_if(
+                Copypasta::hashBody($data['body']) === $parent->body_hash,
+                ValidationException::withMessages(['body' => __('app.errors.variant_unchanged')]),
+            );
+        }
+
+        $isTemplate = $data['is_template'] ?? false;
+
+        app(AssertValidTemplate::class)->handle($isTemplate, $data['body']);
 
         throw_unless(
             RateLimiter::attempt('publish:'.$author->getKey(), self::MAX_PUBLICATIONS_PER_HOUR, fn (): bool => true, 3600),
@@ -38,12 +54,14 @@ class PublishCopypasta
 
         $tagIds = app(ResolveCopypastaTags::class)->handle($data['tag_ids']);
 
-        $copypasta = DB::transaction(function () use ($author, $data, $title, $tagIds): Copypasta {
+        $copypasta = DB::transaction(function () use ($author, $data, $title, $tagIds, $isTemplate, $parent): Copypasta {
             $copypasta = Copypasta::query()->create([
                 'user_id' => $author->getKey(),
+                'parent_id' => $parent?->getKey(),
                 'title' => $title,
                 'body' => $data['body'],
                 'is_nsfw' => $data['is_nsfw'],
+                'is_template' => $isTemplate,
                 'published_at' => now(),
             ]);
 
@@ -56,11 +74,15 @@ class PublishCopypasta
             return $copypasta;
         });
 
-        app(QueueAchievementEvaluation::class)->handle($author, [AchievementMetric::Published, AchievementMetric::NightPublications]);
+        app(QueueAchievementEvaluation::class)->handle($author, [AchievementMetric::Published, AchievementMetric::NightPublications, AchievementMetric::VariantsPublished]);
 
         SyncCopypastaOgImageJob::dispatch($copypasta->getKey());
 
         app(RecordEvent::class)->handle(EventType::Publish, $author, $copypasta);
+
+        if ($parent instanceof Copypasta) {
+            app(NotifyCopypastaVariant::class)->handle($copypasta);
+        }
 
         return $copypasta;
     }
@@ -73,6 +95,10 @@ class PublishCopypasta
         $adjustProgress = app(AdjustAchievementProgress::class);
 
         $adjustProgress->add($author, AchievementMetric::Published, 1);
+
+        if ($copypasta->parent_id !== null) {
+            $adjustProgress->add($author, AchievementMetric::VariantsPublished, 1);
+        }
 
         if ($copypasta->published_at?->copy()->timezone(config('app.timezone'))->hour === 3) {
             $adjustProgress->add($author, AchievementMetric::NightPublications, 1);

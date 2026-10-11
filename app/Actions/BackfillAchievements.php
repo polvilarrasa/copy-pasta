@@ -36,13 +36,14 @@ class BackfillAchievements
      * sends a notification, and running it again changes nothing: counters are replaced by their recomputed value,
      * flags are only raised, and grants ignore achievements the member already has (revoked ones included).
      *
-     * Copies received and Dinamita come from the events that are still retained, and En tendencia from the current
+     * Copies received, Dinamita and the copies of templates come from the events that are still retained, and En tendencia from the current
      * weekly top: those cannot be reconstructed further back. Returns how many achievements were granted.
      */
     public function handle(): int
     {
         DB::transaction(function (): void {
             $this->classifyUpvotes();
+            $this->backfillTemplateCopies();
             $this->backfillCounters();
             $this->backfillFlags();
             $this->backfillDailyReferrals();
@@ -89,6 +90,12 @@ class BackfillAchievements
                 .'JOIN folders ON folders.id = copypasta_folder.folder_id WHERE folders.is_default = true GROUP BY folders.user_id',
             AchievementMetric::ReportsAccepted->value => 'SELECT reporter_id AS user_id, count(*) AS total FROM reports '
                 ."WHERE status = 'accepted' AND reporter_id IS NOT NULL GROUP BY reporter_id",
+            AchievementMetric::VariantsPublished->value => 'SELECT variants.user_id AS user_id, count(*) AS total FROM copypastas variants '
+                .'JOIN copypastas parents ON parents.id = variants.parent_id '
+                .'WHERE variants.published_at IS NOT NULL AND variants.hidden_at IS NULL AND variants.deleted_at IS NULL '
+                .'AND parents.user_id <> variants.user_id GROUP BY variants.user_id',
+            AchievementMetric::TemplateCopies->value => 'SELECT user_id, max(template_copies_by_others) AS total FROM copypastas '
+                .'WHERE template_copies_by_others > 0 GROUP BY user_id',
             AchievementMetric::VotesCast->value => 'SELECT user_id, count(*) AS total FROM votes GROUP BY user_id',
             AchievementMetric::AttributedVisits->value => 'SELECT owner_id AS user_id, count(*) AS total FROM ('.self::ATTRIBUTED_VISITS.') visits GROUP BY owner_id',
         ];
@@ -102,6 +109,22 @@ class BackfillAchievements
                 [$metric],
             );
         }
+    }
+
+    /**
+     * The copies of each template made by anyone but its author, from the retained copy events that carry
+     * `template: true`. The column only goes up: a copy that was counted live and whose event was already purged
+     * is kept, so the larger of the two wins. Like copies_count, app:recalculate-counters does not touch it.
+     */
+    private function backfillTemplateCopies(): void
+    {
+        DB::update(
+            'UPDATE copypastas SET template_copies_by_others = GREATEST(copypastas.template_copies_by_others, counted.total)::int FROM ('
+            .'SELECT events.copypasta_id, count(*) AS total FROM events JOIN copypastas owned ON owned.id = events.copypasta_id '
+            ."WHERE events.type = '".EventType::Copy->value."' AND events.context ->> 'template' = 'true' "
+            .'AND (events.user_id IS NULL OR events.user_id <> owned.user_id) GROUP BY events.copypasta_id'
+            .') counted WHERE counted.copypasta_id = copypastas.id',
+        );
     }
 
     /**
@@ -125,6 +148,15 @@ class BackfillAchievements
         foreach ($this->trending->authorIds() as $authorId) {
             $this->adjustProgress->raiseTo($authorId, AchievementMetric::TrendingTop, 1);
         }
+
+        DB::insert(
+            'INSERT INTO user_achievement_progress (user_id, metric, value) SELECT DISTINCT variants.user_id, ?, 1 FROM copypastas variants '
+            .'JOIN copypastas parents ON parents.id = variants.parent_id '
+            .'WHERE variants.published_at IS NOT NULL AND variants.hidden_at IS NULL AND variants.deleted_at IS NULL '
+            .'AND variants.score >= ? AND variants.score > parents.score '
+            .'ON CONFLICT (user_id, metric) DO UPDATE SET value = GREATEST(user_achievement_progress.value, 1)',
+            [AchievementMetric::OutscoringVariant->value, DetectOutscoringVariant::MIN_SCORE],
+        );
 
         $window = DetectDynamiteCopypasta::WINDOW_HOURS;
 
