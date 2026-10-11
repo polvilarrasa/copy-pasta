@@ -7,6 +7,7 @@ use App\Actions\DeleteCopypasta;
 use App\Actions\HideCopypasta;
 use App\Actions\PublishCopypasta;
 use App\Actions\RecordCopypastaCopy;
+use App\Actions\RestoreCopypasta;
 use App\Enums\Achievement;
 use App\Enums\AchievementMetric;
 use App\Enums\EventType;
@@ -125,6 +126,36 @@ test('Discípulo aventajado: una variante oculta no lo concede', function (): vo
 
     app(CastVote::class)->handle(User::factory()->create(), $parent, -1);
     app(CastVote::class)->handle(User::factory()->create(), $parent, -1);
+
+    expect(holdsAchievement($disciple, Achievement::StarDisciple))->toBeFalse();
+});
+
+test('Discípulo aventajado: restaurar una variante oculta que ya supera a su padre lo concede', function (): void {
+    $parent = Copypasta::factory()->create(['score' => 4, 'upvotes_count' => 4]);
+    $disciple = User::factory()->create();
+    $variant = Copypasta::factory()->variantOf($parent)->hidden()->for($disciple, 'user')->create(['score' => 12, 'upvotes_count' => 12]);
+
+    app(RestoreCopypasta::class)->handle(User::factory()->moderator()->create(), $variant);
+
+    expect(holdsAchievement($disciple, Achievement::StarDisciple))->toBeTrue();
+});
+
+test('Discípulo aventajado: restaurar el padre oculto evalúa a sus variantes', function (): void {
+    $parent = Copypasta::factory()->hidden()->create(['score' => 4, 'upvotes_count' => 4]);
+    $disciple = User::factory()->create();
+    Copypasta::factory()->variantOf($parent)->for($disciple, 'user')->create(['score' => 12, 'upvotes_count' => 12]);
+
+    app(RestoreCopypasta::class)->handle(User::factory()->moderator()->create(), $parent);
+
+    expect(holdsAchievement($disciple, Achievement::StarDisciple))->toBeTrue();
+});
+
+test('Discípulo aventajado: restaurar una variante que no supera a su padre no lo concede', function (): void {
+    $parent = Copypasta::factory()->create(['score' => 20, 'upvotes_count' => 20]);
+    $disciple = User::factory()->create();
+    $variant = Copypasta::factory()->variantOf($parent)->hidden()->for($disciple, 'user')->create(['score' => 12, 'upvotes_count' => 12]);
+
+    app(RestoreCopypasta::class)->handle(User::factory()->moderator()->create(), $variant);
 
     expect(holdsAchievement($disciple, Achievement::StarDisciple))->toBeFalse();
 });
